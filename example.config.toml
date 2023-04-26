@@ -1,0 +1,8 @@
+[Daemon]
+rpc-url = ''
+
+[Routes]
+router = ''
+ifil = ''
+infinity-pool = ''
+agent-factory = ''
