@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"math/big"
 
 	"github.com/glif-confidential/cli/fevm"
 	"github.com/spf13/cobra"
@@ -25,13 +26,7 @@ var iFILBalanceOfCmd = &cobra.Command{
     strAddr := args[0]
     fmt.Printf("Checking iFIL balance of %s...", strAddr)
 
-    lapi, closer, err := fevm.Connection().ConnectLotusClient()
-    if err != nil {
-      log.Fatalf("Failed to instantiate lotus client %s", err)
-    }
-    defer closer()
-
-    addr, err := ParseAddress(cmd.Context(), strAddr, lapi)
+    addr, err := ParseAddress(cmd.Context(), strAddr)
     if err != nil {
       log.Fatalf("Failed to parse address %s", err)
     }
@@ -45,7 +40,107 @@ var iFILBalanceOfCmd = &cobra.Command{
   },
 }
 
+var iFILTransferCmd = &cobra.Command{
+  Use:   "transfer [to] [amount]",
+  Short: "Transfer iFIL to another address",
+  Args:  cobra.ExactArgs(2),
+  Run: func(cmd *cobra.Command, args []string) {
+    strAddr := args[0]
+    strAmt := args[1]
+    fmt.Printf("Transferring %s iFIL balance to %s...", strAmt, strAddr)
+
+    addr, err := ParseAddress(cmd.Context(), strAddr)
+    if err != nil {
+      log.Fatalf("Failed to parse address %s", err)
+    }
+
+    amt := big.NewInt(0)
+    amt, ok := amt.SetString(strAmt, 10)
+    if !ok {
+      log.Fatalf("Failed to parse amount %s", err)
+    }
+
+    tx, err := fevm.Connection().IFILTransfer(cmd.Context(), addr, amt)
+    if err != nil {
+      log.Fatalf("Failed to get iFIL balance %s", err)
+    }
+
+    if tx == nil {
+      log.Fatal("Failed to transfer iFIL")
+    }
+
+    eapi, err := fevm.Connection().ConnectEthClient()
+    if err != nil {
+      log.Fatalf("Failed to instantiate eth client %s", err)
+    }
+    defer eapi.Close()
+
+    fevm.WaitForReceipt(tx.Hash(), eapi)
+
+    fmt.Printf("iFIL sent!")
+  },
+}
+
+var iFILApproveCmd = &cobra.Command{
+  Use:   "approve [spender] [allowance]",
+  Short: "Approve another address to spend your iFIL",
+  Args:  cobra.ExactArgs(2),
+  Run: func(cmd *cobra.Command, args []string) {
+    strAddr := args[0]
+    strAmt := args[1]
+    fmt.Printf("Approving %s to spend %s of your iFIL balance...", strAddr, strAmt)
+
+    addr, err := ParseAddress(cmd.Context(), strAddr)
+    if err != nil {
+      log.Fatalf("Failed to parse address %s", err)
+    }
+
+    amt := big.NewInt(0)
+    amt, ok := amt.SetString(strAmt, 10)
+    if !ok {
+      log.Fatalf("Failed to parse amount %s", err)
+    }
+
+    tx, err := fevm.Connection().IFILApprove(cmd.Context(), addr, amt)
+    if err != nil {
+      log.Fatalf("Failed to get iFIL balance %s", err)
+    }
+
+    if tx == nil {
+      log.Fatal("Failed to transfer iFIL")
+    }
+
+    eapi, err := fevm.Connection().ConnectEthClient()
+    if err != nil {
+      log.Fatalf("Failed to instantiate eth client %s", err)
+    }
+    defer eapi.Close()
+
+    fevm.WaitForReceipt(tx.Hash(), eapi)
+
+    fmt.Printf("iFIL sent!")
+  },
+}
+
+var iFILPriceCmd = &cobra.Command{
+  Use:   "price",
+  Short: "Get the iFIL price, denominated in FIL",
+  Long: "Get the iFIL price, denominated in FIL. The number returned is the amount of FIL that 1 iFIL is worth.",
+  Run: func(cmd *cobra.Command, args []string) {
+    fmt.Print("Checking iFIL prices...")
+
+    price, err := fevm.Connection().IFILPrice()
+    if err != nil {
+      log.Fatalf("Failed to get iFIL balance %s", err)
+    }
+
+    fmt.Printf("1 iFIL is worth %s FIL", price.String())
+  },
+}
+
 func init() {
 	rootCmd.AddCommand(iFILCmd)
   iFILCmd.AddCommand(iFILBalanceOfCmd)
+  iFILCmd.AddCommand(iFILTransferCmd)
+  iFILCmd.AddCommand(iFILApproveCmd)
 }

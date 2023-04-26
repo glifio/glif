@@ -58,7 +58,7 @@ func TestParseAddress(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := ParseAddress(context.Background(), tc.input, mockAPI)
+			result, err := parseAddress(context.Background(), tc.input, mockAPI)
 
 			if tc.expectError {
 				assert.Error(t, err)

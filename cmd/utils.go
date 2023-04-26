@@ -9,9 +9,20 @@ import (
 	lotusapi "github.com/filecoin-project/lotus/api"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
+	"github.com/glif-confidential/cli/fevm"
 )
 
-func ParseAddress(ctx context.Context, addr string, lapi lotusapi.FullNode) (common.Address, error) {
+func ParseAddress(ctx context.Context, addr string) (common.Address, error) {
+	lapi, closer, err := fevm.Connection().ConnectLotusClient()
+	if err != nil {
+		return common.Address{}, err
+	}
+	defer closer()
+
+	return parseAddress(ctx, addr, lapi)
+}
+
+func parseAddress(ctx context.Context, addr string, lapi lotusapi.FullNode) (common.Address, error) {
 	if strings.HasPrefix(addr, "0x") {
 		return common.HexToAddress(addr), nil
 	}
