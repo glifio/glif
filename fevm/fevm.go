@@ -30,8 +30,8 @@ func WriteTx(
 			log.Fatal(err)
 		}
 
-    // get the eth address from the private key
-    publicKey := pk.Public()
+		// get the eth address from the private key
+		publicKey := pk.Public()
 		publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 		if !ok {
 			return nil, fmt.Errorf("error casting public key to ECDSA")
@@ -39,10 +39,10 @@ func WriteTx(
 
 		fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 
-    nonce, err := Nonce().BumpNonce(fromAddress, 0)
-    if err != nil {
-      return nil, err
-    }
+		nonce, err := Nonce().BumpNonce(fromAddress, 0)
+		if err != nil {
+			return nil, err
+		}
 
 		auth.Nonce = nonce
 

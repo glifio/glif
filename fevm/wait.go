@@ -39,7 +39,7 @@ func WaitForNextBlock(ctx context.Context, c *ethclient.Client, current *big.Int
 }
 
 func WaitForReceipt(hash common.Hash, client *ethclient.Client) {
-  ctx, cancel := context.WithTimeout(context.Background(), 480*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 480*time.Second)
 	defer cancel()
 
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
@@ -58,14 +58,14 @@ func WaitForReceipt(hash common.Hash, client *ethclient.Client) {
 
 		ch := make(chan bool)
 		go WaitForNextBlock(ctx, client, receipt.BlockNumber, ch)
-      select {
-      case <-ctx.Done():
-        s.Stop()
-        log.Fatal("Timed out waiting for transaction.")
-      case <-ch:
-        s.Stop()
-        fmt.Println("Transaction receipt received.")
-        fmt.Printf("Status: %v\n", receipt.Status)
-      }
-    }
+			select {
+			case <-ctx.Done():
+				s.Stop()
+				log.Fatal("Timed out waiting for transaction.")
+			case <-ch:
+				s.Stop()
+				fmt.Println("Transaction receipt received.")
+				fmt.Printf("Status: %v\n", receipt.Status)
+			}
+		}
 }

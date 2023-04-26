@@ -11,66 +11,66 @@ import (
 )
 
 func (c *FEVMConnection) IFILBalanceOf(address common.Address) (*big.Int, error) {
-  client, err := c.ConnectEthClient()
-  if err != nil {
-    return nil, err
-  }
-  defer client.Close()
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
 
-  poolTokenCaller, err := abigen.NewPooltokenCaller(c.IFILAddr, client)
-  if err != nil {
-    return nil, err
-  }
+	poolTokenCaller, err := abigen.NewPooltokenCaller(c.IFILAddr, client)
+	if err != nil {
+		return nil, err
+	}
 
-  return poolTokenCaller.BalanceOf(nil, c.IFILAddr)
+	return poolTokenCaller.BalanceOf(nil, c.IFILAddr)
 }
 
 func (c *FEVMConnection) IFILTransfer(ctx context.Context, toAddr common.Address, amount *big.Int) (*types.Transaction, error) {
-  client, err := c.ConnectEthClient()
-  if err != nil {
-    return nil, err
-  }
-  defer client.Close()
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
 
-  poolTokenCaller, err := abigen.NewPooltokenTransactor(c.IFILAddr, client)
-  if err != nil {
-    return nil, err
-  }
+	poolTokenCaller, err := abigen.NewPooltokenTransactor(c.IFILAddr, client)
+	if err != nil {
+		return nil, err
+	}
 
-  args := []interface{}{toAddr, amount}
+	args := []interface{}{toAddr, amount}
 
-  return WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, poolTokenCaller.Transfer, "iFIL Transfer")
+	return WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, poolTokenCaller.Transfer, "iFIL Transfer")
 }
 
 func (c *FEVMConnection) IFILApprove(ctx context.Context, spender common.Address, allowance *big.Int) (*types.Transaction, error) {
-  client, err := c.ConnectEthClient()
-  if err != nil {
-    return nil, err
-  }
-  defer client.Close()
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
 
-  poolTokenCaller, err := abigen.NewPooltokenTransactor(c.IFILAddr, client)
-  if err != nil {
-    return nil, err
-  }
+	poolTokenCaller, err := abigen.NewPooltokenTransactor(c.IFILAddr, client)
+	if err != nil {
+		return nil, err
+	}
 
-  args := []interface{}{spender, allowance}
+	args := []interface{}{spender, allowance}
 
-  return WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, poolTokenCaller.Approve, "iFIL Approve")
+	return WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, poolTokenCaller.Approve, "iFIL Approve")
 }
 
 func (c *FEVMConnection) IFILPrice() (*big.Int, error) {
-  client, err := c.ConnectEthClient()
-  if err != nil {
-    return nil, err
-  }
-  defer client.Close()
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
 
-  infPoolCaller, err := abigen.NewInfinitypoolCaller(c.InfinityPoolAddr, client)
-  if err != nil {
-    return nil, err
-  }
+	infPoolCaller, err := abigen.NewInfinitypoolCaller(c.InfinityPoolAddr, client)
+	if err != nil {
+		return nil, err
+	}
 
-  // return the price of 1 iFIL in FIL
-  return infPoolCaller.ConvertToAssets(nil, big.NewInt(1))
+	// return the price of 1 iFIL in FIL
+	return infPoolCaller.ConvertToAssets(nil, big.NewInt(1))
 }
