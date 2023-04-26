@@ -4,8 +4,6 @@ Copyright © 2023 Glif LTD
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +13,20 @@ var createCmd = &cobra.Command{
 	Short: "Create a Glif agent",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("create called")
+		// check flags for custom owner/repayment private key files
+		// otherwise load default private keys files
+
+		// read private key files into memory
+
+		// agentCreatEvent := contract_utils.AgentCreate()
+		// if agentCreateEvent == nil {
+		//		log.Fatal("failed to create agent")
+		// }
+
+		// agentID := agentCreateEvent.Agent
+
+		// store the agentID into a file in the config folder
+
 	},
 }
 
@@ -31,4 +42,7 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// createCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
+	createCmd.Flags().String("ownerfile", "", "Owner eth address")
+	createCmd.Flags().String("repaymentfile", "", "Repayment eth address")
 }
