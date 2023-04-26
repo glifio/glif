@@ -1,5 +1,5 @@
 /*
-Copyright © 2023 Glif LTD 
+Copyright © 2023 Glif LTD
 */
 package cmd
 
@@ -9,7 +9,8 @@ import (
 
 // agentCmd represents the agent command
 var agentCmd = &cobra.Command{
-	Use: "agent",
+	Use:   "agent",
+	Short: "Commands for interacting with the Glif Agent",
 }
 
 func init() {

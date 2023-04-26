@@ -1,5 +1,5 @@
 /*
-Copyright © 2023 Glif LTD 
+Copyright © 2023 Glif LTD
 */
 package cmd
 
@@ -12,7 +12,7 @@ import (
 // createCmd represents the create command
 var createCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create a glif agent",
+	Short: "Create a Glif agent",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("create called")
