@@ -23,77 +23,77 @@ func WriteTx(
 	writeTx interface{},
 	label string,
 ) (*types.Transaction, error) {
-		chainID, err := client.ChainID(ctx)
+	chainID, err := client.ChainID(ctx)
 
-		auth, err := bind.NewKeyedTransactorWithChainID(pk, chainID)
-		if err != nil {
-			log.Fatal(err)
-		}
+	auth, err := bind.NewKeyedTransactorWithChainID(pk, chainID)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-		// get the eth address from the private key
-		publicKey := pk.Public()
-		publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-		if !ok {
-			return nil, fmt.Errorf("error casting public key to ECDSA")
-		}
+	// get the eth address from the private key
+	publicKey := pk.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		return nil, fmt.Errorf("error casting public key to ECDSA")
+	}
 
-		fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 
-		nonce, err := Nonce().BumpNonce(fromAddress, 0)
-		if err != nil {
-			return nil, err
-		}
+	nonce, err := Nonce().BumpNonce(fromAddress, 0)
+	if err != nil {
+		return nil, err
+	}
 
-		auth.Nonce = nonce
+	auth.Nonce = nonce
 
-		// Use reflection to call the writeTx function with the required arguments
-		writeTxValue := reflect.ValueOf(writeTx)
-		writeTxArgs := []reflect.Value{reflect.ValueOf(auth)}
+	// Use reflection to call the writeTx function with the required arguments
+	writeTxValue := reflect.ValueOf(writeTx)
+	writeTxArgs := []reflect.Value{reflect.ValueOf(auth)}
 
-		argStrings := make([]string, len(args))
-		for i, arg := range args {
-				writeTxArgs = append(writeTxArgs, reflect.ValueOf(arg))
-				argStrings[i] = stringifyArg(arg)
-		}
+	argStrings := make([]string, len(args))
+	for i, arg := range args {
+		writeTxArgs = append(writeTxArgs, reflect.ValueOf(arg))
+		argStrings[i] = StringifyArg(arg)
+	}
 
-		fmt.Printf("Calling %s, with %s\n", label, strings.Join(argStrings, ", "))
+	fmt.Printf("Calling %s, with %s\n", label, strings.Join(argStrings, ", "))
 
-		result := writeTxValue.Call(writeTxArgs)
+	result := writeTxValue.Call(writeTxArgs)
 
-		// Get the transaction and error from the result
-		tx := result[0].Interface().(*types.Transaction)
+	// Get the transaction and error from the result
+	tx := result[0].Interface().(*types.Transaction)
 
-		fmt.Printf("Transaction: %s", tx.Hash())
-		err = nil
-		if !result[1].IsNil() {
-				err = result[1].Interface().(error)
-		}
+	fmt.Printf("Transaction: %s", tx.Hash())
+	err = nil
+	if !result[1].IsNil() {
+		err = result[1].Interface().(error)
+	}
 
-		return tx, err
+	return tx, err
 }
 
-func stringifyArg(arg interface{}) string {
+func StringifyArg(arg interface{}) string {
 	val := reflect.ValueOf(arg)
 	typ := val.Type()
 
 	// If the argument is a slice, iterate over its elements and stringify each one
 	if typ.Kind() == reflect.Slice {
-			elemCount := val.Len()
-			elemStrings := make([]string, elemCount)
-			for i := 0; i < elemCount; i++ {
-					elem := val.Index(i).Interface()
-					elemStrings[i] = stringifyArg(elem)
-			}
-			return fmt.Sprintf("[%s]", strings.Join(elemStrings, ", "))
+		elemCount := val.Len()
+		elemStrings := make([]string, elemCount)
+		for i := 0; i < elemCount; i++ {
+			elem := val.Index(i).Interface()
+			elemStrings[i] = StringifyArg(elem)
+		}
+		return fmt.Sprintf("[%s]", strings.Join(elemStrings, ", "))
 	}
 
 	// Handle other types
 	switch arg.(type) {
 	case *bind.TransactOpts:
-			return fmt.Sprintf("TransactOpts{From: %s, Nonce: %s}", val.FieldByName("From").Interface(), val.FieldByName("Nonce").Interface())
+		return fmt.Sprintf("TransactOpts{From: %s, Nonce: %s}", val.FieldByName("From").Interface(), val.FieldByName("Nonce").Interface())
 	case common.Address:
-			return fmt.Sprintf("Address: %s", arg.(common.Address).Hex())
+		return fmt.Sprintf("Address: %s", arg.(common.Address).Hex())
 	default:
-			return fmt.Sprintf("%v", arg)
+		return fmt.Sprintf("%v", arg)
 	}
 }

@@ -16,7 +16,10 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
+	"log"
 	"os"
 
 	"github.com/glif-confidential/cli/fevm"
@@ -54,9 +57,6 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
-	// Pulls in the FEVM connection params
-	fevm.InitFEVMConnection(rootCmd.Context())
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -66,19 +66,49 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// Find home directory.
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
+		// home, err := os.UserHomeDir()
+		// cobra.CheckErr(err)
+
+		//TODO: check that $HOME/.config/glif exists and create if not
+		// create default config.toml
+		// create empty agent.toml
+		// create empty keys.toml
 
 		// Search config in home directory with name ".glif" (without extension).
-		viper.AddConfigPath(fmt.Sprintf("%s/.config/glif", home))
+		// viper.AddConfigPath(fmt.Sprintf("%s/.config/glif", home))
+		viper.AddConfigPath(".")
 		viper.SetConfigType("toml")
+
 		viper.SetConfigName("config")
+		// if err = viper.MergeInConfig(); err != nil {
+		// 	log.Fatalf("Error merging config file '%s': %v", "config", err)
+		// }
+		// viper.SetConfigFile("./keys.toml")
+		// if err = viper.MergeInConfig(); err != nil {
+		// 	log.Fatalf("Error merging config file '%s': %v", "keys", err)
+		// }
+		// viper.SetConfigFile("./agent.toml")
+		// if err = viper.MergeInConfig(); err != nil {
+		// 	log.Fatalf("Error merging config file '%s': %v", "agent", err)
+		// }
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+	if err := viper.ReadInConfig(); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			log.Fatalf("No config file found at %s\n", viper.ConfigFileUsed())
+		} else if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Config file not found; ignore error if desired
+			fmt.Fprintln(os.Stderr, "Warning: No config file found.")
+		} else {
+			log.Fatalf("Config file error: %v\n", err)
+		}
+	}
+
+	// Pulls in the FEVM connection params
+	if err := fevm.InitFEVMConnection(rootCmd.Context()); err != nil {
+		log.Fatalf("Error initializing FEVM connection: %v\n", err)
 	}
 }

@@ -38,7 +38,7 @@ func WaitForNextBlock(ctx context.Context, c *ethclient.Client, current *big.Int
 	}
 }
 
-func WaitForReceipt(hash common.Hash, client *ethclient.Client) {
+func waitForReceipt(hash common.Hash, client *ethclient.Client) {
 	ctx, cancel := context.WithTimeout(context.Background(), 480*time.Second)
 	defer cancel()
 
@@ -58,14 +58,24 @@ func WaitForReceipt(hash common.Hash, client *ethclient.Client) {
 
 		ch := make(chan bool)
 		go WaitForNextBlock(ctx, client, receipt.BlockNumber, ch)
-			select {
-			case <-ctx.Done():
-				s.Stop()
-				log.Fatal("Timed out waiting for transaction.")
-			case <-ch:
-				s.Stop()
-				fmt.Println("Transaction receipt received.")
-				fmt.Printf("Status: %v\n", receipt.Status)
-			}
+		select {
+		case <-ctx.Done():
+			s.Stop()
+			log.Fatal("Timed out waiting for transaction.")
+		case <-ch:
+			s.Stop()
+			fmt.Println("Transaction receipt received.")
+			fmt.Printf("Status: %v\n", receipt.Status)
 		}
+	}
+}
+
+func WaitForReceipt(hash common.Hash) {
+	eapi, err := Connection().ConnectEthClient()
+	if err != nil {
+		log.Fatalf("Failed to instantiate eth client %s", err)
+	}
+	defer eapi.Close()
+
+	waitForReceipt(hash, eapi)
 }

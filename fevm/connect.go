@@ -3,6 +3,7 @@ package fevm
 import (
 	"context"
 	"net/http"
+	"os"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -12,13 +13,15 @@ import (
 )
 
 type FEVMConnection struct {
-	RpcURL             string
-	Token              string
-	ChainID            int64
-	RouterAddress      common.Address
-	IFILAddr           common.Address
-	InfinityPoolAddr   common.Address
-	AgentFactoryAddr   common.Address
+	// the lotus RPC url contains a token in it - see https://lotus.filecoin.io/storage-providers/setup/initialize/ for more info
+	LotusRpcUrl      string
+	EthRpcUrl        string
+	ChainID          int64
+	RouterAddress    common.Address
+	IFILAddr         common.Address
+	InfinityPoolAddr common.Address
+	AgentFactoryAddr common.Address
+	PoolRegistryAddr common.Address
 }
 
 var connection *FEVMConnection
@@ -29,56 +32,55 @@ func Connection() *FEVMConnection {
 
 // NewConnectParams instantiates an FEVMConnection struct singleton
 func InitFEVMConnection(ctx context.Context) error {
-	rpcUrl := viper.GetString("daemon.rpc-url")
+	ethRpcUrl := viper.GetString("daemon.rpc-url")
 
-	client, err := ethclient.Dial(rpcUrl)
+	client, err := ethclient.Dial(ethRpcUrl)
 	if err != nil {
 		return err
 	}
+	defer client.Close()
 
 	chainID, err := client.ChainID(ctx)
 	if err != nil {
 		return err
 	}
 
+	// https://api.node.glif.io/rpc/v1
 	connection = &FEVMConnection{
-		RpcURL: viper.GetString("daemon.rpc-url"),
-		ChainID: chainID.Int64(),
-		RouterAddress: common.HexToAddress(viper.GetString("routes.router")),
-		IFILAddr: common.HexToAddress(viper.GetString("routes.ifil")),
+		LotusRpcUrl:      os.Getenv("FULL_NODE_API_INFO"),
+		EthRpcUrl:        ethRpcUrl,
+		ChainID:          chainID.Int64(),
+		RouterAddress:    common.HexToAddress(viper.GetString("routes.router")),
+		IFILAddr:         common.HexToAddress(viper.GetString("routes.ifil")),
 		InfinityPoolAddr: common.HexToAddress(viper.GetString("routes.infinity-pool")),
 		AgentFactoryAddr: common.HexToAddress(viper.GetString("routes.agent-factory")),
+		PoolRegistryAddr: common.HexToAddress(viper.GetString("routes.pool-registry")),
 	}
 
 	return nil
 }
 
 func (c *FEVMConnection) ConnectEthClient() (*ethclient.Client, error) {
-	return ethclient.Dial(c.RpcURL)
+	return ethclient.Dial(c.EthRpcUrl)
 }
 
 func (c *FEVMConnection) ConnectLotusClient() (*lotusapi.FullNodeStruct, jsonrpc.ClientCloser, error) {
-		head := http.Header{}
-		// var api lotusapi.FullNodeStruct
+	head := http.Header{}
 
-		if c.Token != "" {
-			head.Set("Authorization", "Bearer "+c.Token)
-		}
+	lapi := &lotusapi.FullNodeStruct{}
 
-		lapi := &lotusapi.FullNodeStruct{}
+	closer, err := jsonrpc.NewMergeClient(
+		context.Background(),
+		c.LotusRpcUrl,
+		"Filecoin",
+		//[]interface{}{&api.Internal, &api.CommonStruct.Internal},
+		lotusapi.GetInternalStructs(lapi),
+		head,
+	)
 
-		closer, err := jsonrpc.NewMergeClient(
-			context.Background(),
-			c.RpcURL,
-			"Filecoin",
-			//[]interface{}{&api.Internal, &api.CommonStruct.Internal},
-			lotusapi.GetInternalStructs(lapi),
-			head,
-		)
+	if err != nil {
+		return nil, nil, err
+	}
 
-		if err != nil {
-			return nil, nil, err
-		}
-
-		return lapi, closer, nil
+	return lapi, closer, nil
 }

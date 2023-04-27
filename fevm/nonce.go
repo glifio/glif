@@ -12,7 +12,7 @@ import (
 type NonceCache struct {
 	nonces map[common.Address]*big.Int
 	rpcUrl string
-	mutex sync.Mutex
+	mutex  sync.Mutex
 }
 
 var nonceCache *NonceCache
@@ -23,7 +23,7 @@ func Nonce() *NonceCache {
 
 func (c *FEVMConnection) InitNonceCache() {
 	nonceCache = &NonceCache{}
-	nonceCache.rpcUrl = c.RpcURL
+	nonceCache.rpcUrl = c.EthRpcUrl
 }
 
 func (n *NonceCache) BumpNonce(address common.Address, nonceOverride uint64) (*big.Int, error) {
@@ -31,7 +31,7 @@ func (n *NonceCache) BumpNonce(address common.Address, nonceOverride uint64) (*b
 	defer n.mutex.Unlock()
 	oldNonce, exists := n.nonces[address]
 
-	if (!exists) {
+	if !exists {
 		var nonce uint64
 		if nonceOverride != 0 {
 			nonce = nonceOverride
@@ -58,4 +58,3 @@ func (n *NonceCache) BumpNonce(address common.Address, nonceOverride uint64) (*b
 
 	return oldNonce, nil
 }
-
