@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
 	"github.com/glif-confidential/cli/fevm"
@@ -42,4 +43,13 @@ func deriveAddrFromPk(pk *ecdsa.PrivateKey) (common.Address, address.Address, er
 	}
 
 	return evmAddr, delegatedAddr, nil
+}
+
+func deriveAddrFromPkString(pk string) (common.Address, address.Address, error) {
+	pkECDSA, err := crypto.HexToECDSA(pk)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return deriveAddrFromPk(pkECDSA)
 }

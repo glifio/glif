@@ -4,7 +4,12 @@ Copyright © 2023 Glif LTD
 package cmd
 
 import (
+	"fmt"
+	"log"
+
+	"github.com/glif-confidential/cli/fevm"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // createCmd represents the create command
@@ -13,42 +18,44 @@ var createCmd = &cobra.Command{
 	Short: "Create a Glif agent",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
+		//TODO: handle deployer key
+
 		// 1. Read in the owner and operator addresses
+		ownerAddr, _, err := deriveAddrFromPkString(viper.GetString("keys.owner"))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		operatorAddr, _, err := deriveAddrFromPkString(viper.GetString("keys.operator"))
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		// 2. Call AgentCreate, which gives you an address, agent ID, and a transaction hash
+		id, addr, tx, err := fevm.Connection().AgentCreate(ownerAddr, operatorAddr)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		// 3. Given the tx hash, WaitForReceipt(tx.Hash())
+		fevm.WaitForReceipt(tx.Hash())
+
 		// 4. Print the address, agent ID, and tx hash
+		fmt.Printf("Agent address: %s\n", addr)
+		fmt.Printf("Agent ID: %s\n", id)
+		fmt.Printf("Tx hash: %s\n", tx.Hash())
+
 		// 5. Write the address, agent ID, and tx hash to the config
-
-		// check flags for custom owner/repayment private key files
-		// otherwise load default private keys files
-
-		// read private key files into memory
-
-		// agentCreatEvent := contract_utils.AgentCreate()
-		// if agentCreateEvent == nil {
-		//		log.Fatal("failed to create agent")
-		// }
-
-		// agentID := agentCreateEvent.Agent
-
-		// store the agentID into a file in the config folder
-
+		viper.Set("agent.address", addr)
+		viper.Set("agent.id", id)
+		viper.Set("agent.tx", tx.Hash())
 	},
 }
 
 func init() {
 	agentCmd.AddCommand(createCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// createCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// createCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
 	createCmd.Flags().String("ownerfile", "", "Owner eth address")
-	createCmd.Flags().String("repaymentfile", "", "Repayment eth address")
+	createCmd.Flags().String("operatorfile", "", "Repayment eth address")
+	createCmd.Flags().String("deployerfile", "", "Deployer eth address")
 }
