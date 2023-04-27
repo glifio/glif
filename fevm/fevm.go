@@ -15,6 +15,16 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
+func DeriveAddressFromPk(pk *ecdsa.PrivateKey) (common.Address, error) {
+	publicKey := pk.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		return common.Address{}, fmt.Errorf("error casting public key to ECDSA")
+	}
+
+	return crypto.PubkeyToAddress(*publicKeyECDSA), nil
+}
+
 func WriteTx(
 	ctx context.Context,
 	pk *ecdsa.PrivateKey,
@@ -30,14 +40,10 @@ func WriteTx(
 		log.Fatal(err)
 	}
 
-	// get the eth address from the private key
-	publicKey := pk.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		return nil, fmt.Errorf("error casting public key to ECDSA")
+	fromAddress, err := DeriveAddressFromPk(pk)
+	if err != nil {
+		return nil, err
 	}
-
-	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
 
 	nonce, err := Nonce().BumpNonce(fromAddress, 0)
 	if err != nil {

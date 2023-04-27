@@ -6,39 +6,28 @@ package cmd
 import (
 	"log"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 // newCmd represents the new command
-var newCmd = &cobra.Command{
-	Use:   "new",
-	Short: "Create a set of keys for the Agent",
-	Long:  `Creates an owner and an operator key and stores the values in $HOME/.config/glif/keys.toml`,
+var getCmd = &cobra.Command{
+	Use:   "get",
+	Short: "Gets the addresses associated with your owner and operator keys",
 	Run: func(cmd *cobra.Command, args []string) {
 		ownerKey := viper.GetString("keys.owner")
 		operatorKey := viper.GetString("keys.operator")
-		if ownerKey != "" || operatorKey != "" {
-			log.Fatal("Keys already exists")
+		if ownerKey == "" || operatorKey == "" {
+			log.Fatal("Missing keys")
 		}
 
-		// Create the Ethereum private key
-		ownerPrivateKey, err := crypto.GenerateKey()
+		ownerPrivateKey, err := crypto.HexToECDSA(ownerKey)
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		operatorPrivateKey, err := crypto.GenerateKey()
+		operatorPrivateKey, err := crypto.HexToECDSA(operatorKey)
 		if err != nil {
-			log.Fatal(err)
-		}
-
-		viper.Set("keys.owner", hexutil.Encode(crypto.FromECDSA(ownerPrivateKey))[2:])
-		viper.Set("keys.operator", hexutil.Encode(crypto.FromECDSA(operatorPrivateKey))[2:])
-
-		if err := viper.WriteConfig(); err != nil {
 			log.Fatal(err)
 		}
 
@@ -57,5 +46,5 @@ var newCmd = &cobra.Command{
 }
 
 func init() {
-	keysCmd.AddCommand(newCmd)
+	keysCmd.AddCommand(getCmd)
 }

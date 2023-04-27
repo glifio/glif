@@ -4,6 +4,13 @@ Copyright © 2023 Glif LTD
 package cmd
 
 import (
+	"crypto/ecdsa"
+	"log"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/filecoin-project/go-address"
+	"github.com/filecoin-project/lotus/chain/types/ethtypes"
+	"github.com/glif-confidential/cli/fevm"
 	"github.com/spf13/cobra"
 )
 
@@ -16,14 +23,23 @@ var keysCmd = &cobra.Command{
 
 func init() {
 	agentCmd.AddCommand(keysCmd)
+}
 
-	// Here you will define your flags and configuration settings.
+func deriveAddrFromPk(pk *ecdsa.PrivateKey) (common.Address, address.Address, error) {
+	evmAddr, err := fevm.DeriveAddressFromPk(pk)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// keysCmd.PersistentFlags().String("foo", "", "A help for foo")
+	fevmAddr, err := ethtypes.ParseEthAddress(evmAddr.String())
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// keysCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	delegatedAddr, err := fevmAddr.ToFilecoinAddress()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return evmAddr, delegatedAddr, nil
 }
