@@ -13,6 +13,12 @@ var createCmd = &cobra.Command{
 	Short: "Create a Glif agent",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
+		// 1. Read in the owner and operator addresses
+		// 2. Call AgentCreate, which gives you an address, agent ID, and a transaction hash
+		// 3. Given the tx hash, WaitForReceipt(tx.Hash())
+		// 4. Print the address, agent ID, and tx hash
+		// 5. Write the address, agent ID, and tx hash to the config
+
 		// check flags for custom owner/repayment private key files
 		// otherwise load default private keys files
 
