@@ -32,7 +32,7 @@ var createCmd = &cobra.Command{
 		}
 
 		// 2. Call AgentCreate, which gives you an address, agent ID, and a transaction hash
-		id, addr, tx, err := fevm.Connection().AgentCreate(ownerAddr, operatorAddr)
+		id, addr, tx, err := fevm.Connection().AgentCreate(cmd.Context(), nil, ownerAddr, operatorAddr)
 		if err != nil {
 			log.Fatal(err)
 		}
