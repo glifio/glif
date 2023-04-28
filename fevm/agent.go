@@ -66,3 +66,38 @@ func (c *FEVMConnection) AgentCreate(ctx context.Context, deployerPk *ecdsa.Priv
 
 	return agentID, common.Address{}, tx, nil
 }
+
+func (c *FEVMConnection) AgentPullFunds(ctx context.Context, agentID *big.Int, amount *big.Int) (*types.Transaction, error) {
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+
+	agentTransactor, err := abigen.NewAgentTransactor(c.AgentFactoryAddr, client)
+	if err != nil {
+		return nil, common.Address{}, nil, err
+	}
+
+	args := []interface{}{owner, operator, amount}
+
+	return WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, agentTransactor.PullFunds, "Agent Pull Funds")
+}
+
+// AgentPushFunds pushes funds from the agent to a miner
+func (c *FEVMConnection) AgentPushFunds(ctx context.Context, agentID *big.Int, miner common.Address, amount *big.Int) (*types.Transaction, error) {
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+
+	agentTransactor, err := abigen.NewAgentTransactor(c.AgentFactoryAddr, client)
+	if err != nil {
+		return nil, common.Address{}, nil, err
+	}
+
+	args := []interface{}{miner, amount}
+
+	return WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, agentTransactor.PushFunds, "Agent Push Funds")
+}
