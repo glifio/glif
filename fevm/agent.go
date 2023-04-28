@@ -18,6 +18,12 @@ func (c *FEVMConnection) AgentCreate(ctx context.Context, deployerPk *ecdsa.Priv
 	}
 	defer client.Close()
 
+	// record the block height
+	blockHeight, err := client.BlockNumber(ctx)
+	if err != nil {
+		return nil, common.Address{}, nil, err
+	}
+
 	agentFactoryTransactor, err := abigen.NewAgentfactoryTransactor(c.AgentFactoryAddr, client)
 	if err != nil {
 		return nil, common.Address{}, nil, err
@@ -41,7 +47,8 @@ func (c *FEVMConnection) AgentCreate(ctx context.Context, deployerPk *ecdsa.Priv
 	agents := []common.Address{owner}
 	operators := []common.Address{operator}
 
-	iter, err := afFilterer.FilterCreateAgent(&bind.FilterOpts{}, aIDs, agents, operators)
+	//TODO: I don't think this filter works
+	iter, err := afFilterer.FilterCreateAgent(&bind.FilterOpts{Start: blockHeight}, aIDs, agents, operators)
 	if err != nil {
 		return nil, common.Address{}, nil, err
 	}
@@ -57,5 +64,5 @@ func (c *FEVMConnection) AgentCreate(ctx context.Context, deployerPk *ecdsa.Priv
 		}
 	}
 
-	return big.NewInt(0), common.Address{}, tx, nil
+	return agentID, common.Address{}, tx, nil
 }
