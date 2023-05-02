@@ -11,7 +11,7 @@ import (
 	abigen "github.com/glif-confidential/abigen/bindings"
 )
 
-func (c *FEVMConnection) AgentCreate(ctx context.Context, deployerPk *ecdsa.PrivateKey, owner common.Address, operator common.Address) (*big.Int, common.Address, *types.Transaction, error) {
+func (c *FEVMConnection) AgentCreate(ctx context.Context, deployerPk *ecdsa.PrivateKey, owner common.Address, operator common.Address, request common.Address) (*big.Int, common.Address, *types.Transaction, error) {
 	client, err := c.ConnectEthClient()
 	if err != nil {
 		return nil, common.Address{}, nil, err
@@ -29,7 +29,7 @@ func (c *FEVMConnection) AgentCreate(ctx context.Context, deployerPk *ecdsa.Priv
 		return nil, common.Address{}, nil, err
 	}
 
-	args := []interface{}{owner, operator}
+	args := []interface{}{owner, operator, request}
 
 	tx, err := WriteTx(ctx, deployerPk, client, args, agentFactoryTransactor.Create, "Agent Create")
 	if err != nil {

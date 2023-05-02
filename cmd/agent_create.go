@@ -31,8 +31,13 @@ var createCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		requestAddr, _, err := deriveAddrFromPkString(viper.GetString("keys.request"))
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		// 2. Call AgentCreate, which gives you an address, agent ID, and a transaction hash
-		id, addr, tx, err := fevm.Connection().AgentCreate(cmd.Context(), nil, ownerAddr, operatorAddr)
+		id, addr, tx, err := fevm.Connection().AgentCreate(cmd.Context(), nil, ownerAddr, operatorAddr, requestAddr)
 		if err != nil {
 			log.Fatal(err)
 		}
