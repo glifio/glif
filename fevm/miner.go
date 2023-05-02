@@ -31,14 +31,15 @@ func (c *FEVMConnection) MinerAdd(ctx context.Context, agentAddr common.Address,
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("sc: %s", sc)
 
 	// record the block height
 	blockHeight, err := client.BlockNumber(ctx)
 	if err != nil {
-		return nil, common.Address{}, nil, err
+		return nil, err
 	}
 
-	minerCaller, err := abigen.NewMinerregistryTransactor(minerAddr, client)
+	minerCaller, err := abigen.NewMinerRegistryTransactor(agentAddr, client)
 	if err != nil {
 		return nil, err
 	}
@@ -50,13 +51,13 @@ func (c *FEVMConnection) MinerAdd(ctx context.Context, agentAddr common.Address,
 		return nil, err
 	}
 
-	mrFilterer, err := abigen.NewMinerregistryFilterer(minerAddr, client)
+	mrFilterer, err := abigen.NewMinerRegistryFilterer(agentAddr, client)
 	if err != nil {
 		return nil, err
 	}
 
 	// wait for the miner to be added
-	iter, err := mrFilterer.FilterAddMiner(&bind.FilterOpts{Start: blockHeight, End: nil}, []common.Address{minerAddr})
+	iter, err := mrFilterer.FilterAddMiner(&bind.FilterOpts{Start: blockHeight, End: nil}, []common.Address{}, []uint64{})
 	if err != nil {
 		return nil, err
 	}
@@ -79,10 +80,11 @@ func (c *FEVMConnection) MinerRemove(ctx context.Context, minerAddr common.Addre
 	// record the block height
 	blockHeight, err := client.BlockNumber(ctx)
 	if err != nil {
-		return nil, common.Address{}, nil, err
+		return nil, err
 	}
+	log.Printf("blockHeight: %d", blockHeight)
 
-	minerCaller, err := abigen.NewMinerregistryTransactor(minerAddr, client)
+	minerCaller, err := abigen.NewMinerRegistryTransactor(minerAddr, client)
 	if err != nil {
 		return nil, err
 	}

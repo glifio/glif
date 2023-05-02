@@ -14,7 +14,7 @@ func (c *FEVMConnection) PoolsList() ([]common.Address, error) {
 	}
 	defer client.Close()
 
-	poolRegCaller, err := abigen.NewPoolregistryCaller(c.PoolRegistryAddr, client)
+	poolRegCaller, err := abigen.NewPoolRegistryCaller(c.PoolRegistryAddr, client)
 	if err != nil {
 		return nil, err
 	}

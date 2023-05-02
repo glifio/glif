@@ -17,7 +17,7 @@ func (c *FEVMConnection) IFILBalanceOf(address common.Address) (*big.Int, error)
 	}
 	defer client.Close()
 
-	poolTokenCaller, err := abigen.NewPooltokenCaller(c.IFILAddr, client)
+	poolTokenCaller, err := abigen.NewPoolTokenCaller(c.IFILAddr, client)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func (c *FEVMConnection) IFILTransfer(ctx context.Context, toAddr common.Address
 	}
 	defer client.Close()
 
-	poolTokenCaller, err := abigen.NewPooltokenTransactor(c.IFILAddr, client)
+	poolTokenCaller, err := abigen.NewPoolTokenTransactor(c.IFILAddr, client)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (c *FEVMConnection) IFILApprove(ctx context.Context, spender common.Address
 	}
 	defer client.Close()
 
-	poolTokenCaller, err := abigen.NewPooltokenTransactor(c.IFILAddr, client)
+	poolTokenCaller, err := abigen.NewPoolTokenTransactor(c.IFILAddr, client)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func (c *FEVMConnection) IFILPrice() (*big.Int, error) {
 	}
 	defer client.Close()
 
-	infPoolCaller, err := abigen.NewInfinitypoolCaller(c.InfinityPoolAddr, client)
+	infPoolCaller, err := abigen.NewInfinityPoolCaller(c.InfinityPoolAddr, client)
 	if err != nil {
 		return nil, err
 	}

@@ -24,7 +24,7 @@ func (c *FEVMConnection) AgentCreate(ctx context.Context, deployerPk *ecdsa.Priv
 		return nil, common.Address{}, nil, err
 	}
 
-	agentFactoryTransactor, err := abigen.NewAgentfactoryTransactor(c.AgentFactoryAddr, client)
+	agentFactoryTransactor, err := abigen.NewAgentFactoryTransactor(c.AgentFactoryAddr, client)
 	if err != nil {
 		return nil, common.Address{}, nil, err
 	}
@@ -38,7 +38,7 @@ func (c *FEVMConnection) AgentCreate(ctx context.Context, deployerPk *ecdsa.Priv
 
 	//TODO: watch for event and return agent id and address
 
-	afFilterer, err := abigen.NewAgentfactoryFilterer(c.AgentFactoryAddr, client)
+	afFilterer, err := abigen.NewAgentFactoryFilterer(c.AgentFactoryAddr, client)
 	if err != nil {
 		return nil, common.Address{}, nil, err
 	}
@@ -76,10 +76,10 @@ func (c *FEVMConnection) AgentPullFunds(ctx context.Context, agentID *big.Int, a
 
 	agentTransactor, err := abigen.NewAgentTransactor(c.AgentFactoryAddr, client)
 	if err != nil {
-		return nil, common.Address{}, nil, err
+		return nil, err
 	}
 
-	args := []interface{}{owner, operator, amount}
+	args := []interface{}{amount}
 
 	return WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, agentTransactor.PullFunds, "Agent Pull Funds")
 }
@@ -94,7 +94,7 @@ func (c *FEVMConnection) AgentPushFunds(ctx context.Context, agentID *big.Int, m
 
 	agentTransactor, err := abigen.NewAgentTransactor(c.AgentFactoryAddr, client)
 	if err != nil {
-		return nil, common.Address{}, nil, err
+		return nil, err
 	}
 
 	args := []interface{}{miner, amount}
