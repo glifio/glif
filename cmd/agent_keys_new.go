@@ -35,8 +35,10 @@ var newCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		viper.Set("keys.owner", hexutil.Encode(crypto.FromECDSA(ownerPrivateKey))[2:])
-		viper.Set("keys.operator", hexutil.Encode(crypto.FromECDSA(operatorPrivateKey))[2:])
+		KeyStorage.Set("owner", hexutil.Encode(crypto.FromECDSA(ownerPrivateKey))[2:])
+		KeyStorage.Set("operator", hexutil.Encode(crypto.FromECDSA(operatorPrivateKey))[2:])
+		// viper.Set("keys.owner", hexutil.Encode(crypto.FromECDSA(ownerPrivateKey))[2:])
+		// viper.Set("keys.operator", hexutil.Encode(crypto.FromECDSA(operatorPrivateKey))[2:])
 
 		if err := viper.WriteConfig(); err != nil {
 			log.Fatal(err)
