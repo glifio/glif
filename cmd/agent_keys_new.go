@@ -20,7 +20,8 @@ var newCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ownerKey := viper.GetString("keys.owner")
 		operatorKey := viper.GetString("keys.operator")
-		if ownerKey != "" || operatorKey != "" {
+		requestKey := viper.GetString("key.request")
+		if ownerKey != "" || operatorKey != "" || requestKey != "" {
 			log.Fatal("Keys already exists")
 		}
 
@@ -35,8 +36,14 @@ var newCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		requestPrivateKey, err := crypto.GenerateKey()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		KeyStorage.Set("owner", hexutil.Encode(crypto.FromECDSA(ownerPrivateKey))[2:])
 		KeyStorage.Set("operator", hexutil.Encode(crypto.FromECDSA(operatorPrivateKey))[2:])
+		KeyStorage.Set("request", hexutil.Encode(crypto.FromECDSA(requestPrivateKey))[2:])
 		// viper.Set("keys.owner", hexutil.Encode(crypto.FromECDSA(ownerPrivateKey))[2:])
 		// viper.Set("keys.operator", hexutil.Encode(crypto.FromECDSA(operatorPrivateKey))[2:])
 
@@ -48,16 +55,20 @@ var newCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		operatorAddr, operatorDelAddr, err := deriveAddrFromPk(operatorPrivateKey)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		log.Printf("Owner address: %s (ETH), %s (FIL)", ownerAddr, ownerDelAddr)
-		log.Printf("Operator address: %s (ETH), %s (FIL)", operatorAddr, operatorDelAddr)
+		log.Printf("Owner address: %s (ETH), %s (FIL)\n", ownerAddr, ownerDelAddr)
+		log.Printf("Operator address: %s (ETH), %s (FIL)\n", operatorAddr, operatorDelAddr)
+		log.Printf("Request key: %s", hexutil.Encode(crypto.FromECDSA(requestPrivateKey))[2:])
 	},
 }
 
 func init() {
 	keysCmd.AddCommand(newCmd)
+
+	//TODO: add flags that allow for specific keys to be generated
 }
