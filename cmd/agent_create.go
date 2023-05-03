@@ -47,6 +47,11 @@ var createCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		bh, err := fevm.Connection().BlockNumber()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		// 2. Call AgentCreate, which gives you an address, agent ID, and a transaction hash
 		tx, err := fevm.Connection().AgentCreate(cmd.Context(), nil, ownerAddr, operatorAddr, requestAddr)
 		if err != nil {
@@ -60,7 +65,7 @@ var createCmd = &cobra.Command{
 		}
 
 		// 4. Call AgentFilter, which gives you the agent ID
-		id, err := fevm.Connection().AgentFilter(cmd.Context(), receipt)
+		id, err := fevm.Connection().AgentFilter(cmd.Context(), receipt, bh)
 		if err != nil {
 			log.Fatal(err)
 		}
