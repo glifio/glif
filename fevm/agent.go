@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	abigen "github.com/glif-confidential/abigen/bindings"
@@ -27,7 +28,7 @@ func (c *FEVMConnection) AgentCreate(ctx context.Context, deployerPk *ecdsa.Priv
 	return WriteTx(ctx, deployerPk, client, args, agentFactoryTransactor.Create, "Agent Create")
 }
 
-func (c *FEVMConnection) AgentFilter(ctx context.Context, receipt *types.Receipt) (*big.Int, error) {
+func (c *FEVMConnection) AgentFilter(ctx context.Context, receipt *types.Receipt, blockHeight uint64) (*big.Int, error) {
 	client, err := c.ConnectEthClient()
 	if err != nil {
 		return nil, err
@@ -43,6 +44,9 @@ func (c *FEVMConnection) AgentFilter(ctx context.Context, receipt *types.Receipt
 	if err != nil {
 		return nil, err
 	}
+
+	opts := &bind.FilterOpts{Start: blockHeight, End: nil, Context: ctx}
+	agentFactoryFilterer.FilterCreateAgent(opts, nil, []common.Address{}, []common.Address{})
 
 	var agentID *big.Int
 
