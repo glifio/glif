@@ -5,66 +5,62 @@ import (
 	"crypto/ecdsa"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	abigen "github.com/glif-confidential/abigen/bindings"
 )
 
-func (c *FEVMConnection) AgentCreate(ctx context.Context, deployerPk *ecdsa.PrivateKey, owner common.Address, operator common.Address, request common.Address) (*big.Int, common.Address, *types.Transaction, error) {
+func (c *FEVMConnection) AgentCreate(ctx context.Context, deployerPk *ecdsa.PrivateKey, owner common.Address, operator common.Address, request common.Address) (*types.Transaction, error) {
 	client, err := c.ConnectEthClient()
 	if err != nil {
-		return nil, common.Address{}, nil, err
+		return nil, err
 	}
 	defer client.Close()
 
-	// record the block height
-	blockHeight, err := client.BlockNumber(ctx)
-	if err != nil {
-		return nil, common.Address{}, nil, err
-	}
-
 	agentFactoryTransactor, err := abigen.NewAgentFactoryTransactor(c.AgentFactoryAddr, client)
 	if err != nil {
-		return nil, common.Address{}, nil, err
+		return nil, err
 	}
 
 	args := []interface{}{owner, operator, request}
 
-	tx, err := WriteTx(ctx, deployerPk, client, args, agentFactoryTransactor.Create, "Agent Create")
+	return WriteTx(ctx, deployerPk, client, args, agentFactoryTransactor.Create, "Agent Create")
+}
+
+func (c *FEVMConnection) AgentFilter(ctx context.Context, receipt *types.Receipt) (*big.Int, error) {
+	client, err := c.ConnectEthClient()
 	if err != nil {
-		return nil, common.Address{}, nil, err
+		return nil, err
+	}
+	defer client.Close()
+
+	agentABI, err := abigen.AgentFactoryMetaData.GetAbi()
+	if err != nil {
+		return nil, err
 	}
 
-	//TODO: watch for event and return agent id and address
-
-	afFilterer, err := abigen.NewAgentFactoryFilterer(c.AgentFactoryAddr, client)
+	agentFactoryFilterer, err := abigen.NewAgentFactoryFilterer(c.AgentFactoryAddr, client)
 	if err != nil {
-		return nil, common.Address{}, nil, err
-	}
-
-	aIDs := []*big.Int{}
-	agents := []common.Address{owner}
-	operators := []common.Address{operator}
-
-	//TODO: I don't think this filter works
-	iter, err := afFilterer.FilterCreateAgent(&bind.FilterOpts{Start: blockHeight}, aIDs, agents, operators)
-	if err != nil {
-		return nil, common.Address{}, nil, err
+		return nil, err
 	}
 
 	var agentID *big.Int
 
-	for iter.Next() {
-		agent := iter.Event.Agent
-		agentID = iter.Event.AgentID
-
-		if agent == owner && agentID != nil {
-			break
+	for _, l := range receipt.Logs {
+		event, err := agentABI.EventByID(l.Topics[0])
+		if err != nil {
+			return nil, err
+		}
+		if event.Name == "CreateAgent" {
+			createAgentEvent, err := agentFactoryFilterer.ParseCreateAgent(*l)
+			if err != nil {
+				return nil, err
+			}
+			agentID = createAgentEvent.AgentID
 		}
 	}
 
-	return agentID, common.Address{}, tx, nil
+	return agentID, nil
 }
 
 func (c *FEVMConnection) AgentPullFunds(ctx context.Context, agentID *big.Int, amount *big.Int) (*types.Transaction, error) {

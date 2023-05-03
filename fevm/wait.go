@@ -38,7 +38,7 @@ func WaitForNextBlock(ctx context.Context, c *ethclient.Client, current *big.Int
 	}
 }
 
-func waitForReceipt(hash common.Hash, client *ethclient.Client) {
+func waitForReceipt(hash common.Hash, client *ethclient.Client) *types.Receipt {
 	ctx, cancel := context.WithTimeout(context.Background(), 480*time.Second)
 	defer cancel()
 
@@ -48,11 +48,12 @@ func waitForReceipt(hash common.Hash, client *ethclient.Client) {
 	ch := make(chan *types.Receipt)
 	go WaitTx(ctx, client, hash, ch)
 
+	var receipt *types.Receipt
 	select {
 	case <-ctx.Done():
 		s.Stop()
 		log.Fatal("Timed out waiting for transaction.")
-	case receipt := <-ch:
+	case receipt = <-ch:
 		msg := fmt.Sprintf(" Receipt received at block %v. Waiting for next block.\n", receipt.BlockNumber)
 		s.Suffix = msg
 
@@ -66,8 +67,10 @@ func waitForReceipt(hash common.Hash, client *ethclient.Client) {
 			s.Stop()
 			fmt.Println("Transaction receipt received.")
 			fmt.Printf("Status: %v\n", receipt.Status)
+			return receipt
 		}
 	}
+	return receipt
 }
 
 func WaitForReceipt(hash common.Hash) {
@@ -78,4 +81,14 @@ func WaitForReceipt(hash common.Hash) {
 	defer eapi.Close()
 
 	waitForReceipt(hash, eapi)
+}
+
+func WaitReturnReceipt(hash common.Hash) *types.Receipt {
+	eapi, err := Connection().ConnectEthClient()
+	if err != nil {
+		log.Fatalf("Failed to instantiate eth client %s", err)
+	}
+	defer eapi.Close()
+
+	return waitForReceipt(hash, eapi)
 }

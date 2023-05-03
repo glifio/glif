@@ -103,3 +103,13 @@ func StringifyArg(arg interface{}) string {
 		return fmt.Sprintf("%v", arg)
 	}
 }
+
+func (c *FEVMConnection) BlockNumber() (uint64, error) {
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return 0, err
+	}
+	defer client.Close()
+
+	return client.BlockNumber(context.Background())
+}
