@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	toml "github.com/pelletier/go-toml"
+	toml "github.com/pelletier/go-toml/v2"
 )
 
 // Storage is a structure that holds the filename and a map of key-value pairs.
@@ -48,22 +48,13 @@ func (s *Storage) load() error {
 	}
 	defer file.Close()
 
-	bytes, err := io.ReadAll(file)
+	fileContent, err := io.ReadAll(file)
 	if err != nil {
 		return err
 	}
 
-	s.data = make(map[string]string)
-
-	if len(bytes) > 0 {
-		tree, err := toml.LoadBytes(bytes)
-		if err != nil {
-			return err
-		}
-
-		for _, key := range tree.Keys() {
-			s.data[key] = tree.Get(key).(string)
-		}
+	if err := toml.Unmarshal(fileContent, s); err != nil {
+		return err
 	}
 
 	return nil
@@ -71,21 +62,12 @@ func (s *Storage) load() error {
 
 // save writes the current key-value pairs in the data map to the file.
 func (s *Storage) save() error {
-	tree, err := toml.TreeFromMap(map[string]interface{}{})
+	keyStore, err := toml.Marshal(s.data)
 	if err != nil {
 		return err
 	}
 
-	for key, value := range s.data {
-		tree.Set(key, value)
-	}
-
-	tomlBytes, err := tree.ToTomlString()
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(s.filename, []byte(tomlBytes), 0644)
+	err = os.WriteFile(s.filename, keyStore, 0644)
 	if err != nil {
 		return err
 	}
