@@ -52,11 +52,11 @@ func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	//TODO: check that $HOME/.config/glif exists and create if not
-	if err := util.NewKeyStore("keys.toml"); err == nil {
+	if err := util.NewKeyStore("keys.toml"); err != nil {
 		log.Fatal(err)
 	}
 
-	if err := util.NewAgentStore("agent.toml"); err == nil {
+	if err := util.NewAgentStore("agent.toml"); err != nil {
 		log.Fatal(err)
 	}
 
