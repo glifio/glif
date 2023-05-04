@@ -5,7 +5,6 @@ import (
 	"crypto/ecdsa"
 	"log"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/filecoin-project/go-address"
@@ -14,7 +13,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func (c *FEVMConnection) MinerAdd(ctx context.Context, agentAddr common.Address, minerAddr address.Address) (*types.Transaction, error) {
+func (c *FEVMConnection) AddMiner(ctx context.Context, agentAddr common.Address, minerAddr address.Address) (*types.Transaction, error) {
 	client, err := c.ConnectEthClient()
 	if err != nil {
 		return nil, err
@@ -27,43 +26,18 @@ func (c *FEVMConnection) MinerAdd(ctx context.Context, agentAddr common.Address,
 	}
 	defer closer()
 
+	agentTransactor, err := abigen.NewAgentTransactor(agentAddr, client)
+
 	sc, err := rpc.ADOClient.AddMiner(ctx, agentAddr, minerAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("sc: %s", sc)
 
-	// record the block height
-	blockHeight, err := client.BlockNumber(ctx)
+	args := []interface{}{sc}
+
+	tx, err := WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, agentTransactor.AddMiner, "Agent Add Miner")
 	if err != nil {
 		return nil, err
-	}
-
-	minerCaller, err := abigen.NewMinerRegistryTransactor(agentAddr, client)
-	if err != nil {
-		return nil, err
-	}
-
-	args := []interface{}{minerAddr}
-
-	tx, err := WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, minerCaller.AddMiner, "Miner Add")
-	if err != nil {
-		return nil, err
-	}
-
-	mrFilterer, err := abigen.NewMinerRegistryFilterer(agentAddr, client)
-	if err != nil {
-		return nil, err
-	}
-
-	// wait for the miner to be added
-	iter, err := mrFilterer.FilterAddMiner(&bind.FilterOpts{Start: blockHeight, End: nil}, []common.Address{}, []uint64{})
-	if err != nil {
-		return nil, err
-	}
-
-	for iter.Next() {
-
 	}
 
 	return tx, nil
