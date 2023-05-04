@@ -6,7 +6,9 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/glif-confidential/cli/fevm"
 	"github.com/glif-confidential/cli/util"
 	"github.com/spf13/cobra"
@@ -19,9 +21,17 @@ var createCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		ks := util.KeyStore()
-		//TODO: handle deployer key
+		as := util.AgentStore()
 
-		// 1. Read in the owner and operator addresses
+		// Check if an agent already exists
+		addressStr, err := as.Get("agent.address")
+		if err != nil && err != util.KeyNotFoundErr {
+			log.Fatal(err)
+		}
+		if addressStr != "" {
+			log.Fatalf("Agent already exists: %s", addressStr)
+		}
+
 		ownerAddr, _, err := ks.GetAddrs(util.OwnerKey)
 		if err != nil {
 			log.Fatal(err)
@@ -37,34 +47,44 @@ var createCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		// 2. Call AgentCreate, which gives you an address, agent ID, and a transaction hash
-		tx, err := fevm.Connection().AgentCreate(cmd.Context(), nil, ownerAddr, operatorAddr, requestAddr)
+		if util.IsZeroAddress(ownerAddr) || util.IsZeroAddress(operatorAddr) || util.IsZeroAddress(requestAddr) {
+			log.Fatal("Keys not found. Please check your `keys.toml` file")
+		}
+
+		pk, err := ks.GetPrivate(util.OwnerKey)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		// 3. Given the tx hash, WaitForReceipt(tx.Hash())
+		fmt.Printf("Creating agent, owner %s, operator %s, request %s", ownerAddr, operatorAddr, requestAddr)
+
+		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+		s.Start()
+		// submit the agent create transaction
+		tx, err := fevm.Connection().AgentCreate(cmd.Context(), pk, ownerAddr, operatorAddr, requestAddr)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Printf("Agent create transaction submitted: %s", tx.Hash())
+
+		// transaction landed on chain or errored
 		receipt := fevm.WaitReturnReceipt(tx.Hash())
 		if receipt == nil {
 			log.Fatal("Failed to get receipt")
 		}
 
-		// 4. Call AgentFilter, which gives you the agent ID
+		// grab the ID and the address of the agent from the receipt's logs
 		id, addr, err := fevm.Connection().AgentAddrID(cmd.Context(), receipt)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		// 4. Print the address, agent ID, and tx hash
-		// fmt.Printf("Agent address: %s\n", addr)
-		fmt.Printf("Agent ID: %s\n", id)
-		fmt.Printf("Agent address: %\n", addr)
-		fmt.Printf("Tx hash: %s\n", tx.Hash())
+		s.Stop()
 
-		// 5. Write the address, agent ID, and tx hash to the config
-		// AgentStorage.Set("agent.address", addr.String())
-		AgentStorage.Set("agent.id", id.String())
-		AgentStorage.Set("agent.tx", tx.Hash().String())
+		as.Set("agent.id", id.String())
+		as.Set("agent.address", addr.String())
+		as.Set("agent.tx", tx.Hash().String())
 	},
 }
 
