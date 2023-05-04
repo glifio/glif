@@ -1,12 +1,13 @@
 package util
 
 import (
-	"fmt"
 	"io"
 	"os"
 
 	toml "github.com/pelletier/go-toml/v2"
 )
+
+var KeyNotFoundErr error
 
 type StorageData map[string]string
 
@@ -85,7 +86,7 @@ func (s *Storage) save() error {
 func (s *Storage) Get(key string) (string, error) {
 	value, ok := s.data[key]
 	if !ok {
-		return "", fmt.Errorf("key not found: %s", key)
+		return "", KeyNotFoundErr
 	}
 	return value, nil
 }
@@ -99,7 +100,7 @@ func (s *Storage) Set(key, value string) error {
 // Delete removes a key-value pair from the data map and saves the data to the file.
 func (s *Storage) Delete(key string) error {
 	if _, ok := s.data[key]; !ok {
-		return fmt.Errorf("key not found: %s", key)
+		return KeyNotFoundErr
 	}
 	delete(s.data, key)
 	return s.save()
