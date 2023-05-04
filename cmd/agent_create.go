@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"github.com/glif-confidential/cli/fevm"
+	"github.com/glif-confidential/cli/util"
 	"github.com/spf13/cobra"
 )
 
@@ -17,37 +18,21 @@ var createCmd = &cobra.Command{
 	Short: "Create a Glif agent",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
+		ks := util.KeyStore()
 		//TODO: handle deployer key
 
 		// 1. Read in the owner and operator addresses
-		ownerKey, err := KeyStorage.Get("owner")
-		if err != nil {
-			log.Fatal(err)
-		}
-		ownerAddr, _, err := deriveAddrFromPkString(ownerKey)
+		ownerAddr, _, err := ks.GetAddrs(util.OwnerKey)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		operatorKey, err := KeyStorage.Get("operator")
-		if err != nil {
-			log.Fatal(err)
-		}
-		operatorAddr, _, err := deriveAddrFromPkString(operatorKey)
+		operatorAddr, _, err := ks.GetAddrs(util.OperatorKey)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		requestKey, err := KeyStorage.Get("request")
-		if err != nil {
-			log.Fatal(err)
-		}
-		requestAddr, _, err := deriveAddrFromPkString(requestKey)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		bh, err := fevm.Connection().BlockNumber()
+		requestAddr, _, err := ks.GetAddrs(util.RequestKey)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -65,7 +50,7 @@ var createCmd = &cobra.Command{
 		}
 
 		// 4. Call AgentFilter, which gives you the agent ID
-		id, err := fevm.Connection().AgentFilter(cmd.Context(), receipt, bh)
+		id, addr, err := fevm.Connection().AgentAddrID(cmd.Context(), receipt)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -73,6 +58,7 @@ var createCmd = &cobra.Command{
 		// 4. Print the address, agent ID, and tx hash
 		// fmt.Printf("Agent address: %s\n", addr)
 		fmt.Printf("Agent ID: %s\n", id)
+		fmt.Printf("Agent address: %\n", addr)
 		fmt.Printf("Tx hash: %s\n", tx.Hash())
 
 		// 5. Write the address, agent ID, and tx hash to the config

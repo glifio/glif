@@ -8,10 +8,12 @@ import (
 	toml "github.com/pelletier/go-toml/v2"
 )
 
+type StorageData map[string]string
+
 // Storage is a structure that holds the filename and a map of key-value pairs.
 type Storage struct {
 	filename string
-	data     map[string]string
+	data     StorageData
 }
 
 // NewStorage creates a new Storage instance and initializes it with the given filename.
@@ -53,9 +55,13 @@ func (s *Storage) load() error {
 		return err
 	}
 
-	if err := toml.Unmarshal(fileContent, s); err != nil {
+	var sd StorageData
+
+	if err := toml.Unmarshal(fileContent, &sd); err != nil {
 		return err
 	}
+
+	s.data = sd
 
 	return nil
 }

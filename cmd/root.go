@@ -29,7 +29,6 @@ import (
 )
 
 var cfgFile string
-var KeyStorage *util.Storage
 var AgentStorage *util.Storage
 
 // rootCmd represents the base command when called without any subcommands
@@ -56,7 +55,7 @@ func init() {
 	//TODO: check that $HOME/.config/glif exists and create if not
 	// create key storage
 	var err error
-	KeyStorage, err = util.NewStorage("keys.toml")
+	util.NewKeyStore("keys.toml")
 	if err != nil {
 		log.Fatal(err)
 	}

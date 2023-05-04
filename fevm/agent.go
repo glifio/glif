@@ -5,7 +5,6 @@ import (
 	"crypto/ecdsa"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	abigen "github.com/glif-confidential/abigen/bindings"
@@ -28,43 +27,42 @@ func (c *FEVMConnection) AgentCreate(ctx context.Context, deployerPk *ecdsa.Priv
 	return WriteTx(ctx, deployerPk, client, args, agentFactoryTransactor.Create, "Agent Create")
 }
 
-func (c *FEVMConnection) AgentFilter(ctx context.Context, receipt *types.Receipt, blockHeight uint64) (*big.Int, error) {
+func (c *FEVMConnection) AgentAddrID(ctx context.Context, receipt *types.Receipt) (*big.Int, common.Address, error) {
 	client, err := c.ConnectEthClient()
 	if err != nil {
-		return nil, err
+		return nil, common.Address{}, err
 	}
 	defer client.Close()
 
-	agentABI, err := abigen.AgentFactoryMetaData.GetAbi()
+	agentFactoryABI, err := abigen.AgentFactoryMetaData.GetAbi()
 	if err != nil {
-		return nil, err
+		return nil, common.Address{}, err
 	}
 
 	agentFactoryFilterer, err := abigen.NewAgentFactoryFilterer(c.AgentFactoryAddr, client)
 	if err != nil {
-		return nil, err
+		return nil, common.Address{}, err
 	}
 
-	opts := &bind.FilterOpts{Start: blockHeight, End: nil, Context: ctx}
-	agentFactoryFilterer.FilterCreateAgent(opts, nil, []common.Address{}, []common.Address{})
-
 	var agentID *big.Int
+	var agentAddr common.Address
 
 	for _, l := range receipt.Logs {
-		event, err := agentABI.EventByID(l.Topics[0])
+		event, err := agentFactoryABI.EventByID(l.Topics[0])
 		if err != nil {
-			return nil, err
+			return nil, common.Address{}, err
 		}
 		if event.Name == "CreateAgent" {
 			createAgentEvent, err := agentFactoryFilterer.ParseCreateAgent(*l)
 			if err != nil {
-				return nil, err
+				return nil, common.Address{}, err
 			}
+			agentAddr = createAgentEvent.Agent
 			agentID = createAgentEvent.AgentID
 		}
 	}
 
-	return agentID, nil
+	return agentID, agentAddr, nil
 }
 
 func (c *FEVMConnection) AgentPullFunds(ctx context.Context, agentID *big.Int, amount *big.Int) (*types.Transaction, error) {
