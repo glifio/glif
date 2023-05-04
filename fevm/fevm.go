@@ -56,14 +56,14 @@ func WriteTx(
 
 	result := writeTxValue.Call(writeTxArgs)
 
+	if !result[1].IsNil() {
+		return nil, result[1].Interface().(error)
+	}
+
 	// Get the transaction and error from the result
 	tx := result[0].Interface().(*types.Transaction)
 
 	fmt.Printf("Transaction: %s", tx.Hash())
-	err = nil
-	if !result[1].IsNil() {
-		err = result[1].Interface().(error)
-	}
 
 	return tx, err
 }
