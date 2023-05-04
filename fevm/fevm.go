@@ -11,19 +11,9 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/glif-confidential/cli/util"
 )
-
-func DeriveAddressFromPk(pk *ecdsa.PrivateKey) (common.Address, error) {
-	publicKey := pk.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		return common.Address{}, fmt.Errorf("error casting public key to ECDSA")
-	}
-
-	return crypto.PubkeyToAddress(*publicKeyECDSA), nil
-}
 
 func WriteTx(
 	ctx context.Context,
@@ -40,7 +30,7 @@ func WriteTx(
 		log.Fatal(err)
 	}
 
-	fromAddress, err := DeriveAddressFromPk(pk)
+	fromAddress, err := util.DeriveAddressFromPk(pk)
 	if err != nil {
 		return nil, err
 	}

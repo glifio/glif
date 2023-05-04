@@ -18,7 +18,7 @@ func panicIfKeyExists(key util.KeyType, addr common.Address, err error) {
 		log.Fatal(err)
 	}
 
-	if addr != util.ZeroEvmAddr {
+	if util.IsZeroAddress(addr) {
 		log.Fatalf("Key already exists for %s", key)
 	}
 }
@@ -27,7 +27,7 @@ func panicIfKeyExists(key util.KeyType, addr common.Address, err error) {
 var newCmd = &cobra.Command{
 	Use:   "new",
 	Short: "Create a set of keys for the Agent",
-	Long:  `Creates an owner and an operator key and stores the values in $HOME/.config/glif/keys.toml`,
+	Long:  `Creates an owner, an operator, and a requester key and stores the values in $HOME/.config/glif/keys.toml`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ks := util.KeyStore()
 
