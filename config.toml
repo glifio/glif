@@ -1,0 +1,17 @@
+[agent]
+address = ''
+id = ''
+
+[daemon]
+rpc-url = 'https://api.calibration.node.glif.io/rpc/v1'
+
+[keys]
+operator = ''
+owner = ''
+
+[routes]
+agent-factory = '0x0f7ed619f76d3afe14133fb31101d9c383f4b90b'
+ifil = '0xc61f959a0da2b3b703f283d05b924878447c8048'
+infinity-pool = ''
+pool-registry = '0xace253ee9d7e4060892f46392c19f167308e34ca'
+router = '0xbe26169bce62a115da4110634c5479b569b96868'

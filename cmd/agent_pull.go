@@ -4,18 +4,16 @@ Copyright © 2023 Glif LTD
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
 // pullCmd represents the pull command
 var pullCmd = &cobra.Command{
-	Use:   "pull <minerid>",
+	Use:   "pull <minerid> <amount>",
 	Short: "Pull FIL from a specific Miner ID back to the Glif Agent",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("pull called")
+
 	},
 }
 

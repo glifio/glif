@@ -16,9 +16,14 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
+	"log"
 	"os"
 
+	"github.com/glif-confidential/cli/fevm"
+	"github.com/glif-confidential/cli/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -43,16 +48,9 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/glif/config.toml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -65,8 +63,14 @@ func initConfig() {
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
+		//TODO: check that $HOME/.config/glif exists and create if not
+		// create default config.toml
+		// create empty agent.toml
+		// create empty keys.toml
+
 		// Search config in home directory with name ".glif" (without extension).
 		viper.AddConfigPath(fmt.Sprintf("%s/.config/glif", home))
+		viper.AddConfigPath(".")
 		viper.SetConfigType("toml")
 		viper.SetConfigName("config")
 	}
@@ -74,7 +78,30 @@ func initConfig() {
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+	if err := viper.ReadInConfig(); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			log.Fatalf("No config file found at %s\n", viper.ConfigFileUsed())
+		} else if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Config file not found; ignore error if desired
+			fmt.Fprintln(os.Stderr, "Warning: No config file found.")
+		} else {
+			log.Fatalf("Config file error: %v\n", err)
+		}
+	}
+
+	// Pulls in the FEVM connection params
+	if err := fevm.InitFEVMConnection(rootCmd.Context()); err != nil {
+		log.Fatalf("Error initializing FEVM connection: %v\n", err)
+	}
+
+	fevm.Connection().InitNonceCache()
+
+	//TODO: check that $HOME/.config/glif exists and create if not
+	if err := util.NewKeyStore("keys.toml"); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := util.NewAgentStore("agent.toml"); err != nil {
+		log.Fatal(err)
 	}
 }

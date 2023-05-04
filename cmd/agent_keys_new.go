@@ -4,55 +4,95 @@ Copyright © 2023 Glif LTD
 package cmd
 
 import (
-	"crypto/ecdsa"
-	"fmt"
 	"log"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/glif-confidential/cli/util"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
+
+func panicIfKeyExists(key util.KeyType, addr common.Address, err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if util.IsZeroAddress(addr) {
+		log.Fatalf("Key already exists for %s", key)
+	}
+}
 
 // newCmd represents the new command
 var newCmd = &cobra.Command{
 	Use:   "new",
 	Short: "Create a set of keys for the Agent",
-	Long:  ``,
+	Long:  `Creates an owner, an operator, and a requester key and stores the values in $HOME/.config/glif/keys.toml`,
 	Run: func(cmd *cobra.Command, args []string) {
-		//TODO: create .glif home directory, if it doesn't exist
+		ks := util.KeyStore()
+
+		ownerAddr, ownerDelAddr, err := ks.GetAddrs(util.OwnerKey)
+		panicIfKeyExists(util.OwnerKey, ownerAddr, err)
+
+		operatorAddr, operatorDelAddr, err := ks.GetAddrs(util.OperatorKey)
+		panicIfKeyExists(util.OperatorKey, operatorAddr, err)
+
+		requestAddr, requestDelAddr, err := ks.GetAddrs(util.RequestKey)
+		panicIfKeyExists(util.RequestKey, requestAddr, err)
 
 		// Create the Ethereum private key
-		privateKey, err := crypto.GenerateKey()
+		ownerPrivateKey, err := crypto.GenerateKey()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		//TODO: store private key in $HOME/.glif/token
-
-		// privateKeyBytes := crypto.FromECDSA(privateKey)
-		// fmt.Println(hexutil.Encode(privateKeyBytes)[2:])
-
-		publicKey := privateKey.Public()
-		publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-		if !ok {
-			log.Fatal("error casting public key to ECDSA")
+		operatorPrivateKey, err := crypto.GenerateKey()
+		if err != nil {
+			log.Fatal(err)
 		}
 
-		publicKeyBytes := crypto.FromECDSAPub(publicKeyECDSA)
-		fmt.Println(hexutil.Encode(publicKeyBytes)[4:])
+		requestPrivateKey, err := crypto.GenerateKey()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if err := ks.SetKey(util.OwnerKey, ownerPrivateKey); err != nil {
+			log.Fatal(err)
+		}
+
+		if err := ks.SetKey(util.OperatorKey, operatorPrivateKey); err != nil {
+			log.Fatal(err)
+		}
+
+		if err := ks.SetKey(util.RequestKey, requestPrivateKey); err != nil {
+			log.Fatal(err)
+		}
+
+		if err := viper.WriteConfig(); err != nil {
+			log.Fatal(err)
+		}
+
+		ownerAddr, ownerDelAddr, err = ks.GetAddrs(util.OwnerKey)
+		if err != nil {
+			log.Fatal(err)
+		}
+		operatorAddr, operatorDelAddr, err = ks.GetAddrs(util.OperatorKey)
+		if err != nil {
+			log.Fatal(err)
+		}
+		requestAddr, requestDelAddr, err = ks.GetAddrs(util.RequestKey)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Printf("Owner address: %s (ETH), %s (FIL)\n", ownerAddr, ownerDelAddr)
+		log.Printf("Operator address: %s (ETH), %s (FIL)\n", operatorAddr, operatorDelAddr)
+		log.Printf("Request key: %s (ETH), %s (FIL)\n", requestAddr, requestDelAddr)
 	},
 }
 
 func init() {
 	keysCmd.AddCommand(newCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// newCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// newCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	//TODO: add flags that allow for specific keys to be generated
 }
