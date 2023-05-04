@@ -29,7 +29,6 @@ import (
 )
 
 var cfgFile string
-var AgentStorage *util.Storage
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -53,12 +52,14 @@ func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	//TODO: check that $HOME/.config/glif exists and create if not
-	// create key storage
-	var err error
-	util.NewKeyStore("keys.toml")
-	if err != nil {
+	if err := util.NewKeyStore("keys.toml"); err == nil {
 		log.Fatal(err)
 	}
+
+	if err := util.NewAgentStore("agent.toml"); err == nil {
+		log.Fatal(err)
+	}
+
 }
 
 // initConfig reads in config file and ENV variables if set.
