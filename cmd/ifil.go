@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/glif-confidential/cli/fevm"
 	"github.com/spf13/cobra"
 )
@@ -31,10 +33,15 @@ var iFILBalanceOfCmd = &cobra.Command{
 			log.Fatalf("Failed to parse address %s", err)
 		}
 
+		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+		s.Start()
+
 		bal, err := fevm.Connection().IFILBalanceOf(addr)
 		if err != nil {
 			log.Fatalf("Failed to get iFIL balance %s", err)
 		}
+
+		s.Stop()
 
 		fmt.Printf("iFIL balance of %s is %s", strAddr, bal.String())
 	},
@@ -75,7 +82,12 @@ var iFILTransferCmd = &cobra.Command{
 		}
 		defer eapi.Close()
 
+		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+		s.Start()
+
 		fevm.WaitForReceipt(tx.Hash())
+
+		s.Stop()
 
 		fmt.Printf("iFIL sent!")
 	},
@@ -101,6 +113,9 @@ var iFILApproveCmd = &cobra.Command{
 			log.Fatalf("Failed to parse amount %s", err)
 		}
 
+		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+		s.Start()
+
 		tx, err := fevm.Connection().IFILApprove(cmd.Context(), addr, amt)
 		if err != nil {
 			log.Fatalf("Failed to get iFIL balance %s", err)
@@ -111,6 +126,8 @@ var iFILApproveCmd = &cobra.Command{
 		}
 
 		fevm.WaitForReceipt(tx.Hash())
+
+		s.Stop()
 
 		fmt.Printf("iFIL sent!")
 	},
@@ -123,10 +140,15 @@ var iFILPriceCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Print("Checking iFIL prices...")
 
+		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+		s.Start()
+
 		price, err := fevm.Connection().IFILPrice()
 		if err != nil {
 			log.Fatalf("Failed to get iFIL balance %s", err)
 		}
+
+		s.Stop()
 
 		fmt.Printf("1 iFIL is worth %s FIL", price.String())
 	},

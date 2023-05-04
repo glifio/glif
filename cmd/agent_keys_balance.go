@@ -7,7 +7,9 @@ import (
 	"context"
 	"log"
 	"math/big"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/filecoin-project/go-address"
 	"github.com/glif-confidential/cli/fevm"
@@ -50,9 +52,14 @@ func getBalances(
 		balCh <- balance{bal: balDecimal, key: key}
 	}
 
+	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+	s.Start()
+
 	go getBalAsync(util.OwnerKey, owner)
 	go getBalAsync(util.OperatorKey, operator)
 	go getBalAsync(util.RequestKey, request)
+
+	s.Stop()
 
 	for i := 0; i < 3; i++ {
 		select {
