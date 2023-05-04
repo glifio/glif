@@ -24,6 +24,7 @@ func Nonce() *NonceCache {
 func (c *FEVMConnection) InitNonceCache() {
 	nonceCache = &NonceCache{}
 	nonceCache.rpcUrl = c.EthRpcUrl
+	nonceCache.nonces = make(map[common.Address]*big.Int)
 }
 
 func (n *NonceCache) BumpNonce(address common.Address, nonceOverride uint64) (*big.Int, error) {

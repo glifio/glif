@@ -102,4 +102,6 @@ func initConfig() {
 	if err := fevm.InitFEVMConnection(rootCmd.Context()); err != nil {
 		log.Fatalf("Error initializing FEVM connection: %v\n", err)
 	}
+
+	fevm.Connection().InitNonceCache()
 }
