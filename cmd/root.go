@@ -51,15 +51,6 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/glif/config.toml)")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	//TODO: check that $HOME/.config/glif exists and create if not
-	if err := util.NewKeyStore("keys.toml"); err != nil {
-		log.Fatal(err)
-	}
-
-	if err := util.NewAgentStore("agent.toml"); err != nil {
-		log.Fatal(err)
-	}
-
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -104,4 +95,13 @@ func initConfig() {
 	}
 
 	fevm.Connection().InitNonceCache()
+
+	//TODO: check that $HOME/.config/glif exists and create if not
+	if err := util.NewKeyStore("keys.toml"); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := util.NewAgentStore("agent.toml"); err != nil {
+		log.Fatal(err)
+	}
 }

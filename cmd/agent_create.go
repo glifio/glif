@@ -18,13 +18,13 @@ import (
 var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a Glif agent",
-	Long:  ``,
+	Long:  `Spins up a new Agent contract through the Agent Factory, passing the owner, operator, and requestor addresses.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ks := util.KeyStore()
 		as := util.AgentStore()
 
 		// Check if an agent already exists
-		addressStr, err := as.Get("agent.address")
+		addressStr, err := as.Get("address")
 		if err != nil && err != util.KeyNotFoundErr {
 			log.Fatal(err)
 		}
@@ -66,8 +66,12 @@ var createCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Agent create transaction submitted: %s", tx.Hash())
+		s.Stop()
 
+		fmt.Printf("Agent create transaction submitted: %s\n", tx.Hash())
+		fmt.Println("Waiting for confirmation...")
+
+		s.Start()
 		// transaction landed on chain or errored
 		receipt := fevm.WaitReturnReceipt(tx.Hash())
 		if receipt == nil {
@@ -82,9 +86,9 @@ var createCmd = &cobra.Command{
 
 		s.Stop()
 
-		as.Set("agent.id", id.String())
-		as.Set("agent.address", addr.String())
-		as.Set("agent.tx", tx.Hash().String())
+		as.Set("id", id.String())
+		as.Set("address", addr.String())
+		as.Set("tx", tx.Hash().String())
 	},
 }
 
