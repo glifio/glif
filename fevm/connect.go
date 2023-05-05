@@ -3,7 +3,6 @@ package fevm
 import (
 	"context"
 	"net/http"
-	"os"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -47,7 +46,7 @@ func InitFEVMConnection(ctx context.Context) error {
 
 	// https://api.node.glif.io/rpc/v1
 	connection = &FEVMConnection{
-		LotusRpcUrl:      os.Getenv("FULL_NODE_API_INFO"),
+		LotusRpcUrl:      ethRpcUrl,
 		EthRpcUrl:        ethRpcUrl,
 		ChainID:          chainID.Int64(),
 		RouterAddress:    common.HexToAddress(viper.GetString("routes.router")),

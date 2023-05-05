@@ -10,6 +10,26 @@ import (
 	abigen "github.com/glif-confidential/abigen/bindings"
 )
 
+func (c *FEVMConnection) AgentID(ctx context.Context, address common.Address) (*big.Int, error) {
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+
+	agentCaller, err := abigen.NewAgentCaller(address, client)
+	if err != nil {
+		return nil, err
+	}
+
+	agentID, err := agentCaller.Id(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return agentID, nil
+}
+
 func (c *FEVMConnection) AgentCreate(ctx context.Context, deployerPk *ecdsa.PrivateKey, owner common.Address, operator common.Address, request common.Address) (*types.Transaction, error) {
 	client, err := c.ConnectEthClient()
 	if err != nil {
