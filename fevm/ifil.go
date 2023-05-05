@@ -8,9 +8,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	abigen "github.com/glif-confidential/abigen/bindings"
+	"github.com/glif-confidential/cli/util"
 )
 
-func (c *FEVMConnection) IFILBalanceOf(address common.Address) (*big.Int, error) {
+func (c *FEVMConnection) IFILBalanceOf(address common.Address) (*big.Float, error) {
 	client, err := c.ConnectEthClient()
 	if err != nil {
 		return nil, err
@@ -22,7 +23,11 @@ func (c *FEVMConnection) IFILBalanceOf(address common.Address) (*big.Int, error)
 		return nil, err
 	}
 
-	return poolTokenCaller.BalanceOf(nil, c.IFILAddr)
+	bal, err := poolTokenCaller.BalanceOf(nil, address)
+	if err != nil {
+		return nil, err
+	}
+	return util.ToAtto(bal), nil
 }
 
 func (c *FEVMConnection) IFILTransfer(ctx context.Context, toAddr common.Address, amount *big.Int) (*types.Transaction, error) {
