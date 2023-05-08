@@ -3,11 +3,14 @@ package fevm
 import (
 	"context"
 	"crypto/ecdsa"
+	"log"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	abigen "github.com/glif-confidential/abigen/bindings"
+	"github.com/glif-confidential/cli/rpc"
+	"github.com/spf13/viper"
 )
 
 func (c *FEVMConnection) AgentID(ctx context.Context, address common.Address) (*big.Int, error) {
@@ -138,7 +141,52 @@ func (c *FEVMConnection) AgentBorrow(
 		return nil, err
 	}
 
-	args := []interface{}{poolID, amount}
+	closer, err := rpc.NewADOClient(ctx, viper.GetString("ado.address"))
+	if err != nil {
+		return nil, err
+	}
+	defer closer()
+
+	sc, err := rpc.ADOClient.Borrow(ctx, agentAddr, amount)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	args := []interface{}{poolID, sc}
 
 	return WriteTx(ctx, pk, client, args, agentTransactor.Borrow, "Agent Borrow")
+}
+
+func (c *FEVMConnection) AgentWithdraw(
+	ctx context.Context,
+	agentAddr common.Address,
+	receiver common.Address,
+	amount *big.Int,
+	pk *ecdsa.PrivateKey,
+) (*types.Transaction, error) {
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+
+	agentTransactor, err := abigen.NewAgentTransactor(agentAddr, client)
+	if err != nil {
+		return nil, err
+	}
+
+	closer, err := rpc.NewADOClient(ctx, viper.GetString("ado.address"))
+	if err != nil {
+		return nil, err
+	}
+	defer closer()
+
+	sc, err := rpc.ADOClient.Withdraw(ctx, agentAddr, amount)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	args := []interface{}{receiver, sc}
+
+	return WriteTx(ctx, pk, client, args, agentTransactor.Withdraw, "Agent Withdraw")
 }
