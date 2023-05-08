@@ -119,3 +119,26 @@ func (c *FEVMConnection) AgentPushFunds(ctx context.Context, agentID *big.Int, m
 
 	return WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, agentTransactor.PushFunds, "Agent Push Funds")
 }
+
+func (c *FEVMConnection) AgentBorrow(
+	ctx context.Context,
+	agentAddr common.Address,
+	poolID *big.Int,
+	amount *big.Int,
+	pk *ecdsa.PrivateKey,
+) (*types.Transaction, error) {
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+
+	agentTransactor, err := abigen.NewAgentTransactor(agentAddr, client)
+	if err != nil {
+		return nil, err
+	}
+
+	args := []interface{}{poolID, amount}
+
+	return WriteTx(ctx, pk, client, args, agentTransactor.Borrow, "Agent Borrow")
+}

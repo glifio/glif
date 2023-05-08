@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"errors"
+	"math/big"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -75,4 +76,36 @@ func commonSetupOwnerCall() (common.Address, *ecdsa.PrivateKey, error) {
 	}
 
 	return agentAddr, pk, nil
+}
+
+type PoolType uint64
+
+const (
+	InfinityPool PoolType = iota
+)
+
+var poolNames = map[string]PoolType{
+	"infinity": InfinityPool,
+}
+
+func parsePoolType(pool string) (*big.Int, error) {
+	if pool == "" {
+		return big.NewInt(int64(InfinityPool)), nil
+	}
+
+	poolType, ok := poolNames[pool]
+	if !ok {
+		return nil, errors.New("invalid pool")
+	}
+
+	return big.NewInt(int64(poolType)), nil
+}
+
+func parseFILAmount(amount string) (*big.Int, error) {
+	amt, ok := new(big.Float).SetString(amount)
+	if !ok {
+		return nil, errors.New("invalid amount")
+	}
+
+	return util.ToAtto(amt), nil
 }
