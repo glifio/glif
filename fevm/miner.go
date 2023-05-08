@@ -17,6 +17,7 @@ func (c *FEVMConnection) AddMiner(
 	ctx context.Context,
 	agentAddr common.Address,
 	minerAddr address.Address,
+	pk *ecdsa.PrivateKey,
 ) (*types.Transaction, error) {
 	client, err := c.ConnectEthClient()
 	if err != nil {
@@ -39,7 +40,7 @@ func (c *FEVMConnection) AddMiner(
 
 	args := []interface{}{sc}
 
-	tx, err := WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, agentTransactor.AddMiner, "Agent Add Miner")
+	tx, err := WriteTx(ctx, pk, client, args, agentTransactor.AddMiner, "Agent Add Miner")
 	if err != nil {
 		return nil, err
 	}
@@ -53,6 +54,7 @@ func (c *FEVMConnection) RemoveMiner(
 	agentAddr common.Address,
 	minerAddr address.Address,
 	recipientAddr address.Address,
+	pk *ecdsa.PrivateKey,
 ) (*types.Transaction, error) {
 	client, err := c.ConnectEthClient()
 	if err != nil {
@@ -75,7 +77,7 @@ func (c *FEVMConnection) RemoveMiner(
 
 	args := []interface{}{recipientAddr, sc}
 
-	tx, err := WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, agentTransactor.RemoveMiner, "Agent Remove Miner")
+	tx, err := WriteTx(ctx, pk, client, args, agentTransactor.RemoveMiner, "Agent Remove Miner")
 	if err != nil {
 		return nil, err
 	}

@@ -9,10 +9,8 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/filecoin-project/go-address"
 	"github.com/glif-confidential/cli/fevm"
-	"github.com/glif-confidential/cli/util"
 	"github.com/spf13/cobra"
 )
 
@@ -22,27 +20,9 @@ var rmCmd = &cobra.Command{
 	Short: "Remove a miner from your agent",
 	Long:  "Removes a specific miner from your Agent by assigning its owner to `new owner address`",
 	Run: func(cmd *cobra.Command, args []string) {
-		as := util.AgentStore()
-		ks := util.KeyStore()
-		// Check if an agent already exists
-		agentAddrStr, err := as.Get("address")
+		agentAddr, ownerKey, err := commonSetupOwnerCall()
 		if err != nil {
 			log.Fatal(err)
-		}
-
-		if agentAddrStr == "" {
-			log.Fatalf("Did you forget to create your agent? ")
-		}
-
-		agentAddr := common.HexToAddress(agentAddrStr)
-
-		pk, err := ks.GetPrivate(util.OwnerKey)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		if pk == nil {
-			log.Fatal("Owner key not found. Please check your `keys.toml` file. Only an Agent's owner can add a miner to it")
 		}
 
 		if len(args) != 2 {
@@ -64,7 +44,7 @@ var rmCmd = &cobra.Command{
 
 		fmt.Printf("Removing miner %s from agent %s by changing its owner address to %s", minerAddr, agentAddr, recipientAddr)
 
-		tx, err := fevm.Connection().RemoveMiner(cmd.Context(), agentAddr, minerAddr, recipientAddr)
+		tx, err := fevm.Connection().RemoveMiner(cmd.Context(), agentAddr, minerAddr, recipientAddr, ownerKey)
 		if err != nil {
 			log.Fatal(err)
 		}
