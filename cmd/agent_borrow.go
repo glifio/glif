@@ -29,13 +29,7 @@ var borrowCmd = &cobra.Command{
 			log.Fatal("Please provide an amount")
 		}
 
-		poolName := args[0]
-		poolID, err := parsePoolType(poolName)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		amount, err := parseFILAmount(args[1])
+		amount, err := parseFILAmount(args[0])
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -44,10 +38,16 @@ var borrowCmd = &cobra.Command{
 			log.Fatal("Borrow amount must be greater than 1 FIL")
 		}
 
-		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-		s.Start()
+		poolName := args[1]
+		poolID, err := parsePoolType(poolName)
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		fmt.Printf("Borrowing %s FIL from the %s into agent %s", poolID, agentAddr)
+
+		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+		s.Start()
 
 		tx, err := fevm.Connection().AgentBorrow(cmd.Context(), agentAddr, poolID, amount, ownerKey)
 		if err != nil {
