@@ -34,17 +34,21 @@ var rmCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		recipientAddr, err := address.NewFromString(args[1])
+		newMinerOwnerAddr, err := address.NewFromString(args[1])
 		if err != nil {
 			log.Fatal(err)
+		}
+		// IMPORTANT: an ethereum address can not be an owner of a miner, this must be a filecoin address owner
+		if newMinerOwnerAddr.Protocol() == address.Delegated {
+			log.Fatal("New miner owner address must be a filecoin address, not a delegated address")
 		}
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 
-		fmt.Printf("Removing miner %s from agent %s by changing its owner address to %s", minerAddr, agentAddr, recipientAddr)
+		fmt.Printf("Removing miner %s from agent %s by changing its owner address to %s", minerAddr, agentAddr, newMinerOwnerAddr)
 
-		tx, err := fevm.Connection().RemoveMiner(cmd.Context(), agentAddr, minerAddr, recipientAddr, ownerKey)
+		tx, err := fevm.Connection().RemoveMiner(cmd.Context(), agentAddr, minerAddr, newMinerOwnerAddr, ownerKey)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -61,7 +65,7 @@ var rmCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Successfully proposed an ownership change to miner %s, passing %s as the new owner", minerAddr, recipientAddr)
+		fmt.Printf("Successfully proposed an ownership change to miner %s, passing %s as the new owner", minerAddr, newMinerOwnerAddr)
 	},
 }
 
