@@ -45,8 +45,8 @@ var rmCmd = &cobra.Command{
 			log.Fatal("Owner key not found. Please check your `keys.toml` file. Only an Agent's owner can add a miner to it")
 		}
 
-		if len(args) != 1 {
-			log.Fatal("Please provide a miner address")
+		if len(args) != 2 {
+			log.Fatal("Please provide a miner and recipient address")
 		}
 
 		minerAddr, err := address.NewFromString(args[0])
