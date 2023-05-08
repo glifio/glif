@@ -53,7 +53,7 @@ func (c *FEVMConnection) RemoveMiner(
 	ctx context.Context,
 	agentAddr common.Address,
 	minerAddr address.Address,
-	recipientAddr address.Address,
+	newOwnerAddr address.Address,
 	pk *ecdsa.PrivateKey,
 ) (*types.Transaction, error) {
 	client, err := c.ConnectEthClient()
@@ -70,12 +70,12 @@ func (c *FEVMConnection) RemoveMiner(
 
 	agentTransactor, err := abigen.NewAgentTransactor(agentAddr, client)
 
-	sc, err := rpc.ADOClient.AddMiner(ctx, agentAddr, minerAddr)
+	sc, err := rpc.ADOClient.RemoveMiner(ctx, agentAddr, minerAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	args := []interface{}{recipientAddr, sc}
+	args := []interface{}{newOwnerAddr, sc}
 
 	tx, err := WriteTx(ctx, pk, client, args, agentTransactor.RemoveMiner, "Agent Remove Miner")
 	if err != nil {
