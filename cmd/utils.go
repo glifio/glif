@@ -14,6 +14,7 @@ import (
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
 	"github.com/glif-confidential/cli/fevm"
 	"github.com/glif-confidential/cli/util"
+	"github.com/spf13/cobra"
 )
 
 func ParseAddress(ctx context.Context, addr string) (common.Address, error) {
@@ -74,6 +75,50 @@ func commonSetupOwnerCall() (common.Address, *ecdsa.PrivateKey, error) {
 	if pk == nil {
 		return common.Address{}, nil, errors.New("Owner key not found. Please check your `keys.toml` file. Only an Agent's owner can add a miner to it")
 	}
+
+	return agentAddr, pk, nil
+}
+
+func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.PrivateKey, error) {
+	as := util.AgentStore()
+	ks := util.KeyStore()
+
+	opEvm, opFevm, err := ks.GetAddrs(util.OperatorKey)
+	if err != nil {
+		return common.Address{}, nil, err
+	}
+	owEvm, owFevm, err := ks.GetAddrs(util.OwnerKey)
+	if err != nil {
+		return common.Address{}, nil, err
+	}
+
+	var pk *ecdsa.PrivateKey
+	// if no flag was passed, we just use the operator address by default
+	from := cmd.Flag("from").Value.String()
+	if from == "" {
+		pk, err = ks.GetPrivate(util.OperatorKey)
+	} else if from == opEvm.String() || from == opFevm.String() {
+		pk, err = ks.GetPrivate(util.OperatorKey)
+	} else if from == owEvm.String() || from == owFevm.String() {
+		pk, err = ks.GetPrivate(util.OwnerKey)
+	} else {
+		return common.Address{}, nil, errors.New("invalid from address")
+	}
+
+	if err != nil {
+		return common.Address{}, nil, err
+	}
+
+	agentAddrStr, err := as.Get("address")
+	if err != nil {
+		return common.Address{}, nil, err
+	}
+
+	if agentAddrStr == "" {
+		return common.Address{}, nil, errors.New("No agent found. Did you forget to create one?")
+	}
+
+	agentAddr := common.HexToAddress(agentAddrStr)
 
 	return agentAddr, pk, nil
 }
