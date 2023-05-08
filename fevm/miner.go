@@ -13,7 +13,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-func (c *FEVMConnection) AddMiner(ctx context.Context, agentAddr common.Address, minerAddr address.Address) (*types.Transaction, error) {
+func (c *FEVMConnection) AddMiner(
+	ctx context.Context,
+	agentAddr common.Address,
+	minerAddr address.Address,
+) (*types.Transaction, error) {
 	client, err := c.ConnectEthClient()
 	if err != nil {
 		return nil, err
@@ -44,26 +48,37 @@ func (c *FEVMConnection) AddMiner(ctx context.Context, agentAddr common.Address,
 }
 
 // Remove miner
-func (c *FEVMConnection) MinerRemove(ctx context.Context, minerAddr common.Address) (*types.Transaction, error) {
+func (c *FEVMConnection) RemoveMiner(
+	ctx context.Context,
+	agentAddr common.Address,
+	minerAddr address.Address,
+	recipientAddr address.Address,
+) (*types.Transaction, error) {
 	client, err := c.ConnectEthClient()
 	if err != nil {
 		return nil, err
 	}
 	defer client.Close()
 
-	// record the block height
-	blockHeight, err := client.BlockNumber(ctx)
+	closer, err := rpc.NewADOClient(ctx, viper.GetString("ado.address"))
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("blockHeight: %d", blockHeight)
+	defer closer()
 
-	minerCaller, err := abigen.NewMinerRegistryTransactor(minerAddr, client)
+	agentTransactor, err := abigen.NewAgentTransactor(agentAddr, client)
+
+	sc, err := rpc.ADOClient.AddMiner(ctx, agentAddr, minerAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	args := []interface{}{recipientAddr, sc}
+
+	tx, err := WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, agentTransactor.RemoveMiner, "Agent Remove Miner")
 	if err != nil {
 		return nil, err
 	}
 
-	args := []interface{}{minerAddr}
-
-	return WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, minerCaller.RemoveMiner, "Miner Remove")
+	return tx, nil
 }
