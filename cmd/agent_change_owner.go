@@ -54,6 +54,11 @@ var minerChangeOwnerCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		id, err := lapi.StateLookupID(cmd.Context(), delegated, types.EmptyTSK)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		mi, err := lapi.StateMinerInfo(cmd.Context(), minerAddr, types.EmptyTSK)
 		if err != nil {
 			log.Fatal(err)
@@ -61,7 +66,7 @@ var minerChangeOwnerCmd = &cobra.Command{
 
 		fmt.Println("Miner Owner:", mi.Owner)
 
-		sp, err := actors.SerializeParams(&delegated)
+		sp, err := actors.SerializeParams(&id)
 		if err != nil {
 			log.Fatal(err)
 		}

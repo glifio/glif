@@ -69,7 +69,7 @@ func (c *FEVMConnection) ConnectLotusClient() (*lotusapi.FullNodeStruct, jsonrpc
 	head := http.Header{}
 
 	if viper.GetString("daemon.token") != "" {
-		head.Add("Authorization", "Bearer "+viper.GetString("lotus.token"))
+		head.Add("Authorization", "Bearer "+viper.GetString("daemon.token"))
 	}
 
 	lapi := &lotusapi.FullNodeStruct{}
