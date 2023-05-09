@@ -44,7 +44,7 @@ var borrowCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Borrowing %s FIL from the %s into agent %s", poolID, agentAddr)
+		fmt.Printf("Borrowing %s FIL from the %s into agent %s", amount, poolID, agentAddr)
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
