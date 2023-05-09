@@ -34,10 +34,10 @@ var addCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		log.Printf("Adding miner %s to agent %s", minerAddr, agentAddr)
+
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
-
-		fmt.Printf("Adding miner %s to agent %s", minerAddr, agentAddr)
 
 		tx, err := fevm.Connection().AddMiner(cmd.Context(), agentAddr, minerAddr, ownerKey)
 		if err != nil {
