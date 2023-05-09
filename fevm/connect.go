@@ -68,13 +68,16 @@ func (c *FEVMConnection) ConnectEthClient() (*ethclient.Client, error) {
 func (c *FEVMConnection) ConnectLotusClient() (*lotusapi.FullNodeStruct, jsonrpc.ClientCloser, error) {
 	head := http.Header{}
 
+	if viper.GetString("daemon.token") != "" {
+		head.Add("Authorization", "Bearer "+viper.GetString("lotus.token"))
+	}
+
 	lapi := &lotusapi.FullNodeStruct{}
 
 	closer, err := jsonrpc.NewMergeClient(
 		context.Background(),
 		c.LotusRpcUrl,
 		"Filecoin",
-		//[]interface{}{&api.Internal, &api.CommonStruct.Internal},
 		lotusapi.GetInternalStructs(lapi),
 		head,
 	)
