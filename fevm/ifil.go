@@ -27,7 +27,7 @@ func (c *FEVMConnection) IFILBalanceOf(address common.Address) (*big.Float, erro
 	if err != nil {
 		return nil, err
 	}
-	return util.ToAtto(bal), nil
+	return util.ToFIL(bal), nil
 }
 
 func (c *FEVMConnection) IFILTransfer(ctx context.Context, toAddr common.Address, amount *big.Int) (*types.Transaction, error) {

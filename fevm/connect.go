@@ -13,14 +13,15 @@ import (
 
 type FEVMConnection struct {
 	// the lotus RPC url contains a token in it - see https://lotus.filecoin.io/storage-providers/setup/initialize/ for more info
-	LotusRpcUrl      string
-	EthRpcUrl        string
-	ChainID          int64
-	RouterAddress    common.Address
-	IFILAddr         common.Address
-	InfinityPoolAddr common.Address
-	AgentFactoryAddr common.Address
-	PoolRegistryAddr common.Address
+	LotusRpcUrl       string
+	EthRpcUrl         string
+	ChainID           int64
+	RouterAddress     common.Address
+	IFILAddr          common.Address
+	InfinityPoolAddr  common.Address
+	AgentFactoryAddr  common.Address
+	PoolRegistryAddr  common.Address
+	MinerRegistryAddr common.Address
 }
 
 var connection *FEVMConnection
@@ -46,14 +47,15 @@ func InitFEVMConnection(ctx context.Context) error {
 
 	// https://api.node.glif.io/rpc/v1
 	connection = &FEVMConnection{
-		LotusRpcUrl:      ethRpcUrl,
-		EthRpcUrl:        ethRpcUrl,
-		ChainID:          chainID.Int64(),
-		RouterAddress:    common.HexToAddress(viper.GetString("routes.router")),
-		IFILAddr:         common.HexToAddress(viper.GetString("routes.ifil")),
-		InfinityPoolAddr: common.HexToAddress(viper.GetString("routes.infinity-pool")),
-		AgentFactoryAddr: common.HexToAddress(viper.GetString("routes.agent-factory")),
-		PoolRegistryAddr: common.HexToAddress(viper.GetString("routes.pool-registry")),
+		LotusRpcUrl:       ethRpcUrl,
+		EthRpcUrl:         ethRpcUrl,
+		ChainID:           chainID.Int64(),
+		RouterAddress:     common.HexToAddress(viper.GetString("routes.router")),
+		IFILAddr:          common.HexToAddress(viper.GetString("routes.ifil")),
+		InfinityPoolAddr:  common.HexToAddress(viper.GetString("routes.infinity-pool")),
+		AgentFactoryAddr:  common.HexToAddress(viper.GetString("routes.agent-factory")),
+		PoolRegistryAddr:  common.HexToAddress(viper.GetString("routes.pool-registry")),
+		MinerRegistryAddr: common.HexToAddress(viper.GetString("routes.miner-registry")),
 	}
 
 	return nil
@@ -66,13 +68,16 @@ func (c *FEVMConnection) ConnectEthClient() (*ethclient.Client, error) {
 func (c *FEVMConnection) ConnectLotusClient() (*lotusapi.FullNodeStruct, jsonrpc.ClientCloser, error) {
 	head := http.Header{}
 
+	if viper.GetString("daemon.token") != "" {
+		head.Add("Authorization", "Bearer "+viper.GetString("daemon.token"))
+	}
+
 	lapi := &lotusapi.FullNodeStruct{}
 
 	closer, err := jsonrpc.NewMergeClient(
 		context.Background(),
 		c.LotusRpcUrl,
 		"Filecoin",
-		//[]interface{}{&api.Internal, &api.CommonStruct.Internal},
 		lotusapi.GetInternalStructs(lapi),
 		head,
 	)

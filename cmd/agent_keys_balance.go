@@ -48,7 +48,7 @@ func getBalances(
 		if err != nil {
 			errCh <- err
 		}
-		balDecimal := util.ToAtto(big.NewInt(bal.Int64()))
+		balDecimal := util.ToFIL(big.NewInt(bal.Int64()))
 		balCh <- balance{bal: balDecimal, key: key}
 	}
 

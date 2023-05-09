@@ -45,12 +45,12 @@ func NewKeyStore(filename string) error {
 func (s *KeyStorage) GetPrivate(key KeyType) (*ecdsa.PrivateKey, error) {
 	pk, ok := s.data[string(key)]
 	if !ok {
-		return &ecdsa.PrivateKey{}, fmt.Errorf("key not found: %s", key)
+		return nil, fmt.Errorf("key not found: %s", key)
 	}
 
 	pkECDSA, err := crypto.HexToECDSA(pk)
 	if err != nil {
-		return &ecdsa.PrivateKey{}, err
+		return nil, err
 	}
 
 	return pkECDSA, nil

@@ -9,47 +9,42 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/glif-confidential/cli/fevm"
-	"github.com/glif-confidential/cli/util"
 	"github.com/spf13/cobra"
 )
 
 // borrowCmd represents the borrow command
-var borrowCmd = &cobra.Command{
-	Use:   "borrow [amount] [pool-name]",
-	Short: "Borrow FIL from a Pool",
-	Long:  "Borrow FIL from a Pool. If you do not pass a `pool-name` arg,tThe default pool is the Infinity Pool.",
+var withdrawCmd = &cobra.Command{
+	Use:   "withdraw [amount]",
+	Short: "Withdraw FIL from your Agent.",
+	Long:  "",
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, ownerKey, err := commonSetupOwnerCall()
 		if err != nil {
 			log.Fatal(err)
 		}
 
+		receiver := agentAddr
+		if cmd.Flag("recipient").Changed {
+			receiver = common.HexToAddress(cmd.Flag("recipient").Value.String())
+		}
+
 		if len(args) != 1 {
 			log.Fatal("Please provide an amount")
 		}
 
-		amount, err := parseFILAmount(args[0])
+		amount, err := parseFILAmount(args[1])
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		if amount.Cmp(util.WAD) == -1 {
-			log.Fatal("Borrow amount must be greater than 1 FIL")
-		}
-
-		poolName := args[1]
-		poolID, err := parsePoolType(poolName)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Printf("Borrowing %s FIL from the %s into agent %s", poolID, agentAddr)
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 
-		tx, err := fevm.Connection().AgentBorrow(cmd.Context(), agentAddr, poolID, amount, ownerKey)
+		fmt.Printf("Withdrawing %s FIL from your Agent...", args[0])
+
+		tx, err := fevm.Connection().AgentWithdraw(cmd.Context(), agentAddr, receiver, amount, ownerKey)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -71,5 +66,6 @@ var borrowCmd = &cobra.Command{
 }
 
 func init() {
-	agentCmd.AddCommand(borrowCmd)
+	agentCmd.AddCommand(withdrawCmd)
+	createCmd.Flags().String("recipient", "", "Receiver of the funds (agent's owner is chosen if not specified)")
 }
