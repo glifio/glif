@@ -91,19 +91,67 @@ func (c *FEVMConnection) AgentAddrID(ctx context.Context, receipt *types.Receipt
 	return agentID, agentAddr, nil
 }
 
-func (c *FEVMConnection) AgentPullFunds(ctx context.Context, agentID *big.Int, amount *big.Int) (*types.Transaction, error) {
+// AgentPullFunds pulls funds from the agent to a miner
+func (c *FEVMConnection) AgentPullFunds(
+	ctx context.Context,
+	agentAddr common.Address,
+	amount *big.Int,
+	miner address.Address,
+	pk *ecdsa.PrivateKey,
+) (*types.Transaction, error) {
 	client, err := c.ConnectEthClient()
 	if err != nil {
 		return nil, err
 	}
 	defer client.Close()
 
+	as := util.AgentStore()
+	agentIDStr, err := as.Get("id")
+	if err != nil {
+		return nil, err
+	}
+
+	agentID, ok := new(big.Int).SetString(agentIDStr, 10)
+	if !ok {
+		return nil, errors.New("could not convert agent id to big.Int")
+	}
+
+	minerRegistryCaller, err := abigen.NewMinerRegistryCaller(c.MinerRegistryAddr, client)
+	if err != nil {
+		return nil, err
+	}
+
+	minerU64, err := address.IDFromAddress(miner)
+	if err != nil {
+		return nil, err
+	}
+
+	registered, err := minerRegistryCaller.MinerRegistered(nil, agentID, minerU64)
+	if err != nil {
+		return nil, err
+	}
+
+	if !registered {
+		return nil, errors.New("Miner not registered with agent. Be sure to call `agent add-miner` first before pulling funds.")
+	}
+
+	closer, err := rpc.NewADOClient(ctx, viper.GetString("ado.address"))
+	if err != nil {
+		return nil, err
+	}
+	defer closer()
+
+	sc, err := rpc.ADOClient.PullFunds(ctx, agentAddr, amount, miner)
+	if err != nil {
+		return nil, err
+	}
+
 	agentTransactor, err := abigen.NewAgentTransactor(c.AgentFactoryAddr, client)
 	if err != nil {
 		return nil, err
 	}
 
-	args := []interface{}{amount}
+	args := []interface{}{sc}
 
 	return WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, agentTransactor.PullFunds, "Agent Pull Funds")
 }
