@@ -44,7 +44,7 @@ func (c *FEVMConnection) IFILTransfer(ctx context.Context, toAddr common.Address
 
 	args := []interface{}{toAddr, amount}
 
-	return WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, poolTokenCaller.Transfer, "iFIL Transfer")
+	return WriteTx(ctx, &ecdsa.PrivateKey{}, client, common.Big0, args, poolTokenCaller.Transfer, "iFIL Transfer")
 }
 
 func (c *FEVMConnection) IFILApprove(ctx context.Context, spender common.Address, allowance *big.Int) (*types.Transaction, error) {
@@ -61,7 +61,7 @@ func (c *FEVMConnection) IFILApprove(ctx context.Context, spender common.Address
 
 	args := []interface{}{spender, allowance}
 
-	return WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, poolTokenCaller.Approve, "iFIL Approve")
+	return WriteTx(ctx, &ecdsa.PrivateKey{}, client, common.Big0, args, poolTokenCaller.Approve, "iFIL Approve")
 }
 
 func (c *FEVMConnection) IFILPrice() (*big.Int, error) {

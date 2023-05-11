@@ -43,7 +43,7 @@ func (c *FEVMConnection) AddMiner(
 
 	args := []interface{}{sc}
 
-	tx, err := WriteTx(ctx, pk, client, args, agentTransactor.AddMiner, "Agent Add Miner")
+	tx, err := WriteTx(ctx, pk, client, common.Big0, args, agentTransactor.AddMiner, "Agent Add Miner")
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (c *FEVMConnection) RemoveMiner(
 
 	args := []interface{}{newOwnerAddr, sc}
 
-	tx, err := WriteTx(ctx, pk, client, args, agentTransactor.RemoveMiner, "Agent Remove Miner")
+	tx, err := WriteTx(ctx, pk, client, common.Big0, args, agentTransactor.RemoveMiner, "Agent Remove Miner")
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +156,7 @@ func (c *FEVMConnection) ChangeWorker(
 
 	args := []interface{}{minerID, workerID, controlIDs}
 
-	tx, err := WriteTx(ctx, pk, client, args, agentTransactor.ChangeMinerWorker, "Agent Change Miner Worker")
+	tx, err := WriteTx(ctx, pk, client, common.Big0, args, agentTransactor.ChangeMinerWorker, "Agent Change Miner Worker")
 	if err != nil {
 		return nil, err
 	}

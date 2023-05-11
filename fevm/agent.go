@@ -50,7 +50,7 @@ func (c *FEVMConnection) AgentCreate(ctx context.Context, deployerPk *ecdsa.Priv
 
 	args := []interface{}{owner, operator, request}
 
-	return WriteTx(ctx, deployerPk, client, args, agentFactoryTransactor.Create, "Agent Create")
+	return WriteTx(ctx, deployerPk, client, common.Big0, args, agentFactoryTransactor.Create, "Agent Create")
 }
 
 func (c *FEVMConnection) AgentAddrID(ctx context.Context, receipt *types.Receipt) (*big.Int, common.Address, error) {
@@ -153,7 +153,7 @@ func (c *FEVMConnection) AgentPullFunds(
 
 	args := []interface{}{sc}
 
-	return WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, agentTransactor.PullFunds, "Agent Pull Funds")
+	return WriteTx(ctx, &ecdsa.PrivateKey{}, client, common.Big0, args, agentTransactor.PullFunds, "Agent Pull Funds")
 }
 
 // AgentPushFunds pushes funds from the agent to a miner
@@ -218,7 +218,7 @@ func (c *FEVMConnection) AgentPushFunds(
 
 	args := []interface{}{sc}
 
-	return WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, agentTransactor.PushFunds, "Agent Push Funds")
+	return WriteTx(ctx, &ecdsa.PrivateKey{}, client, common.Big0, args, agentTransactor.PushFunds, "Agent Push Funds")
 }
 
 func (c *FEVMConnection) AgentBorrow(
@@ -252,7 +252,7 @@ func (c *FEVMConnection) AgentBorrow(
 
 	args := []interface{}{poolID, sc}
 
-	return WriteTx(ctx, pk, client, args, agentTransactor.Borrow, "Agent Borrow")
+	return WriteTx(ctx, pk, client, common.Big0, args, agentTransactor.Borrow, "Agent Borrow")
 }
 
 func (c *FEVMConnection) AgentWithdraw(
@@ -286,5 +286,5 @@ func (c *FEVMConnection) AgentWithdraw(
 
 	args := []interface{}{receiver, sc}
 
-	return WriteTx(ctx, pk, client, args, agentTransactor.Withdraw, "Agent Withdraw")
+	return WriteTx(ctx, pk, client, common.Big0, args, agentTransactor.Withdraw, "Agent Withdraw")
 }

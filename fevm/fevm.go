@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"log"
+	"math/big"
 	"reflect"
 	"strings"
 
@@ -19,6 +20,7 @@ func WriteTx(
 	ctx context.Context,
 	pk *ecdsa.PrivateKey,
 	client *ethclient.Client,
+	value *big.Int,
 	args []interface{},
 	writeTx interface{},
 	label string,
@@ -41,6 +43,7 @@ func WriteTx(
 	}
 
 	auth.Nonce = nonce
+	auth.Value = value
 
 	// Use reflection to call the writeTx function with the required arguments
 	writeTxValue := reflect.ValueOf(writeTx)
