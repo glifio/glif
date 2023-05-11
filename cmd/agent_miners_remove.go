@@ -16,7 +16,7 @@ import (
 
 // addCmd represents the add command
 var rmCmd = &cobra.Command{
-	Use:   "rm-miner [miner address] [new owner address]",
+	Use:   "remove [miner address] [new owner address]",
 	Short: "Remove a miner from your agent",
 	Long:  "Removes a specific miner from your Agent by assigning its owner to `new owner address`",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -74,5 +74,5 @@ var rmCmd = &cobra.Command{
 }
 
 func init() {
-	agentCmd.AddCommand(rmCmd)
+	minersCmd.AddCommand(rmCmd)
 }

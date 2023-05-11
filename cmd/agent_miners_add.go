@@ -16,7 +16,7 @@ import (
 
 // addCmd represents the add command
 var addCmd = &cobra.Command{
-	Use:   "add-miner [miner address]",
+	Use:   "add [miner address]",
 	Short: "Add a miner id to the agent",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -65,5 +65,5 @@ var addCmd = &cobra.Command{
 }
 
 func init() {
-	agentCmd.AddCommand(addCmd)
+	minersCmd.AddCommand(addCmd)
 }

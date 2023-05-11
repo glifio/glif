@@ -112,3 +112,54 @@ func (c *FEVMConnection) ToMinerID(miner string) (address.Address, error) {
 
 	return idAddr, nil
 }
+
+func (c *FEVMConnection) ChangeWorker(
+	ctx context.Context,
+	agentAddr common.Address,
+	minerAddr address.Address,
+	workerAddr address.Address,
+	controlAddrs []address.Address,
+	pk *ecdsa.PrivateKey,
+) (*types.Transaction, error) {
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+
+	agentTransactor, err := abigen.NewAgentTransactor(agentAddr, client)
+	if err != nil {
+		return nil, err
+	}
+
+	// convert miner address to ID address
+	minerID, err := address.IDFromAddress(minerAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	// convert worker address to ID address
+	workerID, err := address.IDFromAddress(workerAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	// convert control addresses to ID addresses
+	var controlIDs []uint64
+	for _, controlAddr := range controlAddrs {
+		controlID, err := address.IDFromAddress(controlAddr)
+		if err != nil {
+			return nil, err
+		}
+		controlIDs = append(controlIDs, controlID)
+	}
+
+	args := []interface{}{minerID, workerID, controlIDs}
+
+	tx, err := WriteTx(ctx, pk, client, args, agentTransactor.ChangeMinerWorker, "Agent Change Miner Worker")
+	if err != nil {
+		return nil, err
+	}
+
+	return tx, nil
+}
