@@ -30,9 +30,9 @@ var listCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		log.Printf("Owner address: %s (ETH), %s (FIL)", ownerEvm, ownerFevm)
-		log.Printf("Operator address: %s (ETH), %s (FIL)", operatorEvm, operatorFevm)
-		log.Printf("Requester address: %s (ETH), %s (FIL)", requestEvm, requestFevm)
+		log.Printf("Owner address: %s (EVM), %s (FIL)", ownerEvm, ownerFevm)
+		log.Printf("Operator address: %s (EVM), %s (FIL)", operatorEvm, operatorFevm)
+		log.Printf("Requester address: %s (EVM), %s (FIL)", requestEvm, requestFevm)
 	},
 }
 

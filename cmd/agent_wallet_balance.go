@@ -48,7 +48,7 @@ func getBalances(
 		if err != nil {
 			errCh <- err
 		}
-		balDecimal := util.ToFIL(big.NewInt(bal.Int64()))
+		balDecimal := util.ToFIL(bal.Int)
 		balCh <- balance{bal: balDecimal, key: key}
 	}
 
@@ -81,7 +81,8 @@ func getBalances(
 }
 
 func logBal(key util.KeyType, bal *big.Float, fevmAddr address.Address, evmAddr common.Address) {
-	log.Printf("%s balance: %s FIL - (FEVM) %s (EVM) %s", key, bal.String(), util.TruncateAddr(fevmAddr.String()), util.TruncateAddr(evmAddr.String()))
+	bf64, _ := bal.Float64()
+	log.Printf("%s balance: %.02f FIL", key, bf64)
 }
 
 // newCmd represents the new command
