@@ -22,6 +22,7 @@ type FEVMConnection struct {
 	AgentFactoryAddr  common.Address
 	PoolRegistryAddr  common.Address
 	MinerRegistryAddr common.Address
+	AgentPoliceAddr   common.Address
 }
 
 var connection *FEVMConnection
@@ -56,6 +57,7 @@ func InitFEVMConnection(ctx context.Context) error {
 		AgentFactoryAddr:  common.HexToAddress(viper.GetString("routes.agent-factory")),
 		PoolRegistryAddr:  common.HexToAddress(viper.GetString("routes.pool-registry")),
 		MinerRegistryAddr: common.HexToAddress(viper.GetString("routes.miner-registry")),
+		AgentPoliceAddr:   common.HexToAddress(viper.GetString("routes.agent-police")),
 	}
 
 	return nil
