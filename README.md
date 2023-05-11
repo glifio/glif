@@ -19,14 +19,14 @@ The Agent is a crucial component of the underlying [GLIF Pools Protocol](https:/
 
 To create your Agent, first, we need to create 3 new addresses:
 
-`glif agent keys new`<br />
+`glif wallet new`<br />
 
 This command will randomly generate 3 new private keys that represent your `owner`, `operator`, and `requester`. It will store the keys in `$HOME/.glif/config/keys.toml`
 
 You should see the output:
 
 ```
-➜ ✗ glif agent keys new
+➜ ✗ glif wallet new
 2023/05/03 19:53:37 Owner address: 0x8b35624Ed57789D18445142a51A4a51eFb375F26 (ETH), f410frm2wetwvo6e5dbcfcqvfdjffd35toxzgtslcqja (FIL)
 2023/05/03 19:53:37 Operator address: 0x69D2CE31DDABF4A7098a2547147c13cF10F5Ea7b (ETH), f410fnhjm4mo5vp2kocmkevdri7atz4ipl2t3zcdiani (FIL)
 2023/05/03 19:53:37 Request key: 0x115fFf27B67875032D6E6D2F28a3aAbC31A69f54 (ETH), f410fcfp76j5wpb2qgllonuxsri5kxqy2nh2uqbvcnoy (FIL)
@@ -37,7 +37,7 @@ Next, we need to fund our owner key. To do this, please navigate over to the [GL
 Once you've funded your owner key, verify:
 
 ```
-➜ ✗ glif agent keys balance
+➜ ✗ glif wallet balance
 2023/05/03 20:55:13 owner balance: 0 FIL - (FEVM) f410fr...cqja (EVM) 0x8b35...5F26
 2023/05/03 20:55:13 operator balance: 0 FIL - (FEVM) f410fn...iani (EVM) 0x69D2...Ea7b
 2023/05/03 20:55:13 request balance: 0 FIL - (FEVM) f410fc...cnoy (EVM) 0x115f...9f54
@@ -47,4 +47,7 @@ Lastly, you can go ahead and create your agent:
 
 ```
 ➜ ✗ glif agent create
+```
+
+## Add a miner to your Agent
 ```

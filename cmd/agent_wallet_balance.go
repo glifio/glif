@@ -119,5 +119,5 @@ var balCmd = &cobra.Command{
 }
 
 func init() {
-	keysCmd.AddCommand(balCmd)
+	walletCmd.AddCommand(balCmd)
 }

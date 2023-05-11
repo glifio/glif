@@ -26,8 +26,8 @@ func panicIfKeyExists(key util.KeyType, addr common.Address, err error) {
 // newCmd represents the new command
 var newCmd = &cobra.Command{
 	Use:   "new",
-	Short: "Create a set of keys for the Agent",
-	Long:  `Creates an owner, an operator, and a requester key and stores the values in $HOME/.config/glif/keys.toml`,
+	Short: "Create a set of keys",
+	Long:  `Creates an owner, an operator, and a requester key and stores the values in $HOME/.config/glif/keys.toml. Note that the owner and requester keys are only applicable to Agents, the operator key is the primary key for interacting with smart contracts.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ks := util.KeyStore()
 
@@ -92,7 +92,7 @@ var newCmd = &cobra.Command{
 }
 
 func init() {
-	keysCmd.AddCommand(newCmd)
+	walletCmd.AddCommand(newCmd)
 
 	//TODO: add flags that allow for specific keys to be generated
 }
