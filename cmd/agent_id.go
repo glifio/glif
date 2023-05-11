@@ -15,7 +15,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// pullCmd represents the pull command
 var idCmd = &cobra.Command{
 	Use:   "id",
 	Short: "Fetches the Agent ID (uses the address in agent.toml by default)",

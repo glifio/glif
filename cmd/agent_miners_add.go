@@ -1,5 +1,5 @@
 /*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
+Copyright © 2023 Glif LTD
 */
 package cmd
 
@@ -14,12 +14,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// changeWorkerCmd represents the changeWorker command
-var changeWorkerCmd = &cobra.Command{
-	Use:   "change-worker",
-	Short: "Change the worker address of your miner",
+// addCmd represents the add command
+var addCmd = &cobra.Command{
+	Use:   "add [miner address]",
+	Short: "Add a miner id to the agent",
 	Long:  ``,
-	Args:  cobra.RangeArgs(2, 5),
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, ownerKey, err := commonSetupOwnerCall()
 		if err != nil {
@@ -35,26 +34,12 @@ var changeWorkerCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		workerAddr, err := address.NewFromString(args[1])
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		var controlAddrs []address.Address
-		for _, arg := range args[2:] {
-			controlAddr, err := address.NewFromString(arg)
-			if err != nil {
-				log.Fatal(err)
-			}
-			controlAddrs = append(controlAddrs, controlAddr)
-		}
-
-		log.Printf("Changing worker address for miner %s to %s", minerAddr, workerAddr)
+		log.Printf("Adding miner %s to agent %s", minerAddr, agentAddr)
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 
-		tx, err := fevm.Connection().ChangeWorker(cmd.Context(), agentAddr, minerAddr, workerAddr, controlAddrs, ownerKey)
+		tx, err := fevm.Connection().AddMiner(cmd.Context(), agentAddr, minerAddr, ownerKey)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -80,5 +65,5 @@ var changeWorkerCmd = &cobra.Command{
 }
 
 func init() {
-	minerCmd.AddCommand(changeWorkerCmd)
+	minersCmd.AddCommand(addCmd)
 }
