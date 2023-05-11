@@ -3,7 +3,6 @@ package fevm
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/big"
 	"time"
 
@@ -38,7 +37,7 @@ func WaitForNextBlock(ctx context.Context, c *ethclient.Client, current *big.Int
 	}
 }
 
-func waitForReceipt(hash common.Hash, client *ethclient.Client) *types.Receipt {
+func waitForReceipt(hash common.Hash, client *ethclient.Client) (*types.Receipt, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 480*time.Second)
 	defer cancel()
 
@@ -52,7 +51,7 @@ func waitForReceipt(hash common.Hash, client *ethclient.Client) *types.Receipt {
 	select {
 	case <-ctx.Done():
 		s.Stop()
-		log.Fatal("Timed out waiting for transaction.")
+		return nil, fmt.Errorf("timed out waiting for transaction")
 	case receipt = <-ch:
 		msg := fmt.Sprintf(" Receipt received at block %v. Waiting for next block.\n", receipt.BlockNumber)
 		s.Suffix = msg
@@ -62,33 +61,39 @@ func waitForReceipt(hash common.Hash, client *ethclient.Client) *types.Receipt {
 		select {
 		case <-ctx.Done():
 			s.Stop()
-			log.Fatal("Timed out waiting for transaction.")
+			return nil, fmt.Errorf("timed out waiting for transaction")
 		case <-ch:
 			s.Stop()
 			fmt.Println("Transaction receipt received.")
 			fmt.Printf("Status: %v\n", receipt.Status)
-			return receipt
+			return receipt, nil
 		}
 	}
-	return receipt
 }
 
-func WaitForReceipt(hash common.Hash) {
+func WaitForReceipt(hash common.Hash) error {
 	eapi, err := Connection().ConnectEthClient()
 	if err != nil {
-		log.Fatalf("Failed to instantiate eth client %s", err)
+		return err
 	}
 	defer eapi.Close()
 
-	waitForReceipt(hash, eapi)
+	if _, err := waitForReceipt(hash, eapi); err != nil {
+		return err
+	}
+	return nil
 }
 
-func WaitReturnReceipt(hash common.Hash) *types.Receipt {
+func WaitReturnReceipt(hash common.Hash) (*types.Receipt, error) {
 	eapi, err := Connection().ConnectEthClient()
 	if err != nil {
-		log.Fatalf("Failed to instantiate eth client %s", err)
+		return nil, err
 	}
 	defer eapi.Close()
 
-	return waitForReceipt(hash, eapi)
+	var receipt *types.Receipt
+	if receipt, err = waitForReceipt(hash, eapi); err != nil {
+		return nil, err
+	}
+	return receipt, nil
 }

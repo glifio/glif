@@ -50,7 +50,11 @@ var withdrawCmd = &cobra.Command{
 		}
 
 		// transaction landed on chain or errored
-		receipt := fevm.WaitReturnReceipt(tx.Hash())
+		receipt, err := fevm.WaitReturnReceipt(tx.Hash())
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		if receipt == nil {
 			log.Fatal("Failed to get receipt")
 		}

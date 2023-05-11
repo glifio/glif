@@ -44,7 +44,7 @@ var borrowCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Borrowing %s FIL from the %s into agent %s", poolID, agentAddr)
+		fmt.Printf("Borrowing %s FIL from the %s into agent %s", amount, poolID, agentAddr)
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
@@ -55,7 +55,11 @@ var borrowCmd = &cobra.Command{
 		}
 
 		// transaction landed on chain or errored
-		receipt := fevm.WaitReturnReceipt(tx.Hash())
+		receipt, err := fevm.WaitReturnReceipt(tx.Hash())
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		if receipt == nil {
 			log.Fatal("Failed to get receipt")
 		}
