@@ -69,6 +69,6 @@ var pushCmd = &cobra.Command{
 }
 
 func init() {
-	agentCmd.AddCommand(pushCmd)
+	minersCmd.AddCommand(pushCmd)
 	pushCmd.Flags().String("from", "", "address of the owner or operator of the agent")
 }

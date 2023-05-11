@@ -1,5 +1,5 @@
 /*
-Copyright © 2023 Glif LTD 
+Copyright © 2023 Glif LTD
 */
 package cmd
 
@@ -8,12 +8,12 @@ import (
 )
 
 // minerCmd represents the miner command
-var minerCmd = &cobra.Command{
-	Use: "miner",
+var minersCmd = &cobra.Command{
+	Use: "miners",
 }
 
 func init() {
-	agentCmd.AddCommand(minerCmd)
+	agentCmd.AddCommand(minersCmd)
 
 	// Here you will define your flags and configuration settings.
 
