@@ -13,10 +13,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// pull represents the pull command
-var pullCmd = &cobra.Command{
-	Use:   "pull-funds [amount] [miner address]",
-	Short: "Pull FIL from a miner into your Glif Agent",
+// pushCmd represents the push command
+var pushCmd = &cobra.Command{
+	Use:   "push-funds [amount] [miner address]",
+	Short: "Push FIL from the Glif Agent to a specific Miner ID",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, pk, err := commonOwnerOrOperatorSetup(cmd)
@@ -38,18 +38,22 @@ var pullCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Pulling %s FIL from %s", amount.String(), minerAddr.String())
+		fmt.Printf("Pushing %s FIL to %s", amount.String(), minerAddr.String())
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 
-		tx, err := fevm.Connection().AgentPullFunds(cmd.Context(), agentAddr, amount, minerAddr, pk)
+		tx, err := fevm.Connection().AgentPushFunds(cmd.Context(), agentAddr, amount, minerAddr, pk)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		// transaction landed on chain or errored
-		receipt := fevm.WaitReturnReceipt(tx.Hash())
+		receipt, err := fevm.WaitReturnReceipt(tx.Hash())
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		if receipt == nil {
 			log.Fatal("Failed to get receipt")
 		}
@@ -60,11 +64,11 @@ var pullCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Successfully pull funds up from miner %s", minerAddr)
+		fmt.Printf("Successfully pushed funds down to miner %s", minerAddr)
 	},
 }
 
 func init() {
-	agentCmd.AddCommand(pullCmd)
-	pullCmd.Flags().String("from", "", "address of the owner or operator of the agent")
+	minersCmd.AddCommand(pushCmd)
+	pushCmd.Flags().String("from", "", "address of the owner or operator of the agent")
 }

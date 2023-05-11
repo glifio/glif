@@ -19,8 +19,8 @@ import (
 )
 
 // addCmd represents the add command
-var minerChangeOwnerCmd = &cobra.Command{
-	Use:   "miner-change-owner [miner address]",
+var changeOwnerCmd = &cobra.Command{
+	Use:   "change-owner [miner address]",
 	Short: "Proposes an ownership change to your miner to prepare it for pledging to the Agent.",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -100,5 +100,5 @@ var minerChangeOwnerCmd = &cobra.Command{
 }
 
 func init() {
-	agentCmd.AddCommand(minerChangeOwnerCmd)
+	minersCmd.AddCommand(changeOwnerCmd)
 }
