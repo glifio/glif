@@ -36,7 +36,7 @@ var agentLvlCmd = &cobra.Command{
 			log.Fatalf("could not convert agent id %s to big.Int", agentIDStr)
 		}
 
-		fmt.Println("Querying the level of AgentID %s", agentID.String())
+		fmt.Printf("Querying the level of AgentID %s", agentID.String())
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
