@@ -4,7 +4,6 @@ Copyright © 2023 Glif LTD
 package cmd
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -23,8 +22,6 @@ var idCmd = &cobra.Command{
 		as := util.AgentStore()
 
 		address := cmd.Flag("address").Value.String()
-
-		fmt.Println(address)
 
 		if address == "" {
 			// Check if an agent already exists
