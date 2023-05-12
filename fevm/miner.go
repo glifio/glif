@@ -3,6 +3,7 @@ package fevm
 import (
 	"context"
 	"crypto/ecdsa"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -162,4 +163,39 @@ func (c *FEVMConnection) ChangeWorker(
 	}
 
 	return tx, nil
+}
+
+func (c *FEVMConnection) MinersList(ctx context.Context, agentID *big.Int) ([]address.Address, error) {
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+
+	minerRegistryCaller, err := abigen.NewMinerRegistryCaller(c.MinerRegistryAddr, client)
+	if err != nil {
+		return nil, err
+	}
+
+	agentMinersCount, err := minerRegistryCaller.MinersCount(nil, agentID)
+	if err != nil {
+		return nil, err
+	}
+
+	var miners []address.Address
+	for i := big.NewInt(0); i.Cmp(agentMinersCount) < 0; i.Add(i, big.NewInt(1)) {
+		minerID, err := minerRegistryCaller.GetMiner(nil, agentID, i)
+		if err != nil {
+			return nil, err
+		}
+
+		minerAddr, err := address.NewIDAddress(minerID)
+		if err != nil {
+			return nil, err
+		}
+
+		miners = append(miners, minerAddr)
+	}
+
+	return miners, nil
 }
