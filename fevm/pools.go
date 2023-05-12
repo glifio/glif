@@ -41,6 +41,31 @@ func (c *FEVMConnection) PoolsList() ([]common.Address, error) {
 	return pools, nil
 }
 
+func (c *FEVMConnection) PoolGetAccount(ctx context.Context, poolAddr common.Address, agentID *big.Int) (abigen.Account, error) {
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return abigen.Account{}, err
+	}
+	defer client.Close()
+
+	poolRegCaller, err := abigen.NewInfinityPoolCaller(poolAddr, client)
+	if err != nil {
+		return abigen.Account{}, err
+	}
+
+	id, err := poolRegCaller.Id(nil)
+	if err != nil {
+		return abigen.Account{}, err
+	}
+
+	routerCaller, err := abigen.NewRouterCaller(c.RouterAddr, client)
+	if err != nil {
+		return abigen.Account{}, err
+	}
+
+	return routerCaller.GetAccount(nil, agentID, id)
+}
+
 func (c *FEVMConnection) PoolAvailableLiquidity(ctx context.Context, poolAddr common.Address) (float64, error) {
 	client, err := c.ConnectEthClient()
 	if err != nil {
