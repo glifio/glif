@@ -20,17 +20,14 @@ import (
 
 // addCmd represents the add command
 var changeOwnerCmd = &cobra.Command{
-	Use:   "change-owner [miner address]",
+	Use:   "change-owner <miner address>",
 	Short: "Proposes an ownership change to your miner to prepare it for pledging to the Agent.",
 	Long:  ``,
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, _, err := commonSetupOwnerCall()
 		if err != nil {
 			log.Fatal(err)
-		}
-
-		if len(args) != 1 {
-			log.Fatal("Please provide a miner address")
 		}
 
 		minerAddr, err := address.NewFromString(args[0])
