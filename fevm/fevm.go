@@ -66,7 +66,7 @@ func WriteTx(
 	// Get the transaction and error from the result
 	tx := result[0].Interface().(*types.Transaction)
 
-	fmt.Printf("Transaction: %s", tx.Hash())
+	fmt.Println("Transaction:", tx.Hash())
 
 	return tx, err
 }
