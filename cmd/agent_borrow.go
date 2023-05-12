@@ -18,15 +18,12 @@ import (
 var borrowCmd = &cobra.Command{
 	Use:   "borrow [amount] [pool-name]",
 	Short: "Borrow FIL from a Pool",
+	Args:  cobra.RangeArgs(1, 2),
 	Long:  "Borrow FIL from a Pool. If you do not pass a `pool-name` arg,tThe default pool is the Infinity Pool.",
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, ownerKey, err := commonSetupOwnerCall()
 		if err != nil {
 			log.Fatal(err)
-		}
-
-		if len(args) != 1 {
-			log.Fatal("Please provide an amount")
 		}
 
 		amount, err := parseFILAmount(args[0])
@@ -38,7 +35,13 @@ var borrowCmd = &cobra.Command{
 			log.Fatal("Borrow amount must be greater than 1 FIL")
 		}
 
-		poolName := args[1]
+		var poolName string
+		if len(args) == 1 {
+			poolName = "infinity"
+		} else {
+			poolName = args[1]
+		}
+
 		poolID, err := parsePoolType(poolName)
 		if err != nil {
 			log.Fatal(err)
@@ -70,7 +73,7 @@ var borrowCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Successfully borrowed %s FIL", amount)
+		fmt.Printf("Successfully borrowed %s FIL", args[0])
 	},
 }
 
