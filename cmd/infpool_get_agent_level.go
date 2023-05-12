@@ -6,12 +6,10 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/glif-confidential/cli/fevm"
-	"github.com/glif-confidential/cli/util"
 	"github.com/spf13/cobra"
 )
 
@@ -20,20 +18,9 @@ var agentLvlCmd = &cobra.Command{
 	Short: "Gets the level of the Agent within the Infinity Pool",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		agentIDStr := cmd.Flag("agent-id").Value.String()
-		if agentIDStr == "" {
-			as := util.AgentStore()
-			storedAgent, err := as.Get("id")
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			agentIDStr = storedAgent
-		}
-
-		agentID := new(big.Int)
-		if _, ok := agentID.SetString(agentIDStr, 10); !ok {
-			log.Fatalf("could not convert agent id %s to big.Int", agentIDStr)
+		agentID, err := getAgentID(cmd)
+		if err != nil {
+			log.Fatal(err)
 		}
 
 		fmt.Printf("Querying the level of AgentID %s", agentID.String())

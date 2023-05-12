@@ -13,8 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// pushCmd represents the push command
-var pushCmd = &cobra.Command{
+var pushFundsCmd = &cobra.Command{
 	Use:   "push-funds <amount> <miner address>",
 	Short: "Push FIL from the Glif Agent to a specific Miner ID",
 	Long:  ``,
@@ -34,8 +33,6 @@ var pushCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		fmt.Printf("Pushing %s FIL to %s", amount.String(), minerAddr.String())
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
@@ -66,6 +63,6 @@ var pushCmd = &cobra.Command{
 }
 
 func init() {
-	minersCmd.AddCommand(pushCmd)
-	pushCmd.Flags().String("from", "", "address of the owner or operator of the agent")
+	minersCmd.AddCommand(pushFundsCmd)
+	pushFundsCmd.Flags().String("from", "", "address of the owner or operator of the agent")
 }

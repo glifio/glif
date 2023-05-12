@@ -20,23 +20,9 @@ var getAccountCmd = &cobra.Command{
 	Short: "Gets the details associated with an active account borrowing from the Infinity Pool",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		var agentIDStr string
-
-		if cmd.Flag("agent-id") != nil && cmd.Flag("agent-id").Changed {
-			agentIDStr = cmd.Flag("agent-id").Value.String()
-		} else {
-			as := util.AgentStore()
-			storedAgent, err := as.Get("id")
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			agentIDStr = storedAgent
-		}
-
-		agentID := new(big.Int)
-		if _, ok := agentID.SetString(agentIDStr, 10); !ok {
-			log.Fatalf("could not convert agent id %s to big.Int", agentIDStr)
+		agentID, err := getAgentID(cmd)
+		if err != nil {
+			log.Fatal(err)
 		}
 
 		fmt.Printf("Querying the Account of AgentID %s", agentID.String())
