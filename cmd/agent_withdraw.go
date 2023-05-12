@@ -16,9 +16,10 @@ import (
 
 // borrowCmd represents the borrow command
 var withdrawCmd = &cobra.Command{
-	Use:   "withdraw [amount]",
+	Use:   "withdraw <amount>",
 	Short: "Withdraw FIL from your Agent.",
 	Long:  "",
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, ownerKey, err := commonSetupOwnerCall()
 		if err != nil {
@@ -28,10 +29,6 @@ var withdrawCmd = &cobra.Command{
 		receiver := agentAddr
 		if cmd.Flag("recipient").Changed {
 			receiver = common.HexToAddress(cmd.Flag("recipient").Value.String())
-		}
-
-		if len(args) != 1 {
-			log.Fatal("Please provide an amount")
 		}
 
 		amount, err := parseFILAmount(args[1])

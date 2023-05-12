@@ -94,7 +94,7 @@ var iFILTransferCmd = &cobra.Command{
 }
 
 var iFILApproveCmd = &cobra.Command{
-	Use:   "approve [spender] [allowance]",
+	Use:   "approve <spender> <allowance>",
 	Short: "Approve another address to spend your iFIL",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {

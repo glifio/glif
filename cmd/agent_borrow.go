@@ -16,10 +16,10 @@ import (
 
 // borrowCmd represents the borrow command
 var borrowCmd = &cobra.Command{
-	Use:   "borrow [amount] [pool-name]",
+	Use:   "borrow <amount> [pool-name]",
 	Short: "Borrow FIL from a Pool",
+	Long:  "Borrow FIL from a Pool. If you do not pass a `pool-name` arg, the default pool is the Infinity Pool.",
 	Args:  cobra.RangeArgs(1, 2),
-	Long:  "Borrow FIL from a Pool. If you do not pass a `pool-name` arg,tThe default pool is the Infinity Pool.",
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, ownerKey, err := commonSetupOwnerCall()
 		if err != nil {

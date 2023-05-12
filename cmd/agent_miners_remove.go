@@ -16,17 +16,14 @@ import (
 
 // addCmd represents the add command
 var rmCmd = &cobra.Command{
-	Use:   "remove [miner address] [new owner address]",
+	Use:   "remove <miner address> <new owner address>",
 	Short: "Remove a miner from your agent",
 	Long:  "Removes a specific miner from your Agent by assigning its owner to `new owner address`",
+	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, ownerKey, err := commonSetupOwnerCall()
 		if err != nil {
 			log.Fatal(err)
-		}
-
-		if len(args) != 2 {
-			log.Fatal("Please provide a miner and recipient address")
 		}
 
 		minerAddr, err := address.NewFromString(args[0])
