@@ -26,10 +26,6 @@ var changeWorkerCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		if len(args) != 1 {
-			log.Fatal("Please provide a miner address")
-		}
-
 		minerAddr, err := address.NewFromString(args[0])
 		if err != nil {
 			log.Fatal(err)

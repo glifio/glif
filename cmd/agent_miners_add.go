@@ -16,17 +16,14 @@ import (
 
 // addCmd represents the add command
 var addCmd = &cobra.Command{
-	Use:   "add [miner address]",
+	Use:   "add <miner address>",
 	Short: "Add a miner id to the agent",
 	Long:  ``,
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, ownerKey, err := commonSetupOwnerCall()
 		if err != nil {
 			log.Fatal(err)
-		}
-
-		if len(args) != 1 {
-			log.Fatal("Please provide a miner address")
 		}
 
 		minerAddr, err := address.NewFromString(args[0])
