@@ -14,7 +14,7 @@ import (
 )
 
 // pull represents the pull command
-var pullCmd = &cobra.Command{
+var pullFundsCmd = &cobra.Command{
 	Use:   "pull-funds <amount> <miner address>",
 	Short: "Pull FIL from a miner into your Glif Agent",
 	Long:  ``,
@@ -62,6 +62,6 @@ var pullCmd = &cobra.Command{
 }
 
 func init() {
-	minersCmd.AddCommand(pullCmd)
-	pullCmd.Flags().String("from", "", "address of the owner or operator of the agent")
+	minersCmd.AddCommand(pullFundsCmd)
+	pullFundsCmd.Flags().String("from", "", "address of the owner or operator of the agent")
 }

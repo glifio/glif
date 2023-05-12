@@ -10,16 +10,22 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/glif-confidential/cli/fevm"
+	"github.com/glif-confidential/cli/util"
 	"github.com/spf13/cobra"
 )
 
-var pushFundsCmd = &cobra.Command{
-	Use:   "push-funds <amount> <miner address>",
-	Short: "Push FIL from the Glif Agent to a specific Miner ID",
+var depositFILCmd = &cobra.Command{
+	Use:   "deposit-fil [amount]",
+	Short: "Deposit FIL into the Infinity Pool",
+	Args:  cobra.ExactArgs(1),
 	Long:  ``,
-	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, pk, err := commonOwnerOrOperatorSetup(cmd)
+		_, pk, err := commonOwnerOrOperatorSetup(cmd)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		receiver, err := util.DeriveAddressFromPk(pk)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -29,15 +35,14 @@ var pushFundsCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		minerAddr, err := fevm.Connection().ToMinerID(args[1])
-		if err != nil {
-			log.Fatal(err)
-		}
+		fmt.Printf("Depositing %s FIL into the Infinity Pool", amount.String())
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 
-		tx, err := fevm.Connection().AgentPushFunds(cmd.Context(), agentAddr, amount, minerAddr, pk)
+		conn := fevm.Connection()
+
+		tx, err := conn.PoolDepositFIL(cmd.Context(), conn.InfinityPoolAddr, receiver, amount, pk)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -58,11 +63,11 @@ var pushFundsCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Successfully pushed funds down to miner %s", minerAddr)
+		fmt.Printf("Successfully deposited funds into the Infinity Pool")
 	},
 }
 
 func init() {
-	minersCmd.AddCommand(pushFundsCmd)
-	pushFundsCmd.Flags().String("from", "", "address of the owner or operator of the agent")
+	infinitypoolCmd.AddCommand(depositFILCmd)
+	depositFILCmd.Flags().String("from", "", "address of the owner or operator of the agent")
 }

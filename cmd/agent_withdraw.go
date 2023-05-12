@@ -26,12 +26,24 @@ var withdrawCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		receiver := agentAddr
-		if cmd.Flag("recipient").Changed {
+		conn := fevm.Connection()
+
+		var receiver common.Address
+		if cmd.Flag("recipient") != nil && cmd.Flag("recipient").Changed {
 			receiver = common.HexToAddress(cmd.Flag("recipient").Value.String())
+		} else {
+			// if no recipient is specified, use the agent's owner
+			receiver, err = conn.AgentOwner(cmd.Context(), agentAddr)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
-		amount, err := parseFILAmount(args[1])
+		if common.IsHexAddress(receiver.String()) {
+			log.Fatal("Invalid withdraw address")
+		}
+
+		amount, err := parseFILAmount(args[0])
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -41,7 +53,7 @@ var withdrawCmd = &cobra.Command{
 
 		fmt.Printf("Withdrawing %s FIL from your Agent...", args[0])
 
-		tx, err := fevm.Connection().AgentWithdraw(cmd.Context(), agentAddr, receiver, amount, ownerKey)
+		tx, err := conn.AgentWithdraw(cmd.Context(), agentAddr, receiver, amount, ownerKey)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -62,7 +74,7 @@ var withdrawCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Successfully borrowed %s FIL", amount)
+		fmt.Printf("Successfully withdrew %s FIL", args[0])
 	},
 }
 

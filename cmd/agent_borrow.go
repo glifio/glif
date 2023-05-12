@@ -16,7 +16,7 @@ import (
 
 // borrowCmd represents the borrow command
 var borrowCmd = &cobra.Command{
-	Use:   "borrow <amount> [pool-name]",
+	Use:   "borrow <amount> [flags]",
 	Short: "Borrow FIL from a Pool",
 	Long:  "Borrow FIL from a Pool. If you do not pass a `pool-name` arg, the default pool is the Infinity Pool.",
 	Args:  cobra.RangeArgs(1, 2),
@@ -35,7 +35,8 @@ var borrowCmd = &cobra.Command{
 			log.Fatal("Borrow amount must be greater than 1 FIL")
 		}
 
-		poolName := args[1]
+		poolName := cmd.Flag("pool-name").Value.String()
+
 		poolID, err := parsePoolType(poolName)
 		if err != nil {
 			log.Fatal(err)
@@ -67,10 +68,11 @@ var borrowCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Successfully borrowed %s FIL", amount)
+		fmt.Printf("Successfully borrowed %s FIL", args[0])
 	},
 }
 
 func init() {
 	agentCmd.AddCommand(borrowCmd)
+	borrowCmd.Flags().String("pool-name", "infinity-pool", "name of the pool to borrow from")
 }

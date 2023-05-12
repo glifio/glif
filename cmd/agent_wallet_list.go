@@ -10,10 +10,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// newCmd represents the new command
-var getCmd = &cobra.Command{
-	Use:   "get",
-	Short: "Gets the addresses associated with your owner, operator, and requester keys",
+var listCmd = &cobra.Command{
+	Use:   "list",
+	Short: "Lists the addresses associated with your owner, operator, and requester keys",
 	Run: func(cmd *cobra.Command, args []string) {
 		ks := util.KeyStore()
 		ownerEvm, ownerFevm, err := ks.GetAddrs(util.OwnerKey)
@@ -31,12 +30,12 @@ var getCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		log.Printf("Owner address: %s (ETH), %s (FIL)", ownerEvm, ownerFevm)
-		log.Printf("Operator address: %s (ETH), %s (FIL)", operatorEvm, operatorFevm)
-		log.Printf("Requester address: %s (ETH), %s (FIL)", requestEvm, requestFevm)
+		log.Printf("Owner address: %s (EVM), %s (FIL)", ownerEvm, ownerFevm)
+		log.Printf("Operator address: %s (EVM), %s (FIL)", operatorEvm, operatorFevm)
+		log.Printf("Requester address: %s (EVM), %s (FIL)", requestEvm, requestFevm)
 	},
 }
 
 func init() {
-	keysCmd.AddCommand(getCmd)
+	walletCmd.AddCommand(listCmd)
 }

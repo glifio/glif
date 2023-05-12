@@ -16,12 +16,13 @@ type FEVMConnection struct {
 	LotusRpcUrl       string
 	EthRpcUrl         string
 	ChainID           int64
-	RouterAddress     common.Address
+	RouterAddr        common.Address
 	IFILAddr          common.Address
 	InfinityPoolAddr  common.Address
 	AgentFactoryAddr  common.Address
 	PoolRegistryAddr  common.Address
 	MinerRegistryAddr common.Address
+	AgentPoliceAddr   common.Address
 }
 
 var connection *FEVMConnection
@@ -50,12 +51,13 @@ func InitFEVMConnection(ctx context.Context) error {
 		LotusRpcUrl:       ethRpcUrl,
 		EthRpcUrl:         ethRpcUrl,
 		ChainID:           chainID.Int64(),
-		RouterAddress:     common.HexToAddress(viper.GetString("routes.router")),
+		RouterAddr:        common.HexToAddress(viper.GetString("routes.router")),
 		IFILAddr:          common.HexToAddress(viper.GetString("routes.ifil")),
 		InfinityPoolAddr:  common.HexToAddress(viper.GetString("routes.infinity-pool")),
 		AgentFactoryAddr:  common.HexToAddress(viper.GetString("routes.agent-factory")),
 		PoolRegistryAddr:  common.HexToAddress(viper.GetString("routes.pool-registry")),
 		MinerRegistryAddr: common.HexToAddress(viper.GetString("routes.miner-registry")),
+		AgentPoliceAddr:   common.HexToAddress(viper.GetString("routes.agent-police")),
 	}
 
 	return nil

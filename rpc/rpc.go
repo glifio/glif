@@ -8,6 +8,7 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-jsonrpc"
 	abigen "github.com/glif-confidential/abigen/bindings"
+	"github.com/glif-confidential/vc"
 )
 
 var ADOClient struct {
@@ -21,5 +22,13 @@ var ADOClient struct {
 }
 
 func NewADOClient(ctx context.Context, rpcurl string) (jsonrpc.ClientCloser, error) {
-	return jsonrpc.NewClient(ctx, rpcurl, "Agent", &ADOClient, nil)
+	return jsonrpc.NewClient(ctx, rpcurl, "Mock", &ADOClient, nil)
+}
+
+var MinerInfoClient struct {
+	Info func(context.Context, []address.Address) (vc.VerifiableCredential, error)
+}
+
+func NewMinerInfoClient(ctx context.Context, rpcurl string) (jsonrpc.ClientCloser, error) {
+	return jsonrpc.NewClient(ctx, rpcurl, "Miner", &ADOClient, nil)
 }

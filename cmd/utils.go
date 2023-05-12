@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"errors"
+	"log"
 	"math/big"
 	"strings"
 
@@ -96,6 +97,7 @@ func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.Priv
 	// if no flag was passed, we just use the operator address by default
 	from := cmd.Flag("from").Value.String()
 	if from == "" {
+		from = opEvm.String()
 		pk, err = ks.GetPrivate(util.OperatorKey)
 	} else if from == opEvm.String() || from == opFevm.String() {
 		pk, err = ks.GetPrivate(util.OperatorKey)
@@ -135,7 +137,7 @@ var poolNames = map[string]PoolType{
 
 func parsePoolType(pool string) (*big.Int, error) {
 	if pool == "" {
-		return big.NewInt(int64(InfinityPool)), nil
+		return common.Big0, errors.New("Invalid pool name")
 	}
 
 	poolType, ok := poolNames[pool]
@@ -153,4 +155,50 @@ func parseFILAmount(amount string) (*big.Int, error) {
 	}
 
 	return util.ToAtto(amt), nil
+}
+
+func getAgentAddress(cmd *cobra.Command) (common.Address, error) {
+	as := util.AgentStore()
+
+	agentAddrStr := cmd.Flag("address").Value.String()
+
+	if agentAddrStr == "" {
+		// Check if an agent already exists
+		cachedAddr, err := as.Get("address")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		agentAddrStr = cachedAddr
+
+		if agentAddrStr == "" {
+			log.Fatalf("Did you forget to create your agent or specify an address? Try `glif agent id --address <address>`")
+		}
+
+	}
+
+	return common.HexToAddress(agentAddrStr), nil
+}
+
+func getAgentID(cmd *cobra.Command) (*big.Int, error) {
+	var agentIDStr string
+
+	if cmd.Flag("agent-id") != nil && cmd.Flag("agent-id").Changed {
+		agentIDStr = cmd.Flag("agent-id").Value.String()
+	} else {
+		as := util.AgentStore()
+		storedAgent, err := as.Get("id")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		agentIDStr = storedAgent
+	}
+
+	agentID := new(big.Int)
+	if _, ok := agentID.SetString(agentIDStr, 10); !ok {
+		log.Fatalf("could not convert agent id %s to big.Int", agentIDStr)
+	}
+
+	return agentID, nil
 }

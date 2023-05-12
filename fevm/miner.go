@@ -3,6 +3,7 @@ package fevm
 import (
 	"context"
 	"crypto/ecdsa"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -43,7 +44,7 @@ func (c *FEVMConnection) AddMiner(
 
 	args := []interface{}{sc}
 
-	tx, err := WriteTx(ctx, pk, client, args, agentTransactor.AddMiner, "Agent Add Miner")
+	tx, err := WriteTx(ctx, pk, client, common.Big0, args, agentTransactor.AddMiner, "Agent Add Miner")
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +81,7 @@ func (c *FEVMConnection) RemoveMiner(
 
 	args := []interface{}{newOwnerAddr, sc}
 
-	tx, err := WriteTx(ctx, pk, client, args, agentTransactor.RemoveMiner, "Agent Remove Miner")
+	tx, err := WriteTx(ctx, pk, client, common.Big0, args, agentTransactor.RemoveMiner, "Agent Remove Miner")
 	if err != nil {
 		return nil, err
 	}
@@ -156,10 +157,45 @@ func (c *FEVMConnection) ChangeWorker(
 
 	args := []interface{}{minerID, workerID, controlIDs}
 
-	tx, err := WriteTx(ctx, pk, client, args, agentTransactor.ChangeMinerWorker, "Agent Change Miner Worker")
+	tx, err := WriteTx(ctx, pk, client, common.Big0, args, agentTransactor.ChangeMinerWorker, "Agent Change Miner Worker")
 	if err != nil {
 		return nil, err
 	}
 
 	return tx, nil
+}
+
+func (c *FEVMConnection) MinersList(ctx context.Context, agentID *big.Int) ([]address.Address, error) {
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+
+	minerRegistryCaller, err := abigen.NewMinerRegistryCaller(c.MinerRegistryAddr, client)
+	if err != nil {
+		return nil, err
+	}
+
+	agentMinersCount, err := minerRegistryCaller.MinersCount(nil, agentID)
+	if err != nil {
+		return nil, err
+	}
+
+	var miners []address.Address
+	for i := big.NewInt(0); i.Cmp(agentMinersCount) < 0; i.Add(i, big.NewInt(1)) {
+		minerID, err := minerRegistryCaller.GetMiner(nil, agentID, i)
+		if err != nil {
+			return nil, err
+		}
+
+		minerAddr, err := address.NewIDAddress(minerID)
+		if err != nil {
+			return nil, err
+		}
+
+		miners = append(miners, minerAddr)
+	}
+
+	return miners, nil
 }

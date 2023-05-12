@@ -36,6 +36,46 @@ func (c *FEVMConnection) AgentID(ctx context.Context, address common.Address) (*
 	return agentID, nil
 }
 
+func (c *FEVMConnection) AgentOwner(ctx context.Context, address common.Address) (common.Address, error) {
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return common.Address{}, err
+	}
+	defer client.Close()
+
+	agentCaller, err := abigen.NewAgentCaller(address, client)
+	if err != nil {
+		return common.Address{}, err
+	}
+
+	owner, err := agentCaller.Owner(nil)
+	if err != nil {
+		return common.Address{}, err
+	}
+
+	return owner, nil
+}
+
+func (c *FEVMConnection) AgentAssets(ctx context.Context, address common.Address) (*big.Int, error) {
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+
+	agentCaller, err := abigen.NewAgentCaller(address, client)
+	if err != nil {
+		return nil, err
+	}
+
+	assets, err := agentCaller.LiquidAssets(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return assets, nil
+}
+
 func (c *FEVMConnection) AgentCreate(ctx context.Context, deployerPk *ecdsa.PrivateKey, owner common.Address, operator common.Address, request common.Address) (*types.Transaction, error) {
 	client, err := c.ConnectEthClient()
 	if err != nil {
@@ -50,7 +90,7 @@ func (c *FEVMConnection) AgentCreate(ctx context.Context, deployerPk *ecdsa.Priv
 
 	args := []interface{}{owner, operator, request}
 
-	return WriteTx(ctx, deployerPk, client, args, agentFactoryTransactor.Create, "Agent Create")
+	return WriteTx(ctx, deployerPk, client, common.Big0, args, agentFactoryTransactor.Create, "Agent Create")
 }
 
 func (c *FEVMConnection) AgentAddrID(ctx context.Context, receipt *types.Receipt) (*big.Int, common.Address, error) {
@@ -146,14 +186,14 @@ func (c *FEVMConnection) AgentPullFunds(
 		return nil, err
 	}
 
-	agentTransactor, err := abigen.NewAgentTransactor(c.AgentFactoryAddr, client)
+	agentTransactor, err := abigen.NewAgentTransactor(agentAddr, client)
 	if err != nil {
 		return nil, err
 	}
 
 	args := []interface{}{sc}
 
-	return WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, agentTransactor.PullFunds, "Agent Pull Funds")
+	return WriteTx(ctx, pk, client, common.Big0, args, agentTransactor.PullFunds, "Agent Pull Funds")
 }
 
 // AgentPushFunds pushes funds from the agent to a miner
@@ -211,14 +251,14 @@ func (c *FEVMConnection) AgentPushFunds(
 		return nil, err
 	}
 
-	agentTransactor, err := abigen.NewAgentTransactor(c.AgentFactoryAddr, client)
+	agentTransactor, err := abigen.NewAgentTransactor(agentAddr, client)
 	if err != nil {
 		return nil, err
 	}
 
 	args := []interface{}{sc}
 
-	return WriteTx(ctx, &ecdsa.PrivateKey{}, client, args, agentTransactor.PushFunds, "Agent Push Funds")
+	return WriteTx(ctx, pk, client, common.Big0, args, agentTransactor.PushFunds, "Agent Push Funds")
 }
 
 func (c *FEVMConnection) AgentBorrow(
@@ -252,7 +292,7 @@ func (c *FEVMConnection) AgentBorrow(
 
 	args := []interface{}{poolID, sc}
 
-	return WriteTx(ctx, pk, client, args, agentTransactor.Borrow, "Agent Borrow")
+	return WriteTx(ctx, pk, client, common.Big0, args, agentTransactor.Borrow, "Agent Borrow")
 }
 
 func (c *FEVMConnection) AgentWithdraw(
@@ -286,5 +326,5 @@ func (c *FEVMConnection) AgentWithdraw(
 
 	args := []interface{}{receiver, sc}
 
-	return WriteTx(ctx, pk, client, args, agentTransactor.Withdraw, "Agent Withdraw")
+	return WriteTx(ctx, pk, client, common.Big0, args, agentTransactor.Withdraw, "Agent Withdraw")
 }
