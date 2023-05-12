@@ -15,7 +15,7 @@ import (
 )
 
 var depositFILCmd = &cobra.Command{
-	Use:   "deposit-fil [amount] [flags]",
+	Use:   "deposit-fil [amount]",
 	Short: "Deposit FIL into the Infinity Pool",
 	Args:  cobra.ExactArgs(1),
 	Long:  ``,
@@ -35,7 +35,7 @@ var depositFILCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Depositing %s FIL into the Infinity Pool %s", amount.String())
+		fmt.Printf("Depositing %s FIL into the Infinity Pool", amount.String())
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
