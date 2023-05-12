@@ -135,7 +135,7 @@ var poolNames = map[string]PoolType{
 
 func parsePoolType(pool string) (*big.Int, error) {
 	if pool == "" {
-		return big.NewInt(int64(InfinityPool)), nil
+		return common.Big0, errors.New("Invalid pool name")
 	}
 
 	poolType, ok := poolNames[pool]
