@@ -8,6 +8,7 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-jsonrpc"
 	abigen "github.com/glif-confidential/abigen/bindings"
+	ado "github.com/glif-confidential/ado/rpc"
 	"github.com/glif-confidential/vc"
 )
 
@@ -19,6 +20,7 @@ var ADOClient struct {
 	PullFunds   func(context.Context, common.Address, *big.Int, address.Address) (abigen.SignedCredential, error)
 	AddMiner    func(context.Context, common.Address, address.Address) (abigen.SignedCredential, error)
 	RemoveMiner func(context.Context, common.Address, address.Address) (abigen.SignedCredential, error)
+	AmountOwed  func(context.Context, common.Address, *big.Int) (ado.AgentOwed, error)
 }
 
 func NewADOClient(ctx context.Context, rpcurl string) (jsonrpc.ClientCloser, error) {
