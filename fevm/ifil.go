@@ -8,27 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	abigen "github.com/glif-confidential/abigen/bindings"
-	"github.com/glif-confidential/cli/util"
 )
-
-func (c *FEVMConnection) IFILBalanceOf(address common.Address) (*big.Float, error) {
-	client, err := c.ConnectEthClient()
-	if err != nil {
-		return nil, err
-	}
-	defer client.Close()
-
-	poolTokenCaller, err := abigen.NewPoolTokenCaller(c.IFILAddr, client)
-	if err != nil {
-		return nil, err
-	}
-
-	bal, err := poolTokenCaller.BalanceOf(nil, address)
-	if err != nil {
-		return nil, err
-	}
-	return util.ToFIL(bal), nil
-}
 
 func (c *FEVMConnection) IFILTransfer(ctx context.Context, toAddr common.Address, amount *big.Int) (*types.Transaction, error) {
 	client, err := c.ConnectEthClient()
@@ -62,20 +42,4 @@ func (c *FEVMConnection) IFILApprove(ctx context.Context, spender common.Address
 	args := []interface{}{spender, allowance}
 
 	return WriteTx(ctx, &ecdsa.PrivateKey{}, client, common.Big0, args, poolTokenCaller.Approve, "iFIL Approve")
-}
-
-func (c *FEVMConnection) IFILPrice() (*big.Int, error) {
-	client, err := c.ConnectEthClient()
-	if err != nil {
-		return nil, err
-	}
-	defer client.Close()
-
-	infPoolCaller, err := abigen.NewInfinityPoolCaller(c.InfinityPoolAddr, client)
-	if err != nil {
-		return nil, err
-	}
-
-	// return the price of 1 iFIL in FIL
-	return infPoolCaller.ConvertToAssets(nil, big.NewInt(1))
 }

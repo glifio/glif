@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/glif-confidential/cli/fevm"
 	"github.com/spf13/cobra"
 )
 
@@ -23,16 +22,16 @@ var availLiquidityCmd = &cobra.Command{
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 
-		conn := fevm.Connection()
-
-		bal, err := conn.PoolAvailableLiquidity(cmd.Context(), conn.InfinityPoolAddr)
+		liquid, err := PoolsSDK.Query().InfPoolBorrowableLiquidity(cmd.Context())
 		if err != nil {
 			log.Fatalf("Failed to get iFIL balance %s", err)
 		}
 
+		liquidFIL, _ := liquid.Float64()
+
 		s.Stop()
 
-		fmt.Printf("Total available liquidity in the Pool is %.02f FIL", bal)
+		fmt.Printf("Total available liquidity in the Pool is %.08f FIL", liquidFIL)
 	},
 }
 

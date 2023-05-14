@@ -10,7 +10,6 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/glif-confidential/cli/fevm"
-	"github.com/glif-confidential/cli/util"
 	"github.com/spf13/cobra"
 )
 
@@ -24,14 +23,6 @@ var exitCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		as := util.AgentStore()
-		agentIDStr, err := as.Get("id")
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		agentID, _ := new(big.Int).SetString(agentIDStr, 10)
-
 		poolName := cmd.Flag("pool-name").Value.String()
 
 		poolID, err := parsePoolType(poolName)
@@ -44,7 +35,7 @@ var exitCmd = &cobra.Command{
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 
-		account, err := conn.PoolGetAccount(cmd.Context(), conn.InfinityPoolAddr, agentID)
+		account, err := PoolsSDK.Query().InfPoolGetAccount(cmd.Context(), agentAddr)
 		if err != nil {
 			log.Fatalf("Failed to get iFIL balance %s", err)
 		}

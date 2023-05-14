@@ -20,33 +20,6 @@ var iFILCmd = &cobra.Command{
 	Short: "Commands for interacting with the Infinity Pool Liquid Staking Token (iFIL)",
 }
 
-var iFILBalanceOfCmd = &cobra.Command{
-	Use:   "balance-of [address]",
-	Short: "Get the iFIL balance of an address",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		strAddr := args[0]
-		fmt.Printf("Checking iFIL balance of %s...", strAddr)
-
-		addr, err := ParseAddress(cmd.Context(), strAddr)
-		if err != nil {
-			log.Fatalf("Failed to parse address %s", err)
-		}
-
-		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-		s.Start()
-
-		bal, err := fevm.Connection().IFILBalanceOf(addr)
-		if err != nil {
-			log.Fatalf("Failed to get iFIL balance %s", err)
-		}
-
-		s.Stop()
-
-		fmt.Printf("iFIL balance of %s is %s", strAddr, bal.String())
-	},
-}
-
 var iFILTransferCmd = &cobra.Command{
 	Use:   "transfer [to] [amount]",
 	Short: "Transfer iFIL to another address",
@@ -133,30 +106,8 @@ var iFILApproveCmd = &cobra.Command{
 	},
 }
 
-var iFILPriceCmd = &cobra.Command{
-	Use:   "price",
-	Short: "Get the iFIL price, denominated in FIL",
-	Long:  "Get the iFIL price, denominated in FIL. The number returned is the amount of FIL that 1 iFIL is worth.",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Print("Checking iFIL prices...")
-
-		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-		s.Start()
-
-		price, err := fevm.Connection().IFILPrice()
-		if err != nil {
-			log.Fatalf("Failed to get iFIL balance %s", err)
-		}
-
-		s.Stop()
-
-		fmt.Printf("1 iFIL is worth %s FIL", price.String())
-	},
-}
-
 func init() {
 	rootCmd.AddCommand(iFILCmd)
-	iFILCmd.AddCommand(iFILBalanceOfCmd)
 	iFILCmd.AddCommand(iFILTransferCmd)
 	iFILCmd.AddCommand(iFILApproveCmd)
 }

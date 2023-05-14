@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/glif-confidential/cli/fevm"
 	"github.com/glif-confidential/cli/util"
 	"github.com/spf13/cobra"
 )
@@ -28,7 +27,7 @@ var idCmd = &cobra.Command{
 
 		log.Printf("Fetching agent ID for %s", util.TruncateAddr(agentAddr.String()))
 
-		id, err := fevm.Connection().AgentID(cmd.Context(), agentAddr)
+		id, err := PoolsSDK.Query().AgentID(cmd.Context(), agentAddr)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -41,5 +40,5 @@ var idCmd = &cobra.Command{
 
 func init() {
 	agentCmd.AddCommand(idCmd)
-	idCmd.Flags().String("address", "", "Agent address")
+	idCmd.Flags().String("agent-addr", "", "Agent address")
 }

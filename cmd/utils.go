@@ -13,13 +13,12 @@ import (
 	lotusapi "github.com/filecoin-project/lotus/api"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
-	"github.com/glif-confidential/cli/fevm"
 	"github.com/glif-confidential/cli/util"
 	"github.com/spf13/cobra"
 )
 
 func ParseAddress(ctx context.Context, addr string) (common.Address, error) {
-	lapi, closer, err := fevm.Connection().ConnectLotusClient()
+	lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -160,7 +159,7 @@ func parseFILAmount(amount string) (*big.Int, error) {
 func getAgentAddress(cmd *cobra.Command) (common.Address, error) {
 	as := util.AgentStore()
 
-	agentAddrStr := cmd.Flag("address").Value.String()
+	agentAddrStr := cmd.Flag("agent-addr").Value.String()
 
 	if agentAddrStr == "" {
 		// Check if an agent already exists
