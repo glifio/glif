@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/glif-confidential/cli/fevm"
 	"github.com/spf13/cobra"
 )
 
@@ -30,8 +29,6 @@ var exitCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		conn := fevm.Connection()
-
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 
@@ -40,7 +37,7 @@ var exitCmd = &cobra.Command{
 			log.Fatalf("Failed to get iFIL balance %s", err)
 		}
 
-		amountOwed, _, err := conn.AgentOwes(cmd, agentAddr)
+		amountOwed, _, err := PoolsSDK.Query().AgentOwes(cmd.Context(), agentAddr)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -48,23 +45,15 @@ var exitCmd = &cobra.Command{
 		payAmount := new(big.Int).Add(amountOwed, account.Principal)
 		payAmount = addOnePercent(payAmount)
 
-		tx, err := conn.AgentPay(cmd.Context(), agentAddr, poolID, payAmount, pk)
+		tx, err := PoolsSDK.Act().AgentPay(cmd.Context(), agentAddr, poolID, payAmount, pk)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		// transaction landed on chain or errored
-		receipt, err := fevm.WaitReturnReceipt(tx.Hash())
+		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
 			log.Fatal(err)
-		}
-
-		if receipt == nil {
-			log.Fatal("Failed to get receipt")
-		}
-
-		if receipt.Status == 0 {
-			log.Fatal("Transaction failed")
 		}
 
 		s.Stop()

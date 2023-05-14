@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/glif-confidential/cli/fevm"
 	"github.com/spf13/cobra"
 )
 
@@ -30,8 +29,6 @@ var payCustomCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		conn := fevm.Connection()
-
 		poolName := cmd.Flag("pool-name").Value.String()
 
 		poolID, err := parsePoolType(poolName)
@@ -44,23 +41,15 @@ var payCustomCmd = &cobra.Command{
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 
-		tx, err := conn.AgentPay(cmd.Context(), agentAddr, poolID, amount, pk)
+		tx, err := PoolsSDK.Act().AgentPay(cmd.Context(), agentAddr, poolID, amount, pk)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		// transaction landed on chain or errored
-		receipt, err := fevm.WaitReturnReceipt(tx.Hash())
+		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
 			log.Fatal(err)
-		}
-
-		if receipt == nil {
-			log.Fatal("Failed to get receipt")
-		}
-
-		if receipt.Status == 0 {
-			log.Fatal("Transaction failed")
 		}
 
 		s.Stop()

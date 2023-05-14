@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/glif-confidential/cli/fevm"
 	"github.com/glif-confidential/cli/util"
 	"github.com/spf13/cobra"
 )
@@ -40,15 +39,13 @@ var depositFILCmd = &cobra.Command{
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 
-		conn := fevm.Connection()
-
-		tx, err := conn.PoolDepositFIL(cmd.Context(), conn.InfinityPoolAddr, receiver, amount, pk)
+		tx, err := PoolsSDK.Act().InfPoolDepositFIL(cmd.Context(), receiver, amount, pk)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		// transaction landed on chain or errored
-		receipt, err := fevm.WaitReturnReceipt(tx.Hash())
+		receipt, err := PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
 			log.Fatal(err)
 		}

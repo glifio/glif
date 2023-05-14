@@ -12,8 +12,10 @@ import (
 	"github.com/filecoin-project/go-address"
 	lotusapi "github.com/filecoin-project/lotus/api"
 	"github.com/filecoin-project/lotus/chain/types"
+	ltypes "github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
 	"github.com/glif-confidential/cli/util"
+	denoms "github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
@@ -25,6 +27,30 @@ func ParseAddress(ctx context.Context, addr string) (common.Address, error) {
 	defer closer()
 
 	return parseAddress(ctx, addr, lapi)
+}
+
+func ToMinerID(ctx context.Context, addr string) (address.Address, error) {
+	minerAddr, err := address.NewFromString(addr)
+	if err != nil {
+		return address.Undef, err
+	}
+
+	if minerAddr.Protocol() == address.ID {
+		return minerAddr, nil
+	}
+
+	lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
+	if err != nil {
+		return address.Undef, err
+	}
+	defer closer()
+
+	idAddr, err := lapi.StateLookupID(context.Background(), minerAddr, ltypes.EmptyTSK)
+	if err != nil {
+		return address.Undef, err
+	}
+
+	return idAddr, nil
 }
 
 func parseAddress(ctx context.Context, addr string, lapi lotusapi.FullNode) (common.Address, error) {
@@ -153,7 +179,7 @@ func parseFILAmount(amount string) (*big.Int, error) {
 		return nil, errors.New("invalid amount")
 	}
 
-	return util.ToAtto(amt), nil
+	return denoms.ToAtto(amt), nil
 }
 
 func getAgentAddress(cmd *cobra.Command) (common.Address, error) {

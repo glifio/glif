@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/glif-confidential/cli/fevm"
+	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +25,7 @@ var minersListCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Agent's miners: %s", fevm.StringifyArg(list))
+		fmt.Printf("Agent's miners: %s", util.StringifyArg(list))
 	},
 }
 
