@@ -132,7 +132,7 @@ const (
 )
 
 var poolNames = map[string]PoolType{
-	"infinity": InfinityPool,
+	"infinity-pool": InfinityPool,
 }
 
 func parsePoolType(pool string) (*big.Int, error) {

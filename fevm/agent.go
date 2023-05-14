@@ -11,8 +11,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/filecoin-project/go-address"
 	abigen "github.com/glif-confidential/abigen/bindings"
+	"github.com/glif-confidential/ado/constants"
 	"github.com/glif-confidential/cli/rpc"
 	"github.com/glif-confidential/cli/util"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -293,6 +295,55 @@ func (c *FEVMConnection) AgentBorrow(
 	args := []interface{}{poolID, sc}
 
 	return WriteTx(ctx, pk, client, common.Big0, args, agentTransactor.Borrow, "Agent Borrow")
+}
+
+func (c *FEVMConnection) AgentPay(
+	ctx context.Context,
+	agentAddr common.Address,
+	poolID *big.Int,
+	amount *big.Int,
+	pk *ecdsa.PrivateKey,
+) (*types.Transaction, error) {
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+
+	agentTransactor, err := abigen.NewAgentTransactor(agentAddr, client)
+	if err != nil {
+		return nil, err
+	}
+
+	closer, err := rpc.NewADOClient(ctx, viper.GetString("ado.address"))
+	if err != nil {
+		return nil, err
+	}
+	defer closer()
+
+	sc, err := rpc.ADOClient.Pay(ctx, agentAddr, amount)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	args := []interface{}{poolID, sc}
+
+	return WriteTx(ctx, pk, client, common.Big0, args, agentTransactor.Pay, "Agent Pay")
+}
+
+func (c *FEVMConnection) AgentOwes(cmd *cobra.Command, agentAddr common.Address) (*big.Int, *big.Int, error) {
+	closer, err := rpc.NewADOClient(cmd.Context(), viper.GetString("ado.address"))
+	if err != nil {
+		return nil, nil, err
+	}
+	defer closer()
+
+	agentOwed, err := rpc.ADOClient.AmountOwed(cmd.Context(), agentAddr, constants.INFINITY_POOL_ID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return agentOwed.AmountOwed, agentOwed.Gcred, nil
 }
 
 func (c *FEVMConnection) AgentWithdraw(

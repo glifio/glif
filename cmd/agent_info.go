@@ -29,10 +29,10 @@ var agentInfoCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		fmt.Printf("Fetching stats for %s", agentAddr.String())
+
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
-
-		log.Printf("Fetching stats for %s", agentAddr.String())
 
 		conn := fevm.Connection()
 
@@ -47,6 +47,8 @@ var agentInfoCmd = &cobra.Command{
 
 		generateHeader("AGENT ASSETS")
 		fmt.Printf("%f FIL\n", assetsFIL)
+
+		s.Start()
 
 		account, err := conn.PoolGetAccount(cmd.Context(), conn.InfinityPoolAddr, agentID)
 		if err != nil {
@@ -64,15 +66,33 @@ var agentInfoCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		s.Stop()
+		amountOwed, gcred, err := conn.AgentOwes(cmd, agentAddr)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		amountOwedFIL, _ := util.ToFIL(amountOwed).Float64()
 
 		filPrincipal := util.ToFIL(account.Principal)
 		generateHeader("INFINITY POOL ACCOUNT")
-		fmt.Printf("Account opened at epoch # %s\n", account.StartEpoch.String())
-		fmt.Printf("Outstanding principal: %s\n", filPrincipal.String())
-		fmt.Printf("Account owes %s epoch payments", new(big.Int).Sub(new(big.Int).SetUint64(uint64(chainHead.Height())), account.EpochsPaid))
-		fmt.Printf("Account is paid up to epoch # %s\n", account.EpochsPaid.String())
-		fmt.Printf("Account in default? %v\n", account.Defaulted)
+
+		fmt.Printf("With a GCRED score of: %s, you currently owe: %.08f FIL\n", gcred, amountOwedFIL)
+		fmt.Println()
+
+		principal, _ := filPrincipal.Float64()
+
+		if principal == 0 {
+			fmt.Println("No account exists with the Infinity Pool")
+			return
+		} else {
+			fmt.Printf("Account opened at epoch # %s\n", account.StartEpoch.String())
+			fmt.Printf("Outstanding principal: %.09f\n", principal)
+			fmt.Printf("Current epoch: %s\n", chainHead.Height().String())
+			fmt.Printf("Account owes %s epoch payments\n", new(big.Int).Sub(new(big.Int).SetUint64(uint64(chainHead.Height())), account.EpochsPaid))
+			fmt.Printf("Account is paid up to epoch # %s\n", account.EpochsPaid.String())
+			fmt.Printf("Account in default? %v\n", account.Defaulted)
+		}
+
 	},
 }
 
