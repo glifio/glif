@@ -43,10 +43,18 @@ var agentInfoCmd = &cobra.Command{
 
 		assetsFIL, _ := util.ToFIL(assets).Float64()
 
+		version, err := conn.AgentVersion(cmd.Context(), agentAddr)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		s.Stop()
 
 		generateHeader("AGENT ASSETS")
 		fmt.Printf("%f FIL\n", assetsFIL)
+
+		generateHeader("VERSION")
+		fmt.Printf("%v\n", version)
 
 		s.Start()
 

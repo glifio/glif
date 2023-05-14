@@ -78,6 +78,21 @@ func (c *FEVMConnection) AgentAssets(ctx context.Context, address common.Address
 	return assets, nil
 }
 
+func (c *FEVMConnection) AgentVersion(ctx context.Context, address common.Address) (uint8, error) {
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return 0, err
+	}
+	defer client.Close()
+
+	agentCaller, err := abigen.NewAgentCaller(address, client)
+	if err != nil {
+		return 0, err
+	}
+
+	return agentCaller.Version(nil)
+}
+
 func (c *FEVMConnection) AgentCreate(ctx context.Context, deployerPk *ecdsa.PrivateKey, owner common.Address, operator common.Address, request common.Address) (*types.Transaction, error) {
 	client, err := c.ConnectEthClient()
 	if err != nil {
@@ -93,6 +108,42 @@ func (c *FEVMConnection) AgentCreate(ctx context.Context, deployerPk *ecdsa.Priv
 	args := []interface{}{owner, operator, request}
 
 	return WriteTx(ctx, deployerPk, client, common.Big0, args, agentFactoryTransactor.Create, "Agent Create")
+}
+
+func (c *FEVMConnection) UpgradedAgentAddr(ctx context.Context, receipt *types.Receipt) (common.Address, error) {
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return common.Address{}, err
+	}
+	defer client.Close()
+
+	agentFactoryABI, err := abigen.AgentFactoryMetaData.GetAbi()
+	if err != nil {
+		return common.Address{}, err
+	}
+
+	agentFactoryFilterer, err := abigen.NewAgentFactoryFilterer(c.AgentFactoryAddr, client)
+	if err != nil {
+		return common.Address{}, err
+	}
+
+	var agentAddr common.Address
+
+	for _, l := range receipt.Logs {
+		event, err := agentFactoryABI.EventByID(l.Topics[0])
+		if err != nil {
+			return common.Address{}, err
+		}
+		if event.Name == "UpgradeAgent" {
+			upgradeAgentEvent, err := agentFactoryFilterer.ParseUpgradeAgent(*l)
+			if err != nil {
+				return common.Address{}, err
+			}
+			agentAddr = upgradeAgentEvent.NewAgent
+		}
+	}
+
+	return agentAddr, nil
 }
 
 func (c *FEVMConnection) AgentAddrID(ctx context.Context, receipt *types.Receipt) (*big.Int, common.Address, error) {
@@ -378,4 +429,45 @@ func (c *FEVMConnection) AgentWithdraw(
 	args := []interface{}{receiver, sc}
 
 	return WriteTx(ctx, pk, client, common.Big0, args, agentTransactor.Withdraw, "Agent Withdraw")
+}
+
+func (c *FEVMConnection) AgentUpgrade(ctx context.Context, agentAddr common.Address, pk *ecdsa.PrivateKey) (*types.Transaction, error) {
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+
+	agentFactoryTransactor, err := abigen.NewAgentFactoryTransactor(c.AgentFactoryAddr, client)
+	if err != nil {
+		return nil, err
+	}
+
+	args := []interface{}{agentAddr}
+
+	return WriteTx(ctx, pk, client, common.Big0, args, agentFactoryTransactor.UpgradeAgent, "Agent Upgrade")
+}
+
+func (c *FEVMConnection) MigrateMiner(ctx context.Context, agentAddr common.Address, miner address.Address, pk *ecdsa.PrivateKey) (*types.Transaction, error) {
+	client, err := c.ConnectEthClient()
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+
+	c.ToMinerID(miner.String())
+
+	agentTransactor, err := abigen.NewAgentTransactor(agentAddr, client)
+	if err != nil {
+		return nil, err
+	}
+
+	minerID, err := address.IDFromAddress(miner)
+	if err != nil {
+		return nil, err
+	}
+
+	args := []interface{}{minerID}
+
+	return WriteTx(ctx, pk, client, common.Big0, args, agentTransactor.MigrateMiner, "Agent Upgrade")
 }
