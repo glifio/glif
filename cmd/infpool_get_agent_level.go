@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/glif-confidential/cli/fevm"
 	"github.com/spf13/cobra"
 )
 
@@ -28,9 +27,7 @@ var agentLvlCmd = &cobra.Command{
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 
-		conn := fevm.Connection()
-
-		lvl, borrowCap, err := conn.AgentLevel(cmd.Context(), agentID)
+		lvl, borrowCap, err := PoolsSDK.Query().InfPoolGetAgentLvl(cmd.Context(), agentID)
 		if err != nil {
 			log.Fatalf("Failed to get iFIL balance %s", err)
 		}
@@ -43,5 +40,5 @@ var agentLvlCmd = &cobra.Command{
 
 func init() {
 	infinitypoolCmd.AddCommand(agentLvlCmd)
-	agentLvlCmd.Flags().String("agent-id", "", "ID of the agent")
+	agentLvlCmd.Flags().String("agent-id", "", "ID of the Agent")
 }

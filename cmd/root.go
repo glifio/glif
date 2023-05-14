@@ -22,13 +22,16 @@ import (
 	"log"
 	"os"
 
-	"github.com/glif-confidential/cli/fevm"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/glif-confidential/cli/util"
+	"github.com/glifio/go-pools/sdk"
+	types "github.com/glifio/go-pools/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var cfgFile string
+var PoolsSDK types.PoolsSDK
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -89,12 +92,24 @@ func initConfig() {
 		}
 	}
 
-	// Pulls in the FEVM connection params
-	if err := fevm.InitFEVMConnection(rootCmd.Context()); err != nil {
-		log.Fatalf("Error initializing FEVM connection: %v\n", err)
+	if err := sdk.Init(
+		rootCmd.Context(),
+		&PoolsSDK,
+		common.HexToAddress(viper.GetString("routes.agent-police")),
+		common.HexToAddress(viper.GetString("routes.miner-registry")),
+		common.HexToAddress(viper.GetString("routes.router")),
+		common.HexToAddress(viper.GetString("routes.pool-registry")),
+		common.HexToAddress(viper.GetString("routes.agent-factory")),
+		common.HexToAddress(viper.GetString("routes.ifil")),
+		common.HexToAddress(viper.GetString("routes.infinity-pool")),
+		viper.GetString("ado.address"),
+		// using the mock ADO for now
+		"Mock",
+		viper.GetString("daemon.rpc-url"),
+		viper.GetString("daemon.token"),
+	); err != nil {
+		log.Fatalf("Error initializing Pools SDK: %v\n", err)
 	}
-
-	fevm.Connection().InitNonceCache()
 
 	//TODO: check that $HOME/.config/glif exists and create if not
 	if err := util.NewKeyStore("keys.toml"); err != nil {

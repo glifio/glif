@@ -12,8 +12,8 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/filecoin-project/go-address"
-	"github.com/glif-confidential/cli/fevm"
 	"github.com/glif-confidential/cli/util"
+	denoms "github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
@@ -29,7 +29,7 @@ func getBalances(
 	requesterBal *big.Float,
 	err error,
 ) {
-	lapi, closer, err := fevm.Connection().ConnectLotusClient()
+	lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
 	if err != nil {
 		log.Fatalf("Failed to instantiate eth client %s", err)
 	}
@@ -48,7 +48,7 @@ func getBalances(
 		if err != nil {
 			errCh <- err
 		}
-		balDecimal := util.ToFIL(bal.Int)
+		balDecimal := denoms.ToFIL(bal.Int)
 		balCh <- balance{bal: balDecimal, key: key}
 	}
 

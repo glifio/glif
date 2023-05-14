@@ -10,8 +10,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/glif-confidential/cli/fevm"
-	"github.com/glif-confidential/cli/util"
+	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
@@ -34,9 +33,14 @@ var agentInfoCmd = &cobra.Command{
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 
-		conn := fevm.Connection()
+		query := PoolsSDK.Query()
 
-		assets, err := conn.AgentAssets(cmd.Context(), agentAddr)
+		version, err := query.AgentVersion(cmd.Context(), agentAddr)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		assets, err := query.AgentLiquidAssets(cmd.Context(), agentAddr)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -45,28 +49,27 @@ var agentInfoCmd = &cobra.Command{
 
 		s.Stop()
 
+		generateHeader("BASIC INFO")
+		fmt.Printf("Agent Address: %s\n", agentAddr.String())
+		fmt.Printf("Agent ID: %s\n", agentID)
+		fmt.Printf("Agent Version: %v\n", version)
+
 		generateHeader("AGENT ASSETS")
 		fmt.Printf("%f FIL\n", assetsFIL)
 
 		s.Start()
 
-		account, err := conn.PoolGetAccount(cmd.Context(), conn.InfinityPoolAddr, agentID)
+		account, err := query.InfPoolGetAccount(cmd.Context(), agentAddr)
 		if err != nil {
 			log.Fatalf("Failed to get iFIL balance %s", err)
 		}
 
-		lapi, closer, err := conn.ConnectLotusClient()
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer closer()
-
-		chainHead, err := lapi.ChainHead(cmd.Context())
+		chainHeadHeight, err := query.ChainHeight(cmd.Context())
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		amountOwed, gcred, err := conn.AgentOwes(cmd, agentAddr)
+		amountOwed, gcred, err := query.AgentOwes(cmd.Context(), agentAddr)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -87,8 +90,8 @@ var agentInfoCmd = &cobra.Command{
 		} else {
 			fmt.Printf("Account opened at epoch # %s\n", account.StartEpoch.String())
 			fmt.Printf("Outstanding principal: %.09f\n", principal)
-			fmt.Printf("Current epoch: %s\n", chainHead.Height().String())
-			fmt.Printf("Account owes %s epoch payments\n", new(big.Int).Sub(new(big.Int).SetUint64(uint64(chainHead.Height())), account.EpochsPaid))
+			fmt.Printf("Current epoch: %s\n", chainHeadHeight.String())
+			fmt.Printf("Account owes %s epoch payments\n", new(big.Int).Sub(new(big.Int).SetUint64(chainHeadHeight.Uint64()), account.EpochsPaid))
 			fmt.Printf("Account is paid up to epoch # %s\n", account.EpochsPaid.String())
 			fmt.Printf("Account in default? %v\n", account.Defaulted)
 		}
@@ -148,6 +151,6 @@ func generateHeader(title string) {
 
 func init() {
 	agentCmd.AddCommand(agentInfoCmd)
-	agentInfoCmd.Flags().String("address", "", "Agent address")
+	agentInfoCmd.Flags().String("agent-addr", "", "Agent address")
 	agentInfoCmd.Flags().String("agent-id", "", "AgentID")
 }

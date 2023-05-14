@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/glif-confidential/cli/fevm"
+	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
@@ -15,21 +15,21 @@ var minersListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Get the list of miners owned by this Agent",
 	Run: func(cmd *cobra.Command, args []string) {
-		agentID, err := getAgentID(cmd)
+		agentAddr, err := getAgentAddress(cmd)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		list, err := fevm.Connection().MinersList(cmd.Context(), agentID)
+		list, err := PoolsSDK.Query().AgentMiners(cmd.Context(), agentAddr)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Agent's miners: %s", fevm.StringifyArg(list))
+		fmt.Printf("Agent's miners: %s", util.StringifyArg(list))
 	},
 }
 
 func init() {
 	minersCmd.AddCommand(minersListCmd)
-	minersListCmd.Flags().String("agent-id", "", "ID of the Agent")
+	minersListCmd.Flags().String("agent-addr", "", "Agent address")
 }

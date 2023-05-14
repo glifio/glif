@@ -14,7 +14,6 @@ import (
 	"github.com/filecoin-project/lotus/chain/actors"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
-	"github.com/glif-confidential/cli/fevm"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +34,7 @@ var changeOwnerCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		lapi, closer, err := fevm.Connection().ConnectLotusClient()
+		lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
 		if err != nil {
 			log.Fatal(err)
 		}

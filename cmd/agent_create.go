@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/glif-confidential/cli/fevm"
 	"github.com/glif-confidential/cli/util"
 	"github.com/spf13/cobra"
 )
@@ -61,7 +60,7 @@ var createCmd = &cobra.Command{
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 		// submit the agent create transaction
-		tx, err := fevm.Connection().AgentCreate(cmd.Context(), pk, ownerAddr, operatorAddr, requestAddr)
+		tx, err := PoolsSDK.Act().AgentCreate(cmd.Context(), ownerAddr, operatorAddr, requestAddr, pk)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -73,17 +72,13 @@ var createCmd = &cobra.Command{
 
 		s.Start()
 		// transaction landed on chain or errored
-		receipt, err := fevm.WaitReturnReceipt(tx.Hash())
+		receipt, err := PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		if receipt == nil {
-			log.Fatal("Failed to get receipt")
-		}
-
 		// grab the ID and the address of the agent from the receipt's logs
-		id, addr, err := fevm.Connection().AgentAddrID(cmd.Context(), receipt)
+		id, addr, err := PoolsSDK.Query().AgentAddrIDFromRcpt(cmd.Context(), receipt)
 		if err != nil {
 			log.Fatal(err)
 		}

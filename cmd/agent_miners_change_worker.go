@@ -10,7 +10,6 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/filecoin-project/go-address"
-	"github.com/glif-confidential/cli/fevm"
 	"github.com/spf13/cobra"
 )
 
@@ -50,23 +49,15 @@ var changeWorkerCmd = &cobra.Command{
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 
-		tx, err := fevm.Connection().ChangeWorker(cmd.Context(), agentAddr, minerAddr, workerAddr, controlAddrs, ownerKey)
+		tx, err := PoolsSDK.Act().AgentChangeMinerWorker(cmd.Context(), agentAddr, minerAddr, workerAddr, controlAddrs, ownerKey)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		// transaction landed on chain or errored
-		receipt, err := fevm.WaitReturnReceipt(tx.Hash())
+		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
 			log.Fatal(err)
-		}
-
-		if receipt == nil {
-			log.Fatal("Failed to get receipt")
-		}
-
-		if receipt.Status == 0 {
-			log.Fatal("Transaction failed")
 		}
 
 		s.Stop()

@@ -10,7 +10,6 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/filecoin-project/go-address"
-	"github.com/glif-confidential/cli/fevm"
 	"github.com/spf13/cobra"
 )
 
@@ -45,23 +44,15 @@ var rmCmd = &cobra.Command{
 
 		fmt.Printf("Removing miner %s from agent %s by changing its owner address to %s", minerAddr, agentAddr, newMinerOwnerAddr)
 
-		tx, err := fevm.Connection().RemoveMiner(cmd.Context(), agentAddr, minerAddr, newMinerOwnerAddr, ownerKey)
+		tx, err := PoolsSDK.Act().AgentRemoveMiner(cmd.Context(), agentAddr, minerAddr, newMinerOwnerAddr, ownerKey)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		// transaction landed on chain or errored
-		receipt, err := fevm.WaitReturnReceipt(tx.Hash())
+		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
 			log.Fatal(err)
-		}
-
-		if receipt == nil {
-			log.Fatal("Failed to get receipt")
-		}
-
-		if receipt.Status == 0 {
-			log.Fatal("Transaction failed")
 		}
 
 		s.Stop()
