@@ -100,6 +100,7 @@ func initConfig() {
 		common.HexToAddress(viper.GetString("routes.pool-registry")),
 		common.HexToAddress(viper.GetString("routes.agent-factory")),
 		common.HexToAddress(viper.GetString("routes.ifil")),
+		common.HexToAddress(viper.GetString("routes.wfil")),
 		common.HexToAddress(viper.GetString("routes.infinity-pool")),
 		viper.GetString("ado.address"),
 		// using the mock ADO for now
