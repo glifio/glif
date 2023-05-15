@@ -1,6 +1,42 @@
 # glif cli
 
-## Getting started - Creating your Agent
+## Getting started - Installing the code
+First, clone the repo:
+`git clone git@github.com:glifio/cli.git`<br />
+`cd cli`<br />
+`sudo make install`<br />
+`make calibnet-config`<br />
+
+Now when you run:
+```
+➜ ✗ glif wallet new
+```
+
+You should see:
+
+```
+➜  cli git:(main) ✗ glif --help
+Usage:
+  glif [command]
+
+Available Commands:
+  agent         Commands for interacting with the Glif Agent
+  completion    Generate the autocompletion script for the specified shell
+  help          Help about any command
+  ifil          Commands for interacting with the Infinity Pool Liquid Staking Token (iFIL)
+  infinity-pool Commands for interacting with the Infinity Pool
+  pools         Commands for interacting with the GLIF Pools Protocol
+  wallet        Manage Glif wallets
+
+Flags:
+      --config string   config file (default is $HOME/.config/glif/config.toml)
+  -h, --help            help for glif
+  -t, --toggle          Help message for toggle
+
+Use "glif [command] --help" for more information about a command.
+```
+
+## Creating your Agent
 
 The Agent is a crucial component of the underlying [GLIF Pools Protocol](https://glif.io/docs) (the Protocol on which the Infinity Pool is built) - the Agent is a wrapper contract around one or more [Miner Actors](https://github.com/filecoin-project/specs-actors/blob/master/actors/builtin/miner/miner_actor.go). The Agent is primarily responsible for:
 
@@ -38,15 +74,22 @@ Once you've funded your owner key, verify:
 
 ```
 ➜ ✗ glif wallet balance
-2023/05/03 20:55:13 owner balance: 0 FIL - (FEVM) f410fr...cqja (EVM) 0x8b35...5F26
-2023/05/03 20:55:13 operator balance: 0 FIL - (FEVM) f410fn...iani (EVM) 0x69D2...Ea7b
-2023/05/03 20:55:13 request balance: 0 FIL - (FEVM) f410fc...cnoy (EVM) 0x115f...9f54
+2023/05/15 10:57:53 owner balance: 2.00 FIL
+2023/05/15 10:57:53 operator balance: 0.00 FIL
+2023/05/15 10:57:53 request balance: 0.00 FIL
 ```
 
 Lastly, you can go ahead and create your agent:
 
 ```
 ➜ ✗ glif agent create
+```
+
+This should
+
+
+```
+2023/05/15 17:38:18 pools sdk: agent create: failed to estimate gas: CallWithGas failed: call raw get actor: resolution lookup failed (t410f52ogwtdgdaafchdrj54tiftjdjpbn3kiemnaiay): resolve address t410f52ogwtdgdaafchdrj54tiftjdjpbn3kiemnaiay: actor not found
 ```
 
 ## Add a miner to your Agent

@@ -80,7 +80,7 @@ var createCmd = &cobra.Command{
 		}
 
 		// grab the ID and the address of the agent from the receipt's logs
-		id, addr, err := PoolsSDK.Query().AgentAddrIDFromRcpt(cmd.Context(), receipt)
+		addr, id, err := PoolsSDK.Query().AgentAddrIDFromRcpt(cmd.Context(), receipt)
 		if err != nil {
 			s.Stop()
 			log.Fatalf("pools sdk: query: agent addr id from receipt: %s", err)
