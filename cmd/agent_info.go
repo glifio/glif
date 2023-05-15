@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/filecoin-project/lotus/chain/types/ethtypes"
 	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
@@ -19,6 +20,16 @@ var agentInfoCmd = &cobra.Command{
 	Short: "Get the info associated with your Agent",
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, err := getAgentAddress(cmd)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		agentAddrEthType, err := ethtypes.ParseEthAddress(agentAddr.String())
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		agentAddrDel, err := agentAddrEthType.ToFilecoinAddress()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -47,11 +58,18 @@ var agentInfoCmd = &cobra.Command{
 
 		assetsFIL, _ := util.ToFIL(assets).Float64()
 
+		lvl, cap, err := query.InfPoolGetAgentLvl(cmd.Context(), agentID)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		s.Stop()
 
 		generateHeader("BASIC INFO")
 		fmt.Printf("Agent Address: %s\n", agentAddr.String())
+		fmt.Printf("Agent Address (del): %s\n", agentAddrDel.String())
 		fmt.Printf("Agent ID: %s\n", agentID)
+		fmt.Printf("Agent's lvl is %s and can borrow %.03f FIL\n", lvl.String(), cap)
 		fmt.Printf("Agent Version: %v\n", version)
 
 		generateHeader("AGENT ASSETS")

@@ -117,4 +117,45 @@ If you see an error that looks like:
 It means that your owner key is not properly funded. You must send FIL to this actor before creating an Agent.
 
 ## Add a miner to your Agent
+
+Adding a miner to your Agent occurs in two steps:
+
+1. Setting the owner address on your miner actor to point to your agent
+2. Adding the miner to your Agent
+
+### Step 1 - Proposing an Ownership change
+
+**NOTE** - if your owner key is the default wallet selected on your Lotus daemon, you can adjust your `~/.glif/config.toml` to point to your own Lotus daemon to use our built-in change-miner-owner command. For example, with a `~/.glif/config.toml` that looks like:
+
 ```
+[daemon]
+rpc-url = 'http://localhost:1234/rpc/v1'
+token = 'eyJh...om49Vu1w'
+```
+
+Then you can simply run:<br />
+`glif agent miners change-owner <miner addr>`<br />
+
+This will propose the ownership change. Alternatively, you can call:<br />
+`glif agent info`<br />
+
+To retrieve your delegated `f4` address of your Agent. Then you can go ahead and manually propose an ownership change, setting your Agent's `f4` address as the new owner.
+
+### Step 2 - Adding miner to your Agent
+
+Once you've successfully proposed an ownership change to your agent, you can then call `glif agent miners add <miner addr>` to pledge your miner.
+
+You should see:
+
+```
+2023/05/15 14:05:44 Adding miner f0xxx to agent 0x...
+|Transaction: 0x....
+Successfully added miner f0xxx to agent
+```
+
+### Confirm - Miner added successfully:
+
+You can call `glif agent miners list` and you should see your new miner in the returned list!
+
+## Borrow funds
+
