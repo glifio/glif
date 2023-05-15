@@ -9,12 +9,12 @@ clean:
 	rm -f glif
 
 config:
-	mkdir -p ~/.config/glif
-	cp config.toml ~/.config/glif/config.toml
+	mkdir -p ~/.glif
+	cp config.toml ~/.glif/config.toml
 
 calibnet-config:
-	mkdir -p ~/.config/glif
-	cp calibnet-config.toml ~/.config/glif/config.toml
+	mkdir -p ~/.glif
+	cp calibnet-config.toml ~/.glif/config.toml
 
 install: glif
 	cp glif /usr/local/bin/glif

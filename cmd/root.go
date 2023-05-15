@@ -51,7 +51,7 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.config/glif/config.toml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.glif/config.toml)")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 }
@@ -60,7 +60,7 @@ func init() {
 func initConfig() {
 	home, err := os.UserHomeDir()
 	cobra.CheckErr(err)
-	xdgConfigHome := fmt.Sprintf("%s/.config/glif", home)
+	xdgConfigHome := fmt.Sprintf("%s/.glif", home)
 
 	if cfgFile != "" {
 		// Use config file from the flag.
@@ -71,7 +71,7 @@ func initConfig() {
 		cobra.CheckErr(err)
 
 		// Search config in home directory with name ".glif" (without extension).
-		viper.AddConfigPath(fmt.Sprintf("%s/.config/glif", home))
+		viper.AddConfigPath(fmt.Sprintf("%s/.glif", home))
 		viper.AddConfigPath(".")
 		viper.SetConfigType("toml")
 		viper.SetConfigName("config")
