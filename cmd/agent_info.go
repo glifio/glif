@@ -105,9 +105,10 @@ var agentInfoCmd = &cobra.Command{
 		} else {
 			defaultEpochTime := util.EpochHeightToTimestamp(defaultEpoch)
 			epochsPaidTime := util.EpochHeightToTimestamp(account.EpochsPaid)
+			fmt.Println("Your account with the Infinity Pool is open", defaultEpoch, account.EpochsPaid)
 			fmt.Printf("You currently owe: %.08f FIL on %.02f FIL borrowed\n", amountOwedFIL, principal)
 			fmt.Printf("Your current GCRED score is: %s\n", gcred)
-			fmt.Printf("Your account must make a payment to-current within the next: %s (by epoch # %s)\n", formatSinceDuration(epochsPaidTime, defaultEpochTime), defaultEpoch)
+			fmt.Printf("Your account must make a payment to-current within the next: %s (by epoch # %s)\n", formatSinceDuration(defaultEpochTime, epochsPaidTime), defaultEpoch)
 			fmt.Println()
 
 			fmt.Printf("Your account with the Infinity Pool opened at: %s\n", util.EpochHeightToTimestamp(account.StartEpoch).Format(time.RFC3339))
