@@ -85,12 +85,36 @@ Lastly, you can go ahead and create your agent:
 ➜ ✗ glif agent create
 ```
 
-This should
+If all goes successfully, you can run:
 
+```
+➜ ✗ cli git:(main) glif agent info
+```
+
+And you should see something like:
+
+```
+➜  cli git:(main) glif agent info
+
+BASIC INFO
+Agent Address: 0xbf11d189D528736d25D3a342C826cF60253Df41c
+Agent ID: 4
+Agent Version: 1
+
+AGENT ASSETS
+0.000000 FIL
+|
+INFINITY POOL ACCOUNT
+No account exists with the Infinity Pool
+```
+
+If you see an error that looks like:
 
 ```
 2023/05/15 17:38:18 pools sdk: agent create: failed to estimate gas: CallWithGas failed: call raw get actor: resolution lookup failed (t410f52ogwtdgdaafchdrj54tiftjdjpbn3kiemnaiay): resolve address t410f52ogwtdgdaafchdrj54tiftjdjpbn3kiemnaiay: actor not found
 ```
+
+It means that your owner key is not properly funded. You must send FIL to this actor before creating an Agent.
 
 ## Add a miner to your Agent
 ```

@@ -88,6 +88,9 @@ var createCmd = &cobra.Command{
 
 		s.Stop()
 
+		fmt.Printf("Agent created: %s\n", addr.String())
+		fmt.Printf("Agent ID: %s\n", id.String())
+
 		as.Set("id", id.String())
 		as.Set("address", addr.String())
 		as.Set("tx", tx.Hash().String())
