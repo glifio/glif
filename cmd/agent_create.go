@@ -62,7 +62,8 @@ var createCmd = &cobra.Command{
 		// submit the agent create transaction
 		tx, err := PoolsSDK.Act().AgentCreate(cmd.Context(), ownerAddr, operatorAddr, requestAddr, pk)
 		if err != nil {
-			log.Fatal(err)
+			s.Stop()
+			log.Fatalf("pools sdk: agent create: %s", err)
 		}
 
 		s.Stop()
@@ -74,13 +75,15 @@ var createCmd = &cobra.Command{
 		// transaction landed on chain or errored
 		receipt, err := PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
-			log.Fatal(err)
+			s.Stop()
+			log.Fatalf("pools sdk: query: state wait receipt: %s", err)
 		}
 
 		// grab the ID and the address of the agent from the receipt's logs
 		id, addr, err := PoolsSDK.Query().AgentAddrIDFromRcpt(cmd.Context(), receipt)
 		if err != nil {
-			log.Fatal(err)
+			s.Stop()
+			log.Fatalf("pools sdk: query: agent addr id from receipt: %s", err)
 		}
 
 		s.Stop()
