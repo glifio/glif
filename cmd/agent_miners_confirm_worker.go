@@ -62,5 +62,5 @@ var confirmWorker = &cobra.Command{
 }
 
 func init() {
-	minersCmd.AddCommand(changeWorkerCmd)
+	minersCmd.AddCommand(confirmWorker)
 }
