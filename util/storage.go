@@ -1,13 +1,15 @@
 package util
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"os"
 
 	toml "github.com/pelletier/go-toml/v2"
 )
 
-var KeyNotFoundErr error
+var ErrKeyNotFound error = errors.New("key not found")
 
 type StorageData map[string]string
 
@@ -18,10 +20,10 @@ type Storage struct {
 }
 
 // NewStorage creates a new Storage instance and initializes it with the given filename.
-func NewStorage(filename string) (*Storage, error) {
+func NewStorage(filename string, defaultMap map[string]string) (*Storage, error) {
 	s := &Storage{
 		filename: filename,
-		data:     make(map[string]string),
+		data:     defaultMap,
 	}
 
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
@@ -43,10 +45,6 @@ func NewStorage(filename string) (*Storage, error) {
 func (s *Storage) load() error {
 	file, err := os.Open(s.filename)
 	if err != nil {
-		if os.IsNotExist(err) {
-			s.data = make(map[string]string)
-			return nil
-		}
 		return err
 	}
 	defer file.Close()
@@ -59,7 +57,7 @@ func (s *Storage) load() error {
 	var sd StorageData
 
 	if err := toml.Unmarshal(fileContent, &sd); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal toml file: %w", err)
 	}
 
 	s.data = sd
@@ -86,7 +84,7 @@ func (s *Storage) save() error {
 func (s *Storage) Get(key string) (string, error) {
 	value, ok := s.data[key]
 	if !ok {
-		return "", KeyNotFoundErr
+		return "", ErrKeyNotFound
 	}
 	return value, nil
 }
@@ -100,7 +98,7 @@ func (s *Storage) Set(key, value string) error {
 // Delete removes a key-value pair from the data map and saves the data to the file.
 func (s *Storage) Delete(key string) error {
 	if _, ok := s.data[key]; !ok {
-		return KeyNotFoundErr
+		return ErrKeyNotFound
 	}
 	delete(s.data, key)
 	return s.save()

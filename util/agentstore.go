@@ -7,7 +7,13 @@ func AgentStore() *Storage {
 }
 
 func NewAgentStore(filename string) error {
-	s, err := NewStorage(filename)
+	agentDefault := map[string]string{
+		"id":      "",
+		"address": "",
+		"tx":      "",
+	}
+
+	s, err := NewStorage(filename, agentDefault)
 	if err != nil {
 		return err
 	}

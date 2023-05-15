@@ -18,7 +18,7 @@ func panicIfKeyExists(key util.KeyType, addr common.Address, err error) {
 		log.Fatal(err)
 	}
 
-	if util.IsZeroAddress(addr) {
+	if !util.IsZeroAddress(addr) {
 		log.Fatalf("Key already exists for %s", key)
 	}
 }

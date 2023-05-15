@@ -9,8 +9,13 @@ import (
 
 const testFilename = "test_data.toml"
 
+var defaultMap = map[string]string{
+	"key1": "",
+	"key2": "",
+}
+
 func TestNewStorage(t *testing.T) {
-	_, err := util.NewStorage(testFilename)
+	_, err := util.NewStorage(testFilename, defaultMap)
 	if err != nil {
 		t.Errorf("NewStorage() error: %v", err)
 	}
@@ -20,7 +25,7 @@ func TestNewStorage(t *testing.T) {
 }
 
 func TestGetSetDelete(t *testing.T) {
-	store, err := util.NewStorage(testFilename)
+	store, err := util.NewStorage(testFilename, defaultMap)
 	if err != nil {
 		t.Fatalf("NewStorage() error: %v", err)
 	}
@@ -57,7 +62,7 @@ func TestGetSetDelete(t *testing.T) {
 }
 
 func TestNonexistentKey(t *testing.T) {
-	store, err := util.NewStorage(testFilename)
+	store, err := util.NewStorage(testFilename, defaultMap)
 	if err != nil {
 		t.Fatalf("NewStorage() error: %v", err)
 	}
