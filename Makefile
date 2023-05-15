@@ -5,6 +5,9 @@ all: glif
 glif: main.go
 	go build -o glif .
 
+clean:
+	rm -f glif
+
 config:
 	mkdir -p ~/.config/glif
 	cp config.toml ~/.config/glif/config.toml
