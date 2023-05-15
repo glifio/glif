@@ -6,7 +6,7 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"math/big"
+	"strings"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -64,7 +64,7 @@ var agentInfoCmd = &cobra.Command{
 			log.Fatalf("Failed to get iFIL balance %s", err)
 		}
 
-		chainHeadHeight, err := query.ChainHeight(cmd.Context())
+		defaultEpoch, err := query.DefaultEpoch(cmd.Context())
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -79,24 +79,54 @@ var agentInfoCmd = &cobra.Command{
 		filPrincipal := util.ToFIL(account.Principal)
 		generateHeader("INFINITY POOL ACCOUNT")
 
-		fmt.Printf("With a GCRED score of: %s, you currently owe: %.08f FIL\n", gcred, amountOwedFIL)
-		fmt.Println()
-
 		principal, _ := filPrincipal.Float64()
 
 		if principal == 0 {
 			fmt.Println("No account exists with the Infinity Pool")
 			return
 		} else {
-			fmt.Printf("Account opened at epoch # %s\n", account.StartEpoch.String())
-			fmt.Printf("Outstanding principal: %.09f\n", principal)
-			fmt.Printf("Current epoch: %s\n", chainHeadHeight.String())
-			fmt.Printf("Account owes %s epoch payments\n", new(big.Int).Sub(new(big.Int).SetUint64(chainHeadHeight.Uint64()), account.EpochsPaid))
-			fmt.Printf("Account is paid up to epoch # %s\n", account.EpochsPaid.String())
-			fmt.Printf("Account in default? %v\n", account.Defaulted)
-		}
+			defaultEpochTime := util.EpochHeightToTimestamp(defaultEpoch)
+			epochsPaidTime := util.EpochHeightToTimestamp(account.EpochsPaid)
+			fmt.Printf("You currently owe: %.08f FIL on %.02f FIL borrowed\n", amountOwedFIL, principal)
+			fmt.Printf("Your current GCRED score is: %s\n", gcred)
+			fmt.Printf("Your account must make a payment to-current within the next: %s (by epoch # %s)\n", formatSinceDuration(epochsPaidTime, defaultEpochTime), defaultEpoch)
+			fmt.Println()
 
+			fmt.Printf("Your account with the Infinity Pool opened at: %s\n", util.EpochHeightToTimestamp(account.StartEpoch).Format(time.RFC3339))
+		}
+		fmt.Println()
 	},
+}
+
+func formatSinceDuration(t1 time.Time, t2 time.Time) string {
+	d := t2.Sub(t1).Round(time.Minute)
+
+	var parts []string
+
+	weeks := int(d.Hours()) / (24 * 7)
+	d -= time.Duration(weeks) * 7 * 24 * time.Hour
+	if weeks > 1 {
+		parts = append(parts, fmt.Sprintf("%d weeks", weeks))
+	} else if weeks == 1 {
+		parts = append(parts, fmt.Sprintf("%d week", weeks))
+	}
+
+	days := int(d.Hours()) / 24
+	d -= time.Duration(days) * 24 * time.Hour
+	if days > 1 {
+		parts = append(parts, fmt.Sprintf("%d days", days))
+	} else if days == 1 {
+		parts = append(parts, fmt.Sprintf("%d day", days))
+	}
+
+	h := d / time.Hour
+	d -= h * time.Hour
+	parts = append(parts, fmt.Sprintf("%02d hours", h))
+
+	m := d / time.Minute
+	parts = append(parts, fmt.Sprintf("and %02d minutes", m))
+
+	return strings.Join(parts, " ")
 }
 
 const headerWidth = 60
