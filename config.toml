@@ -1,14 +1,23 @@
 [ado]
-address = 'https://ado-testnet.glif.link/rpc/v0'
+address = 'https://ado.glif.link/rpc/v0'
 
 [daemon]
-rpc-url = 'https://api.calibration.node.glif.io/rpc/v1'
+rpc-url = 'https://api.node.glif.io/rpc/v1'
 
 [routes]
-agent-factory = '0x90f27f8BB869Cfd30A403B3093b817eAd323934a'
-agent-police = '0x1Bc9Bb854463556A12845438d7F3ea33a8Cc2B32'
-ifil = '0xE2806C493d68FB18221c3560EE3104F92f24096D'
-infinity-pool = '0x537055df3CD3173fdbfe27c45a1EE950Ecf04757'
-miner-registry = '0x98060EB674957FD0ef6C066F0fA9D6064F7E4E95'
-pool-registry = '0xc6353026a405FF76082Bc4c844d4454aF3371e99'
-router = '0x34fbD15A5b10A2e32adC4547d9681c38F3E1868a'
+agent-deployer = ''
+agent-factory = ''
+agent-police = ''
+cred-parser = ''
+ifil = ''
+infinity-pool = ''
+miner-registry = ''
+mock-id-addr-store = ''
+pg-donator = ''
+pool-registry = ''
+prestake = ''
+router = ''
+system-admin = ''
+treasury = ''
+vc-issuer-address = ''
+wfil = ''

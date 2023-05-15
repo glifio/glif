@@ -5,5 +5,13 @@ all: glif
 glif: main.go
 	go build -o glif .
 
+config:
+	mkdir -p ~/.config/glif
+	cp config.toml ~/.config/glif/config.toml
+
+calibnet-config:
+	mkdir -p ~/.config/glif
+	cp calibnet-config.toml ~/.config/glif/config.toml
+
 install: glif
 	cp glif /usr/local/bin/glif
