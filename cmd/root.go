@@ -58,6 +58,10 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	home, err := os.UserHomeDir()
+	cobra.CheckErr(err)
+	xdgConfigHome := fmt.Sprintf("%s/.config/glif", home)
+
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
@@ -65,11 +69,6 @@ func initConfig() {
 		// Find home directory.
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
-
-		//TODO: check that $HOME/.config/glif exists and create if not
-		// create default config.toml
-		// create empty agent.toml
-		// create empty keys.toml
 
 		// Search config in home directory with name ".glif" (without extension).
 		viper.AddConfigPath(fmt.Sprintf("%s/.config/glif", home))
@@ -112,11 +111,11 @@ func initConfig() {
 	}
 
 	//TODO: check that $HOME/.config/glif exists and create if not
-	if err := util.NewKeyStore("keys.toml"); err != nil {
+	if err := util.NewKeyStore(fmt.Sprintf("%s/keys.toml", xdgConfigHome)); err != nil {
 		log.Fatal(err)
 	}
 
-	if err := util.NewAgentStore("agent.toml"); err != nil {
+	if err := util.NewAgentStore(fmt.Sprintf("%s/agent.toml", xdgConfigHome)); err != nil {
 		log.Fatal(err)
 	}
 }
