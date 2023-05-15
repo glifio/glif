@@ -4,13 +4,15 @@ go 1.19
 
 replace github.com/ipsn/go-secp256k1 v0.0.0-20180726113642-9d62b9f0bc52 => github.com/glifio/go-secp256k1 v0.0.1
 
+replace github.com/glifio/go-pools v0.0.0-20230515211934-9608308a4b5e => ../go-pools
+
 require (
 	github.com/briandowns/spinner v1.23.0
 	github.com/ethereum/go-ethereum v1.11.6
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-state-types v0.11.1
 	github.com/filecoin-project/lotus v1.23.0
-	github.com/glifio/go-pools v0.0.0-20230515211934-9608308a4b5e
+	github.com/glifio/go-pools v0.0.0-20230515233958-b102238f2fd9
 	github.com/pelletier/go-toml/v2 v2.0.6
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0

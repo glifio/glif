@@ -74,10 +74,7 @@ func addOnePercent(amount *big.Int) *big.Int {
 	newAmount := new(big.Int)
 	amountFloat.Int(newAmount)
 
-	// Add the newAmount to the original amount
-	amount.Add(amount, newAmount)
-
-	return amount
+	return newAmount
 }
 
 func init() {

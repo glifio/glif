@@ -51,18 +51,9 @@ var borrowCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		// transaction landed on chain or errored
-		receipt, err := PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
+		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
 			log.Fatal(err)
-		}
-
-		if receipt == nil {
-			log.Fatal("Failed to get receipt")
-		}
-
-		if receipt.Status == 0 {
-			log.Fatal("Transaction failed")
 		}
 
 		s.Stop()
