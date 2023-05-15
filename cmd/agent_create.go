@@ -24,7 +24,7 @@ var createCmd = &cobra.Command{
 
 		// Check if an agent already exists
 		addressStr, err := as.Get("address")
-		if err != nil && err != util.KeyNotFoundErr {
+		if err != nil && err != util.ErrKeyNotFound {
 			log.Fatal(err)
 		}
 		if addressStr != "" {

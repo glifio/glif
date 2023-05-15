@@ -1,17 +1,14 @@
-[agent]
-address = ''
-id = ''
+[ado]
+address = 'https://ado-testnet.glif.link/rpc/v0'
 
 [daemon]
 rpc-url = 'https://api.calibration.node.glif.io/rpc/v1'
 
-[keys]
-operator = ''
-owner = ''
-
 [routes]
-agent-factory = '0x0f7ed619f76d3afe14133fb31101d9c383f4b90b'
-ifil = '0xc61f959a0da2b3b703f283d05b924878447c8048'
-infinity-pool = ''
-pool-registry = '0xace253ee9d7e4060892f46392c19f167308e34ca'
-router = '0xbe26169bce62a115da4110634c5479b569b96868'
+agent-factory = '0x90f27f8BB869Cfd30A403B3093b817eAd323934a'
+agent-police = '0x1Bc9Bb854463556A12845438d7F3ea33a8Cc2B32'
+ifil = '0xE2806C493d68FB18221c3560EE3104F92f24096D'
+infinity-pool = '0x537055df3CD3173fdbfe27c45a1EE950Ecf04757'
+miner-registry = '0x98060EB674957FD0ef6C066F0fA9D6064F7E4E95'
+pool-registry = '0xc6353026a405FF76082Bc4c844d4454aF3371e99'
+router = '0x34fbD15A5b10A2e32adC4547d9681c38F3E1868a'

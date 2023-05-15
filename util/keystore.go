@@ -32,7 +32,13 @@ func KeyStore() *KeyStorage {
 }
 
 func NewKeyStore(filename string) error {
-	s, err := NewStorage(filename)
+	keyDefault := map[string]string{
+		string(OwnerKey):    "",
+		string(OperatorKey): "",
+		string(RequestKey):  "",
+	}
+
+	s, err := NewStorage(filename, keyDefault)
 	if err != nil {
 		return err
 	}
@@ -60,6 +66,10 @@ func (s *KeyStorage) GetPrivate(key KeyType) (*ecdsa.PrivateKey, error) {
 func (s *KeyStorage) GetAddrs(key KeyType) (common.Address, address.Address, error) {
 	pk, ok := s.data[string(key)]
 	if !ok {
+		return common.Address{}, address.Address{}, nil
+	}
+
+	if pk == "" {
 		return common.Address{}, address.Address{}, nil
 	}
 
@@ -130,9 +140,32 @@ func DelegatedFromEthAddr(addr common.Address) (address.Address, error) {
 
 // IsZeroAddress validate if it's a 0 address
 func IsZeroAddress(address common.Address) bool {
+	if isEmptyStruct(address) {
+		return true
+	}
 	zeroAddressBytes := common.FromHex("0x0000000000000000000000000000000000000000")
 	addressBytes := address.Bytes()
 	return reflect.DeepEqual(addressBytes, zeroAddressBytes)
+}
+
+// isEmptyStruct checks if a variable is an empty instance of a struct
+func isEmptyStruct(s interface{}) bool {
+	v := reflect.ValueOf(s)
+
+	// Ensure the variable is a struct
+	if v.Kind() != reflect.Struct {
+		return false
+	}
+
+	// Check if all fields have their zero values
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		if !reflect.DeepEqual(field.Interface(), reflect.Zero(field.Type()).Interface()) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func TruncateAddr(addr string) string {
