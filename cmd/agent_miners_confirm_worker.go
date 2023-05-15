@@ -14,11 +14,11 @@ import (
 )
 
 // changeWorkerCmd represents the changeWorker command
-var changeWorkerCmd = &cobra.Command{
-	Use:   "change-worker",
-	Short: "Change the worker address of your miner",
+var confirmWorker = &cobra.Command{
+	Use:   "confirm-worker <miner-addr>",
+	Short: "Confirm the worker address change of your miner",
 	Long:  ``,
-	Args:  cobra.RangeArgs(2, 5),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, ownerKey, err := commonSetupOwnerCall()
 		if err != nil {
@@ -26,11 +26,6 @@ var changeWorkerCmd = &cobra.Command{
 		}
 
 		minerAddr, err := address.NewFromString(args[0])
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		workerAddr, err := address.NewFromString(args[1])
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -44,12 +39,12 @@ var changeWorkerCmd = &cobra.Command{
 			controlAddrs = append(controlAddrs, controlAddr)
 		}
 
-		log.Printf("Changing worker address for miner %s to %s", minerAddr, workerAddr)
+		log.Printf("Confirming worker address change for miner %s", minerAddr)
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 
-		tx, err := PoolsSDK.Act().AgentChangeMinerWorker(cmd.Context(), agentAddr, minerAddr, workerAddr, controlAddrs, ownerKey)
+		tx, err := PoolsSDK.Act().AgentConfirmMinerWorkerChange(cmd.Context(), agentAddr, minerAddr, ownerKey)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -62,7 +57,7 @@ var changeWorkerCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Println("Successfully changed miner worker - you must confirm this change yourself using `glif agent miners confirm-worker-change`")
+		fmt.Println("Successfully confirmed worker change")
 	},
 }
 
