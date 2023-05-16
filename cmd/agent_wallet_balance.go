@@ -13,7 +13,7 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/filecoin-project/go-address"
-	"github.com/glif-confidential/cli/util"
+	"github.com/glifio/cli/util"
 	denoms "github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )

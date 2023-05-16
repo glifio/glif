@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "github.com/glif-confidential/cli/cmd"
+import "github.com/glifio/cli/cmd"
 
 func main() {
 	cmd.Execute()

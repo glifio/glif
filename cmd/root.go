@@ -23,7 +23,7 @@ import (
 	"os"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/glif-confidential/cli/util"
+	"github.com/glifio/cli/util"
 	"github.com/glifio/go-pools/sdk"
 	types "github.com/glifio/go-pools/types"
 	"github.com/spf13/cobra"

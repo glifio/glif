@@ -1,4 +1,4 @@
-module github.com/glif-confidential/cli
+module github.com/glifio/cli
 
 go 1.19
 

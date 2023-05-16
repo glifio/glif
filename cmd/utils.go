@@ -14,7 +14,7 @@ import (
 	"github.com/filecoin-project/lotus/chain/types"
 	ltypes "github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
-	"github.com/glif-confidential/cli/util"
+	"github.com/glifio/cli/util"
 	denoms "github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )

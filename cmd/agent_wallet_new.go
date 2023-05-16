@@ -8,7 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/glif-confidential/cli/util"
+	"github.com/glifio/cli/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
