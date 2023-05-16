@@ -48,11 +48,13 @@ var agentInfoCmd = &cobra.Command{
 
 		version, err := query.AgentVersion(cmd.Context(), agentAddr)
 		if err != nil {
+			s.Stop()
 			log.Fatal(err)
 		}
 
 		assets, err := query.AgentLiquidAssets(cmd.Context(), agentAddr)
 		if err != nil {
+			s.Stop()
 			log.Fatal(err)
 		}
 
@@ -60,6 +62,7 @@ var agentInfoCmd = &cobra.Command{
 
 		lvl, cap, err := query.InfPoolGetAgentLvl(cmd.Context(), agentID)
 		if err != nil {
+			s.Stop()
 			log.Fatal(err)
 		}
 
@@ -79,18 +82,23 @@ var agentInfoCmd = &cobra.Command{
 
 		account, err := query.InfPoolGetAccount(cmd.Context(), agentAddr)
 		if err != nil {
+			s.Stop()
 			log.Fatalf("Failed to get iFIL balance %s", err)
 		}
 
 		defaultEpoch, err := query.DefaultEpoch(cmd.Context())
 		if err != nil {
+			s.Stop()
 			log.Fatal(err)
 		}
 
 		amountOwed, gcred, err := query.AgentOwes(cmd.Context(), agentAddr)
 		if err != nil {
+			s.Stop()
 			log.Fatal(err)
 		}
+
+		s.Stop()
 
 		amountOwedFIL, _ := util.ToFIL(amountOwed).Float64()
 

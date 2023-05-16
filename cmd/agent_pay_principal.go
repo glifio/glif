@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
@@ -43,7 +44,7 @@ var payPrincipalCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		log.Printf("Paying %s FIL to the %s", amountOwed, poolName)
+		log.Printf("Paying %s FIL to the %s", util.ToFIL(amountOwed).String(), poolName)
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
@@ -61,7 +62,12 @@ var payPrincipalCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Successfully paid %s FIL", args[0])
+		paidAmount, err := parseFILAmount(args[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Printf("Successfully paid %s FIL", util.ToFIL(paidAmount).String())
 	},
 }
 
