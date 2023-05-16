@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
@@ -61,7 +62,10 @@ var payPrincipalCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Successfully paid %s FIL", args[0])
+		paidAmount := new(big.Int)
+		paidAmount.SetString(args[0], 10)
+
+		fmt.Printf("Successfully paid %s FIL", util.ToFIL(paidAmount))
 	},
 }
 
