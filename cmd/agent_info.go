@@ -34,17 +34,18 @@ var agentInfoCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		agentID, err := getAgentID(cmd)
-		if err != nil {
-			log.Fatal(err)
-		}
-
 		fmt.Printf("Fetching stats for %s", agentAddr.String())
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 
 		query := PoolsSDK.Query()
+
+		agentID, err := query.AgentID(cmd.Context(), agentAddr)
+		if err != nil {
+			s.Stop()
+			log.Fatal(err)
+		}
 
 		version, err := query.AgentVersion(cmd.Context(), agentAddr)
 		if err != nil {
@@ -209,5 +210,4 @@ func generateHeader(title string) {
 func init() {
 	agentCmd.AddCommand(agentInfoCmd)
 	agentInfoCmd.Flags().String("agent-addr", "", "Agent address")
-	agentInfoCmd.Flags().String("agent-id", "", "AgentID")
 }
