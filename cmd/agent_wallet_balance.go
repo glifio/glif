@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math/big"
 	"time"
@@ -47,6 +48,12 @@ func getBalances(
 		bal, err := lapi.WalletBalance(ctx, addr)
 		if err != nil {
 			errCh <- err
+			return
+		}
+		if bal.Int == nil {
+			err = fmt.Errorf("failed to get %s balance", key)
+			errCh <- err
+			return
 		}
 		balDecimal := denoms.ToFIL(bal.Int)
 		balCh <- balance{bal: balDecimal, key: key}
@@ -81,6 +88,10 @@ func getBalances(
 }
 
 func logBal(key util.KeyType, bal *big.Float, fevmAddr address.Address, evmAddr common.Address) {
+	if bal == nil {
+		log.Printf("Failed to get %s balance", key)
+		return
+	}
 	bf64, _ := bal.Float64()
 	log.Printf("%s balance: %.02f FIL", key, bf64)
 }
