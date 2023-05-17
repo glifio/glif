@@ -31,6 +31,7 @@ import (
 )
 
 var cfgFile string
+var cfgDir string
 var PoolsSDK types.PoolsSDK
 
 // rootCmd represents the base command when called without any subcommands
@@ -51,30 +52,38 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.glif/config.toml)")
+	rootCmd.PersistentFlags().StringVar(&cfgDir, "config-dir", "", "config directory (default is $HOME/.glif/)")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	home, err := os.UserHomeDir()
-	cobra.CheckErr(err)
-	xdgConfigHome := fmt.Sprintf("%s/.glif", home)
-
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
+	if cfgDir != "" {
+		viper.AddConfigPath(cfgDir)
+	} else if os.Getenv("GLIF_CONFIG_DIR") != "" {
+		viper.AddConfigPath(os.Getenv("GLIF_CONFIG_DIR"))
 	} else {
 		// Find home directory.
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
+		cfgDir = fmt.Sprintf("%s/.glif", home)
+
 		// Search config in home directory with name ".glif" (without extension).
 		viper.AddConfigPath(fmt.Sprintf("%s/.glif", home))
 		viper.AddConfigPath(".")
-		viper.SetConfigType("toml")
-		viper.SetConfigName("config")
+	}
+
+	viper.SetConfigType("toml")
+	viper.SetConfigName("config")
+
+	if err := util.NewKeyStore(fmt.Sprintf("%s/keys.toml", cfgDir)); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := util.NewAgentStore(fmt.Sprintf("%s/agent.toml", cfgDir)); err != nil {
+		log.Fatal(err)
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
@@ -109,14 +118,5 @@ func initConfig() {
 		viper.GetString("daemon.token"),
 	); err != nil {
 		log.Fatalf("Error initializing Pools SDK: %v\n", err)
-	}
-
-	//TODO: check that $HOME/.config/glif exists and create if not
-	if err := util.NewKeyStore(fmt.Sprintf("%s/keys.toml", xdgConfigHome)); err != nil {
-		log.Fatal(err)
-	}
-
-	if err := util.NewAgentStore(fmt.Sprintf("%s/agent.toml", xdgConfigHome)); err != nil {
-		log.Fatal(err)
 	}
 }
