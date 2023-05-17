@@ -35,9 +35,8 @@ var withdrawCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 		}
-		log.Printf("receiver: %s", receiver.String())
 
-		if common.IsHexAddress(receiver.String()) {
+		if !common.IsHexAddress(receiver.String()) {
 			log.Fatal("Invalid withdraw address")
 		}
 
