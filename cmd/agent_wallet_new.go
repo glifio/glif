@@ -93,6 +93,4 @@ var newCmd = &cobra.Command{
 
 func init() {
 	walletCmd.AddCommand(newCmd)
-
-	//TODO: add flags that allow for specific keys to be generated
 }
