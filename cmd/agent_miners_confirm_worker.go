@@ -30,15 +30,6 @@ var confirmWorker = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		var controlAddrs []address.Address
-		for _, arg := range args[2:] {
-			controlAddr, err := address.NewFromString(arg)
-			if err != nil {
-				log.Fatal(err)
-			}
-			controlAddrs = append(controlAddrs, controlAddr)
-		}
-
 		log.Printf("Confirming worker address change for miner %s", minerAddr)
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
