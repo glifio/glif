@@ -20,7 +20,7 @@ var rmCmd = &cobra.Command{
 	Long:  "Removes a specific miner from your Agent by assigning its owner to `new owner address`",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, ownerKey, err := commonSetupOwnerCall()
+		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -44,7 +44,7 @@ var rmCmd = &cobra.Command{
 
 		fmt.Printf("Removing miner %s from agent %s by changing its owner address to %s", minerAddr, agentAddr, newMinerOwnerAddr)
 
-		tx, err := PoolsSDK.Act().AgentRemoveMiner(cmd.Context(), agentAddr, minerAddr, newMinerOwnerAddr, ownerKey)
+		tx, err := PoolsSDK.Act().AgentRemoveMiner(cmd.Context(), agentAddr, minerAddr, newMinerOwnerAddr, ownerKey, requesterKey)
 		if err != nil {
 			log.Fatal(err)
 		}

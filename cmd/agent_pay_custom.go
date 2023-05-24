@@ -19,7 +19,7 @@ var payCustomCmd = &cobra.Command{
 	Long:  "",
 	// Args:  cobra.RangeArgs(1, 2),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, pk, err := commonOwnerOrOperatorSetup(cmd)
+		agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -41,7 +41,7 @@ var payCustomCmd = &cobra.Command{
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 
-		tx, err := PoolsSDK.Act().AgentPay(cmd.Context(), agentAddr, poolID, amount, pk)
+		tx, err := PoolsSDK.Act().AgentPay(cmd.Context(), agentAddr, poolID, amount, senderKey, requesterKey)
 		if err != nil {
 			log.Fatal(err)
 		}

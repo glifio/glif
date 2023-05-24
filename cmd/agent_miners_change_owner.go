@@ -24,7 +24,7 @@ var changeOwnerCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, _, err := commonSetupOwnerCall()
+		agentAddr, _, _, err := commonSetupOwnerCall()
 		if err != nil {
 			log.Fatal(err)
 		}

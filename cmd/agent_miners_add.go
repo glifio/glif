@@ -20,7 +20,7 @@ var addCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, ownerKey, err := commonSetupOwnerCall()
+		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -35,7 +35,7 @@ var addCmd = &cobra.Command{
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 
-		tx, err := PoolsSDK.Act().AgentAddMiner(cmd.Context(), agentAddr, minerAddr, ownerKey)
+		tx, err := PoolsSDK.Act().AgentAddMiner(cmd.Context(), agentAddr, minerAddr, ownerKey, requesterKey)
 		if err != nil {
 			log.Fatal(err)
 		}
