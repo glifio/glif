@@ -78,44 +78,53 @@ func parseAddress(ctx context.Context, addr string, lapi lotusapi.FullNode) (com
 	return common.HexToAddress(ethAddr.String()), nil
 }
 
-func commonSetupOwnerCall() (common.Address, *ecdsa.PrivateKey, error) {
+func commonSetupOwnerCall() (common.Address, *ecdsa.PrivateKey, *ecdsa.PrivateKey, error) {
 	as := util.AgentStore()
 	ks := util.KeyStore()
 	// Check if an agent already exists
 	agentAddrStr, err := as.Get("address")
 	if err != nil {
-		return common.Address{}, nil, err
+		return common.Address{}, nil, nil, err
 	}
 
 	if agentAddrStr == "" {
-		return common.Address{}, nil, errors.New("No agent found. Did you forget to create one?")
+		return common.Address{}, nil, nil, errors.New("No agent found. Did you forget to create one?")
 	}
 
 	agentAddr := common.HexToAddress(agentAddrStr)
 
 	pk, err := ks.GetPrivate(util.OwnerKey)
 	if err != nil {
-		return common.Address{}, nil, err
+		return common.Address{}, nil, nil, err
 	}
 
 	if pk == nil {
-		return common.Address{}, nil, errors.New("Owner key not found. Please check your `keys.toml` file. Only an Agent's owner can add a miner to it")
+		return common.Address{}, nil, nil, errors.New("Owner key not found. Please check your `keys.toml` file.")
 	}
 
-	return agentAddr, pk, nil
+	requesterKey, err := ks.GetPrivate(util.RequestKey)
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+
+	if pk == nil {
+		return common.Address{}, nil, nil, errors.New("Requester key not found. Please check your `keys.toml` file.")
+	}
+
+	return agentAddr, pk, requesterKey, nil
 }
 
-func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.PrivateKey, error) {
+func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.PrivateKey, *ecdsa.PrivateKey, error) {
 	as := util.AgentStore()
 	ks := util.KeyStore()
 
 	opEvm, opFevm, err := ks.GetAddrs(util.OperatorKey)
 	if err != nil {
-		return common.Address{}, nil, err
+		return common.Address{}, nil, nil, err
 	}
 	owEvm, owFevm, err := ks.GetAddrs(util.OwnerKey)
 	if err != nil {
-		return common.Address{}, nil, err
+		return common.Address{}, nil, nil, err
 	}
 
 	var pk *ecdsa.PrivateKey
@@ -129,25 +138,34 @@ func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.Priv
 	} else if from == owEvm.String() || from == owFevm.String() {
 		pk, err = ks.GetPrivate(util.OwnerKey)
 	} else {
-		return common.Address{}, nil, errors.New("invalid from address")
+		return common.Address{}, nil, nil, errors.New("invalid from address")
 	}
 
 	if err != nil {
-		return common.Address{}, nil, err
+		return common.Address{}, nil, nil, err
 	}
 
 	agentAddrStr, err := as.Get("address")
 	if err != nil {
-		return common.Address{}, nil, err
+		return common.Address{}, nil, nil, err
 	}
 
 	if agentAddrStr == "" {
-		return common.Address{}, nil, errors.New("No agent found. Did you forget to create one?")
+		return common.Address{}, nil, nil, errors.New("No agent found. Did you forget to create one?")
 	}
 
 	agentAddr := common.HexToAddress(agentAddrStr)
 
-	return agentAddr, pk, nil
+	requesterKey, err := ks.GetPrivate(util.RequestKey)
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+
+	if pk == nil {
+		return common.Address{}, nil, nil, errors.New("Requester key not found. Please check your `keys.toml` file.")
+	}
+
+	return agentAddr, pk, requesterKey, nil
 }
 
 type PoolType uint64

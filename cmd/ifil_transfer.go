@@ -15,7 +15,7 @@ var iFILTransferCmd = &cobra.Command{
 	Short: "Transfer iFIL to another address",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		_, pk, err := commonOwnerOrOperatorSetup(cmd)
+		_, pk, _, err := commonOwnerOrOperatorSetup(cmd)
 		if err != nil {
 			log.Fatal(err)
 		}
