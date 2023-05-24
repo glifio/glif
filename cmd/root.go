@@ -30,15 +30,13 @@ import (
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
 var cfgDir string
+var useCalibnet bool // only set in root_calibnet.go
 var PoolsSDK types.PoolsSDK
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "glif",
-	Short: "",
-	Long:  ``,
+	Use: "glif",
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -52,9 +50,8 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgDir, "config-dir", "", "config directory (default is $HOME/.glif/)")
+	rootCmd.PersistentFlags().StringVar(&cfgDir, "config-dir", "", "config directory")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -69,9 +66,12 @@ func initConfig() {
 		cobra.CheckErr(err)
 
 		cfgDir = fmt.Sprintf("%s/.glif", home)
+		if useCalibnet {
+			cfgDir = fmt.Sprintf("%s/.glif/%s", home, "calibnet")
+		}
 
 		// Search config in home directory with name ".glif" (without extension).
-		viper.AddConfigPath(fmt.Sprintf("%s/.glif", home))
+		viper.AddConfigPath(cfgDir)
 		viper.AddConfigPath(".")
 	}
 

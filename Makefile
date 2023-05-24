@@ -3,7 +3,8 @@ SHELL=/bin/bash -o pipefail
 all: glif
 
 glif: main.go
-	go build -o glif .
+	go build $(GOFLAGS) -o glif .
+.PHONY: glif
 
 clean:
 	rm -f glif
@@ -13,8 +14,11 @@ config:
 	cp config.toml ~/.glif/config.toml
 
 calibnet-config:
-	mkdir -p ~/.glif
-	cp calibnet-config.toml ~/.glif/config.toml
+	mkdir -p ~/.glif/calibnet
+	cp calibnet-config.toml ~/.glif/calibnet/config.toml
+
+calibnet: GOFLAGS+=-tags=calibnet
+calibnet: glif
 
 install: glif
 	cp glif /usr/local/bin/glif

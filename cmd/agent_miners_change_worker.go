@@ -15,7 +15,7 @@ import (
 
 // changeWorkerCmd represents the changeWorker command
 var changeWorkerCmd = &cobra.Command{
-	Use:   "change-worker",
+	Use:   "change-worker <miner address> <worker address> [control addresses...]",
 	Short: "Change the worker address of your miner",
 	Long:  ``,
 	Args:  cobra.RangeArgs(2, 5),
@@ -25,20 +25,24 @@ var changeWorkerCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		minerAddr, err := address.NewFromString(args[0])
+		minerAddr, err := ToMinerID(cmd.Context(), args[0])
 		if err != nil {
 			log.Fatal(err)
 		}
+		log.Println(minerAddr)
 
-		workerAddr, err := address.NewFromString(args[1])
+		workerAddr, err := ToMinerID(cmd.Context(), args[1])
 		if err != nil {
+			log.Print("Error parsing worker address")
 			log.Fatal(err)
 		}
+		log.Println(workerAddr)
 
 		var controlAddrs []address.Address
 		for _, arg := range args[2:] {
-			controlAddr, err := address.NewFromString(arg)
+			controlAddr, err := ToMinerID(cmd.Context(), arg)
 			if err != nil {
+				log.Print("Error parsing control address")
 				log.Fatal(err)
 			}
 			controlAddrs = append(controlAddrs, controlAddr)
@@ -51,7 +55,7 @@ var changeWorkerCmd = &cobra.Command{
 
 		tx, err := PoolsSDK.Act().AgentChangeMinerWorker(cmd.Context(), agentAddr, minerAddr, workerAddr, controlAddrs, ownerKey)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("tx error: %s", err)
 		}
 
 		// transaction landed on chain or errored
@@ -62,7 +66,7 @@ var changeWorkerCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Println("Successfully changed miner worker - you must confirm this change yourself using `glif agent miners confirm-worker-change`")
+		fmt.Println("Successfully changed miner worker - you must confirm this change yourself using `glif agent miners confirm-worker`")
 	},
 }
 
