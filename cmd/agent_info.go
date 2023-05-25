@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"math/big"
 	"strings"
 	"time"
 
@@ -117,7 +118,6 @@ var agentInfoCmd = &cobra.Command{
 
 		if principal == 0 {
 			fmt.Println("No account exists with the Infinity Pool")
-			return
 		} else {
 			defaultEpochTime := util.EpochHeightToTimestamp(defaultEpoch)
 			epochsPaidTime := util.EpochHeightToTimestamp(account.EpochsPaid)
@@ -128,6 +128,20 @@ var agentInfoCmd = &cobra.Command{
 			fmt.Println()
 
 			fmt.Printf("Your account with the Infinity Pool opened at: %s\n", util.EpochHeightToTimestamp(account.StartEpoch).Format(time.RFC3339))
+		}
+
+		faultySectorStart, err := query.AgentFaultyEpochStart(cmd.Context(), agentAddr)
+		if err != nil {
+			s.Stop()
+			log.Fatal(err)
+		}
+
+		generateHeader("HEALTH")
+		if faultySectorStart.Cmp(big.NewInt(0)) == 0 {
+			fmt.Printf("Status healthy 🟢\n")
+		} else {
+			fmt.Printf("Status unhealthy 🔴\n")
+			fmt.Printf("Faulty sector start epoch: %v", faultySectorStart)
 		}
 		fmt.Println()
 	},
