@@ -36,6 +36,13 @@ func NewStorage(filename string, defaultMap map[string]string) (*Storage, error)
 		if err != nil {
 			return nil, err
 		}
+		if len(s.data) == 0 {
+			s.data = defaultMap
+			err = s.save()
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	return s, nil
