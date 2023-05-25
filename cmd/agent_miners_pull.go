@@ -14,9 +14,8 @@ import (
 
 // pull represents the pull command
 var pullFundsCmd = &cobra.Command{
-	Use:   "pull-funds <amount> <miner address>",
+	Use:   "pull-funds <miner address> <amount>",
 	Short: "Pull FIL from a miner into your Glif Agent",
-	Long:  ``,
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
@@ -24,12 +23,12 @@ var pullFundsCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		amount, err := parseFILAmount(args[0])
+		minerAddr, err := ToMinerID(cmd.Context(), args[0])
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		minerAddr, err := ToMinerID(cmd.Context(), args[1])
+		amount, err := parseFILAmount(args[1])
 		if err != nil {
 			log.Fatal(err)
 		}
