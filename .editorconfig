@@ -21,3 +21,7 @@ indent_size = 2
 
 # Disable trimming trailing whitespace for Go files, as it may affect raw string literals
 trim_trailing_whitespace = false
+
+[Makefile]
+indent_style = tab
+trim_trailing_whitespace = true
