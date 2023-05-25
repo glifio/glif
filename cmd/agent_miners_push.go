@@ -13,9 +13,8 @@ import (
 )
 
 var pushFundsCmd = &cobra.Command{
-	Use:   "push-funds <amount> <miner address>",
+	Use:   "push-funds <miner address> <amount>",
 	Short: "Push FIL from the Glif Agent to a specific Miner ID",
-	Long:  ``,
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
@@ -23,12 +22,12 @@ var pushFundsCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		amount, err := parseFILAmount(args[0])
+		minerAddr, err := ToMinerID(cmd.Context(), args[0])
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		minerAddr, err := ToMinerID(cmd.Context(), args[1])
+		amount, err := parseFILAmount(args[1])
 		if err != nil {
 			log.Fatal(err)
 		}
