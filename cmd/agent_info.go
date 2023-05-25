@@ -47,11 +47,13 @@ var agentInfoCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		version, err := query.AgentVersion(cmd.Context(), agentAddr)
+		agVersion, ntwVersion, err := query.AgentVersion(cmd.Context(), agentAddr)
 		if err != nil {
 			s.Stop()
 			log.Fatal(err)
 		}
+
+		goodVersion := agVersion == ntwVersion
 
 		assets, err := query.AgentLiquidAssets(cmd.Context(), agentAddr)
 		if err != nil {
@@ -74,7 +76,12 @@ var agentInfoCmd = &cobra.Command{
 		fmt.Printf("Agent Address (del): %s\n", agentAddrDel.String())
 		fmt.Printf("Agent ID: %s\n", agentID)
 		fmt.Printf("Agent's lvl is %s and can borrow %.03f FIL\n", lvl.String(), cap)
-		fmt.Printf("Agent Version: %v\n", version)
+		if goodVersion {
+			fmt.Printf("Agent Version: %v ✅ \n", agVersion)
+		} else {
+			fmt.Println("Agent requires upgrade, run `glif agent upgrade` to upgrade")
+			fmt.Printf("Agent/Network version mismatch: %v/%v ❌ \n", agVersion, ntwVersion)
+		}
 
 		generateHeader("AGENT ASSETS")
 		fmt.Printf("%f FIL\n", assetsFIL)
