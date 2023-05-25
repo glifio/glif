@@ -88,6 +88,8 @@ var newCmd = &cobra.Command{
 		log.Printf("Owner address: %s (ETH), %s (FIL)\n", ownerAddr, ownerDelAddr)
 		log.Printf("Operator address: %s (ETH), %s (FIL)\n", operatorAddr, operatorDelAddr)
 		log.Printf("Request key: %s (ETH), %s (FIL)\n", requestAddr, requestDelAddr)
+		log.Println()
+		log.Println("Please make sure to fund your Owner Address with FIL before creating an Agent")
 	},
 }
 
