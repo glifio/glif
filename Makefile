@@ -20,5 +20,6 @@ calibnet-config:
 calibnet: GOFLAGS+=-tags=calibnet
 calibnet: glif
 
-install: glif
+install:
 	cp glif /usr/local/bin/glif
+.PHONY: install
