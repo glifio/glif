@@ -4,6 +4,7 @@
 First, clone the repo:
 `git clone git@github.com:glifio/cli.git`<br />
 `cd cli`<br />
+`sudo make glif`<br />
 `sudo make install`<br />
 `make calibnet-config`<br />
 
