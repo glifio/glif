@@ -31,7 +31,7 @@ import (
 )
 
 var cfgDir string
-var useCalibnet bool // only set in root_calibnet.go
+
 var PoolsSDK types.PoolsSDK
 
 // rootCmd represents the base command when called without any subcommands
@@ -51,6 +51,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgDir, "config-dir", "", "config directory")
+	rootCmd.PersistentFlags().StringVar(&network, "network", "", "set the network to use ('mainnet' or 'calibrationnet')")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
@@ -65,9 +66,10 @@ func initConfig() {
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
-		cfgDir = fmt.Sprintf("%s/.glif", home)
-		if useCalibnet {
-			cfgDir = fmt.Sprintf("%s/.glif/%s", home, "calibnet")
+		// testnet by default
+		cfgDir = fmt.Sprintf("%s/glif-%v", home, calibnetChainID)
+		if NetworkName() == Mainnet {
+			cfgDir = fmt.Sprintf("%s/glif-%v", home, mainnetChainID)
 		}
 
 		// Search config in home directory with name ".glif" (without extension).
@@ -100,6 +102,11 @@ func initConfig() {
 		}
 	}
 
+	adoNamespace := "Mock"
+	if NetworkName() == Mainnet {
+		adoNamespace = "ADO"
+	}
+
 	if err := sdk.Init(
 		rootCmd.Context(),
 		&PoolsSDK,
@@ -112,11 +119,16 @@ func initConfig() {
 		common.HexToAddress(viper.GetString("routes.wfil")),
 		common.HexToAddress(viper.GetString("routes.infinity-pool")),
 		viper.GetString("ado.address"),
-		// using the mock ADO for now
-		"Mock",
+		adoNamespace,
 		viper.GetString("daemon.rpc-url"),
 		viper.GetString("daemon.token"),
 	); err != nil {
 		log.Fatalf("Error initializing Pools SDK: %v\n", err)
+	}
+
+	chainID := PoolsSDK.Query().ChainID()
+
+	if NetworkName() == Mainnet && chainID.Uint64() != mainnetChainID {
+		log.Fatalf("Error: expected chain ID %v, got %v\n", mainnetChainID, chainID)
 	}
 }
