@@ -37,6 +37,7 @@ var iFILApproveCmd = &cobra.Command{
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
+		defer s.Stop()
 
 		tx, err := PoolsSDK.Act().IFILApprove(cmd.Context(), addr, amt, pk)
 		if err != nil {

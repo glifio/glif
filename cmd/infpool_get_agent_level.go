@@ -26,6 +26,7 @@ var agentLvlCmd = &cobra.Command{
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
+		defer s.Stop()
 
 		lvl, borrowCap, err := PoolsSDK.Query().InfPoolGetAgentLvl(cmd.Context(), agentID)
 		if err != nil {

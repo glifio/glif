@@ -39,18 +39,17 @@ var agentInfoCmd = &cobra.Command{
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
+		defer s.Stop()
 
 		query := PoolsSDK.Query()
 
 		agentID, err := query.AgentID(cmd.Context(), agentAddr)
 		if err != nil {
-			s.Stop()
 			log.Fatal(err)
 		}
 
 		agVersion, ntwVersion, err := query.AgentVersion(cmd.Context(), agentAddr)
 		if err != nil {
-			s.Stop()
 			log.Fatal(err)
 		}
 
@@ -64,7 +63,6 @@ var agentInfoCmd = &cobra.Command{
 
 		assets, err := query.AgentLiquidAssets(cmd.Context(), agentAddr)
 		if err != nil {
-			s.Stop()
 			log.Fatal(err)
 		}
 
@@ -72,7 +70,6 @@ var agentInfoCmd = &cobra.Command{
 
 		lvl, cap, err := query.InfPoolGetAgentLvl(cmd.Context(), agentID)
 		if err != nil {
-			s.Stop()
 			log.Fatal(err)
 		}
 
@@ -97,19 +94,16 @@ var agentInfoCmd = &cobra.Command{
 
 		account, err := query.InfPoolGetAccount(cmd.Context(), agentAddr)
 		if err != nil {
-			s.Stop()
 			log.Fatalf("Failed to get iFIL balance %s", err)
 		}
 
 		defaultEpoch, err := query.DefaultEpoch(cmd.Context())
 		if err != nil {
-			s.Stop()
 			log.Fatal(err)
 		}
 
 		amountOwed, gcred, err := query.AgentOwes(cmd.Context(), agentAddr)
 		if err != nil {
-			s.Stop()
 			log.Fatal(err)
 		}
 
@@ -144,7 +138,6 @@ var agentInfoCmd = &cobra.Command{
 
 		faultySectorStart, err := query.AgentFaultyEpochStart(cmd.Context(), agentAddr)
 		if err != nil {
-			s.Stop()
 			log.Fatal(err)
 		}
 
