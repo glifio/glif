@@ -31,6 +31,7 @@ var exitCmd = &cobra.Command{
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
+		defer s.Stop()
 
 		account, err := PoolsSDK.Query().InfPoolGetAccount(cmd.Context(), agentAddr)
 		if err != nil {

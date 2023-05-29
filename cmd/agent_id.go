@@ -25,10 +25,10 @@ var idCmd = &cobra.Command{
 		log.Printf("Fetching agent ID for %s", util.TruncateAddr(agentAddr.String()))
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
+		defer s.Stop()
 
 		id, err := PoolsSDK.Query().AgentID(cmd.Context(), agentAddr)
 		if err != nil {
-			s.Stop()
 			log.Fatal(err)
 		}
 

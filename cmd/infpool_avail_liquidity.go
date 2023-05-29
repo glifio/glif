@@ -21,6 +21,7 @@ var availLiquidityCmd = &cobra.Command{
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
+		defer s.Stop()
 
 		liquid, err := PoolsSDK.Query().InfPoolBorrowableLiquidity(cmd.Context())
 		if err != nil {

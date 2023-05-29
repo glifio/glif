@@ -34,6 +34,7 @@ var addCmd = &cobra.Command{
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
+		defer s.Stop()
 
 		tx, err := PoolsSDK.Act().AgentAddMiner(cmd.Context(), agentAddr, minerAddr, ownerKey, requesterKey)
 		if err != nil {

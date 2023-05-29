@@ -47,6 +47,7 @@ var withdrawCmd = &cobra.Command{
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
+		defer s.Stop()
 
 		fmt.Printf("Withdrawing %s FIL from your Agent...", args[0])
 

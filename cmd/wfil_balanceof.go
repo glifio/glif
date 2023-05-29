@@ -24,6 +24,7 @@ var wFILBalanceOfCmd = &cobra.Command{
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
+		defer s.Stop()
 
 		bal, err := PoolsSDK.Query().WFILBalanceOf(cmd.Context(), addr)
 		if err != nil {
