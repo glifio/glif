@@ -21,6 +21,7 @@ var inpoolTotalBorrowedCmd = &cobra.Command{
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
+		defer s.Stop()
 
 		assets, err := PoolsSDK.Query().InfPoolTotalBorrowed(cmd.Context())
 		if err != nil {
