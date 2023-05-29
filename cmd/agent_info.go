@@ -54,6 +54,12 @@ var agentInfoCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		agentAdmin, err := query.AgentAdministrator(cmd.Context(), agentAddr)
+		if err != nil {
+			s.Stop()
+			log.Fatal(err)
+		}
+
 		goodVersion := agVersion == ntwVersion
 
 		assets, err := query.AgentLiquidAssets(cmd.Context(), agentAddr)
@@ -130,6 +136,12 @@ var agentInfoCmd = &cobra.Command{
 			fmt.Printf("Your account with the Infinity Pool opened at: %s\n", util.EpochHeightToTimestamp(account.StartEpoch).Format(time.RFC3339))
 		}
 
+		defaulted, err := query.AgentDefaulted(cmd.Context(), agentAddr)
+		if err != nil {
+			s.Stop()
+			log.Fatal(err)
+		}
+
 		faultySectorStart, err := query.AgentFaultyEpochStart(cmd.Context(), agentAddr)
 		if err != nil {
 			s.Stop()
@@ -137,11 +149,35 @@ var agentInfoCmd = &cobra.Command{
 		}
 
 		generateHeader("HEALTH")
+		fmt.Printf("Agent's administrator: %s\n", agentAdmin)
+		fmt.Printf("Agent in default: %t\n\n", defaulted)
 		if faultySectorStart.Cmp(big.NewInt(0)) == 0 {
 			fmt.Printf("Status healthy 🟢\n")
 		} else {
-			fmt.Printf("Status unhealthy 🔴\n")
-			fmt.Printf("Faulty sector start epoch: %v", faultySectorStart)
+			chainHeight, err := query.ChainHeight(cmd.Context())
+			if err != nil {
+				s.Stop()
+				log.Fatal(err)
+			}
+
+			consecutiveFaultEpochTolerance, err := query.MaxConsecutiveFaultEpochs(cmd.Context())
+			if err != nil {
+				s.Stop()
+				log.Fatal(err)
+			}
+
+			consecutiveFaultEpochs := new(big.Int).Sub(chainHeight, faultySectorStart)
+
+			liableForFaultySectorDefault := consecutiveFaultEpochs.Cmp(consecutiveFaultEpochTolerance) >= 0
+
+			if liableForFaultySectorDefault {
+				fmt.Printf("🔴 Status unhealthy - you are at risk of liquidation due to consecutive faulty sectors 🔴\n")
+				fmt.Printf("Faulty sector start epoch: %v", faultySectorStart)
+			} else {
+				epochsBeforeZeroTolerance := new(big.Int).Sub(consecutiveFaultEpochTolerance, consecutiveFaultEpochs)
+				fmt.Printf("🟡 Status unhealthy - you are approaching risk of liquidation due to consecutive faulty sectors 🟡\n")
+				fmt.Printf("- With %v more consecutive faulty sectors, you will be at risk of liquidation\n", epochsBeforeZeroTolerance)
+			}
 		}
 		fmt.Println()
 	},
