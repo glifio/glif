@@ -4,6 +4,9 @@ address = 'https://ado-testnet.glif.link/rpc/v0'
 [daemon]
 rpc-url = 'https://api.calibration.node.glif.io/rpc/v1'
 
+[chain]
+chain-id = 314159
+
 [routes]
 agent-deployer = '0x616F36D56B34A4b12b1208Fb5F513Ff51987575D'
 agent-factory = '0x1EbF54537437a372614Eb50B6EDCbDB643603Fe7'

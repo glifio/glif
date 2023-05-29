@@ -4,6 +4,9 @@ address = 'https://ado.glif.link/rpc/v0'
 [daemon]
 rpc-url = 'https://api.node.glif.io/rpc/v1'
 
+[chain]
+chain-id = 314
+
 [routes]
 agent-deployer = '0x0a9A795E6c051a43CF8e09294Ffb0304c7038f87'
 agent-factory = '0x526Ab27Af261d28c2aC1fD24f63CcB3bd44D50e0'

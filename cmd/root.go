@@ -16,14 +16,17 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
 	"log"
+	"math/big"
 	"os"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/glifio/cli/util"
+	"github.com/glifio/go-pools/constants"
+	"github.com/glifio/go-pools/deploy"
 	"github.com/glifio/go-pools/sdk"
 	types "github.com/glifio/go-pools/types"
 	"github.com/spf13/cobra"
@@ -100,23 +103,21 @@ func initConfig() {
 		}
 	}
 
-	if err := sdk.Init(
-		rootCmd.Context(),
-		&PoolsSDK,
-		common.HexToAddress(viper.GetString("routes.agent-police")),
-		common.HexToAddress(viper.GetString("routes.miner-registry")),
-		common.HexToAddress(viper.GetString("routes.router")),
-		common.HexToAddress(viper.GetString("routes.pool-registry")),
-		common.HexToAddress(viper.GetString("routes.agent-factory")),
-		common.HexToAddress(viper.GetString("routes.ifil")),
-		common.HexToAddress(viper.GetString("routes.wfil")),
-		common.HexToAddress(viper.GetString("routes.infinity-pool")),
-		viper.GetString("ado.address"),
-		// using the mock ADO for now
-		"Mock",
-		viper.GetString("daemon.rpc-url"),
-		viper.GetString("daemon.token"),
-	); err != nil {
-		log.Fatalf("Error initializing Pools SDK: %v\n", err)
+	chainID := viper.GetInt64("chain.chain-id")
+	var extern types.Extern
+
+	switch chainID {
+	case constants.MainnetChainID:
+		extern = deploy.Extern
+	case constants.CalibnetChainID:
+		extern = deploy.TestExtern
+	default:
+		log.Fatalf("Unknown chain id %d", chainID)
 	}
+
+	sdk, err := sdk.New(context.Background(), big.NewInt(chainID), extern)
+	if err != nil {
+		log.Fatalf("Failed to initialize pools sdk %s", err)
+	}
+	PoolsSDK = sdk
 }
