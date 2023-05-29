@@ -14,7 +14,7 @@ First, clone the repo:
 `cd cli`<br />
 `make glif`<br />
 `sudo make install`<br />
-`make calibnet-config`<br />
+`make config`<br />
 
 Now when you run:
 ```
