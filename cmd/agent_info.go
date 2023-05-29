@@ -4,6 +4,7 @@ Copyright © 2023 Glif LTD
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"math/big"
@@ -11,6 +12,10 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/filecoin-project/go-address"
+	"github.com/filecoin-project/lotus/api"
+	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
 	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
@@ -20,6 +25,12 @@ var agentInfoCmd = &cobra.Command{
 	Use:   "info",
 	Short: "Get the info associated with your Agent",
 	Run: func(cmd *cobra.Command, args []string) {
+		lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer closer()
+
 		agentAddr, err := getAgentAddress(cmd)
 		if err != nil {
 			log.Fatal(err)
@@ -35,32 +46,18 @@ var agentInfoCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Fetching stats for %s", agentAddr.String())
-
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 		defer s.Stop()
 
 		query := PoolsSDK.Query()
 
-		agentID, err := query.AgentID(cmd.Context(), agentAddr)
+		agentID, _, _, _, agentAdmin, err := basicInfo(cmd.Context(), agentAddr, agentAddrDel, lapi, s)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		agVersion, ntwVersion, err := query.AgentVersion(cmd.Context(), agentAddr)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		goodVersion := agVersion == ntwVersion
-
-		assets, err := query.AgentLiquidAssets(cmd.Context(), agentAddr)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		assetsFIL, _ := util.ToFIL(assets).Float64()
+		err = econInfo(cmd.Context(), agentAddr, agentID, lapi, s)
 
 		lvl, cap, err := query.InfPoolGetAgentLvl(cmd.Context(), agentID)
 		if err != nil {
@@ -69,20 +66,7 @@ var agentInfoCmd = &cobra.Command{
 
 		s.Stop()
 
-		generateHeader("BASIC INFO")
-		fmt.Printf("Agent Address: %s\n", agentAddr.String())
-		fmt.Printf("Agent Address (del): %s\n", agentAddrDel.String())
-		fmt.Printf("Agent ID: %s\n", agentID)
 		fmt.Printf("Agent's lvl is %s and can borrow %.03f FIL\n", lvl.String(), cap)
-		if goodVersion {
-			fmt.Printf("Agent Version: %v ✅ \n", agVersion)
-		} else {
-			fmt.Println("Agent requires upgrade, run `glif agent upgrade` to upgrade")
-			fmt.Printf("Agent/Network version mismatch: %v/%v ❌ \n", agVersion, ntwVersion)
-		}
-
-		generateHeader("AGENT ASSETS")
-		fmt.Printf("%f FIL\n", assetsFIL)
 
 		s.Start()
 
@@ -124,20 +108,146 @@ var agentInfoCmd = &cobra.Command{
 			fmt.Printf("Your account with the Infinity Pool opened at: %s\n", util.EpochHeightToTimestamp(account.StartEpoch).Format(time.RFC3339))
 		}
 
+		defaulted, err := query.AgentDefaulted(cmd.Context(), agentAddr)
+		if err != nil {
+			s.Stop()
+			log.Fatal(err)
+		}
+
 		faultySectorStart, err := query.AgentFaultyEpochStart(cmd.Context(), agentAddr)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		generateHeader("HEALTH")
+		fmt.Printf("Agent's administrator: %s\n", agentAdmin)
+		fmt.Printf("Agent in default: %t\n\n", defaulted)
 		if faultySectorStart.Cmp(big.NewInt(0)) == 0 {
 			fmt.Printf("Status healthy 🟢\n")
 		} else {
-			fmt.Printf("Status unhealthy 🔴\n")
-			fmt.Printf("Faulty sector start epoch: %v", faultySectorStart)
+			chainHeight, err := query.ChainHeight(cmd.Context())
+			if err != nil {
+				s.Stop()
+				log.Fatal(err)
+			}
+
+			consecutiveFaultEpochTolerance, err := query.MaxConsecutiveFaultEpochs(cmd.Context())
+			if err != nil {
+				s.Stop()
+				log.Fatal(err)
+			}
+
+			consecutiveFaultEpochs := new(big.Int).Sub(chainHeight, faultySectorStart)
+
+			liableForFaultySectorDefault := consecutiveFaultEpochs.Cmp(consecutiveFaultEpochTolerance) >= 0
+
+			if liableForFaultySectorDefault {
+				fmt.Printf("🔴 Status unhealthy - you are at risk of liquidation due to consecutive faulty sectors 🔴\n")
+				fmt.Printf("Faulty sector start epoch: %v", faultySectorStart)
+			} else {
+				epochsBeforeZeroTolerance := new(big.Int).Sub(consecutiveFaultEpochTolerance, consecutiveFaultEpochs)
+				fmt.Printf("🟡 Status unhealthy - you are approaching risk of liquidation due to consecutive faulty sectors 🟡\n")
+				fmt.Printf("- With %v more consecutive faulty sectors, you will be at risk of liquidation\n", epochsBeforeZeroTolerance)
+			}
 		}
 		fmt.Println()
 	},
+}
+
+func basicInfo(ctx context.Context, agent common.Address, agentDel address.Address, lapi *api.FullNodeStruct, s *spinner.Spinner) (
+	agentID *big.Int,
+	agentFILIDAddr address.Address,
+	agVersion uint8,
+	ntwVersion uint8,
+	agentAdmin common.Address,
+	err error,
+) {
+	query := PoolsSDK.Query()
+
+	agentID, err = query.AgentID(ctx, agent)
+	if err != nil {
+		return common.Big0, address.Undef, 0, 0, common.Address{}, err
+	}
+
+	agentFILIDAddr, err = lapi.StateLookupID(ctx, agentDel, types.EmptyTSK)
+	if err != nil {
+		return common.Big0, address.Undef, 0, 0, common.Address{}, err
+	}
+
+	agVersion, ntwVersion, err = query.AgentVersion(ctx, agent)
+	if err != nil {
+		return common.Big0, address.Undef, 0, 0, common.Address{}, err
+	}
+
+	agentAdmin, err = query.AgentAdministrator(ctx, agent)
+	if err != nil {
+		return common.Big0, address.Undef, 0, 0, common.Address{}, err
+	}
+
+	goodVersion := agVersion == ntwVersion
+
+	s.Stop()
+	generateHeader("BASIC INFO")
+	fmt.Printf("Agent Address: %s\n", agent.String())
+	fmt.Printf("Agent Address (del): %s\n", agentDel.String())
+	fmt.Printf("Agent FIL ID Address: %s\n", agentFILIDAddr.String())
+	fmt.Printf("Agent Pools Protocol ID: %s\n", agentID)
+	if goodVersion {
+		fmt.Printf("Agent Version: %v ✅ \n", agVersion)
+	} else {
+		fmt.Println("Agent requires upgrade, run `glif agent upgrade` to upgrade")
+		fmt.Printf("Agent/Network version mismatch: %v/%v ❌ \n", agVersion, ntwVersion)
+	}
+	s.Start()
+
+	return agentID, agentFILIDAddr, agVersion, ntwVersion, agentAdmin, nil
+}
+
+func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi *api.FullNodeStruct, s *spinner.Spinner) error {
+	query := PoolsSDK.Query()
+
+	assets, err := query.AgentLiquidAssets(ctx, agent)
+	if err != nil {
+		return err
+	}
+
+	assetsFIL, _ := util.ToFIL(assets).Float64()
+
+	agentMiners, err := query.MinerRegistryAgentMinersList(ctx, agentID)
+	if err != nil {
+		return err
+	}
+
+	tasks := make([]util.TaskFunc, len(agentMiners))
+
+	for i, minerAddr := range agentMiners {
+		tasks[i] = func() (interface{}, error) {
+			state, err := lapi.StateReadState(ctx, minerAddr, types.EmptyTSK)
+			if err != nil {
+				return nil, err
+			}
+			bal, ok := new(big.Int).SetString(state.Balance.String(), 10)
+			if !ok {
+				return nil, fmt.Errorf("failed to convert balance to big.Int")
+			}
+
+			return bal, nil
+		}
+	}
+
+	bals, err := util.Multiread(tasks)
+	if err != nil {
+		return err
+	}
+
+	var totalMinerCollaterals = big.NewInt(0)
+	for _, bal := range bals {
+		totalMinerCollaterals.Add(totalMinerCollaterals, bal.(*big.Int))
+	}
+
+	fmt.Printf("Agent's liquid assets: %0.08f FIL\n", assetsFIL)
+	fmt.Printf("Agent's pledged miner count: %v\n", len(agentMiners))
+	return nil
 }
 
 func formatSinceDuration(t1 time.Time, t2 time.Time) string {
@@ -177,49 +287,6 @@ func generateHeader(title string) {
 	fmt.Println()
 	fmt.Printf("\033[1m%s\033[0m\n", title)
 }
-
-// var agentInfoCmd = &cobra.Command{
-// 	Use:   "stats",
-// 	Short: "Get the stats associated with your Agent",
-// 	Run: func(cmd *cobra.Command, args []string) {
-
-// 		defaultBlock := 1000
-// 		currentBlock := 500000
-// 		paidBlock := 20000
-
-// 		lineLength := 50
-// 		percentagePaid := float64(paidBlock-defaultBlock) / float64(currentBlock-defaultBlock)
-
-// 		paidPosition := int(float64(lineLength) * percentagePaid)
-// 		line := ""
-// 		labelsTop := ""
-// 		labelsBottom := ""
-
-// 		for i := 0; i < lineLength; i++ {
-// 			if i == 0 {
-// 				line += "─"
-// 				labelsTop += "default"
-// 				labelsBottom += strconv.Itoa(defaultBlock)
-// 			} else if i == lineLength-1 {
-// 				line += "─"
-// 				labelsTop += " current"
-// 				labelsBottom += strconv.Itoa(currentBlock)
-// 			} else if i == paidPosition {
-// 				line += "⦿"
-// 				labelsTop += "account paid"
-// 				labelsBottom += strconv.Itoa(paidBlock)
-// 			} else {
-// 				line += "─"
-// 				labelsTop += " "
-// 				labelsBottom += " "
-// 			}
-// 		}
-
-// 		fmt.Println(labelsTop)
-// 		fmt.Println(line)
-// 		fmt.Println(labelsBottom)
-// 	},
-// }
 
 func init() {
 	agentCmd.AddCommand(agentInfoCmd)
