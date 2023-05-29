@@ -1,9 +1,18 @@
 # glif cli
 
-## Getting started - Installing the code
+## Getting started (Calibnet)
 First, clone the repo:
 `git clone git@github.com:glifio/cli.git`<br />
 `cd cli`<br />
+`make calibnet`<br />
+`sudo make install`<br />
+`make calibnet-config`<br />
+
+## Getting started (Mainnet)
+First, clone the repo:
+`git clone git@github.com:glifio/cli.git`<br />
+`cd cli`<br />
+`make glif`<br />
 `sudo make install`<br />
 `make calibnet-config`<br />
 
@@ -51,7 +60,7 @@ The Agent is a crucial component of the underlying [GLIF Pools Protocol](https:/
 
 **Owner** - The Owner Address owns your agent. The Agent's Owner is like your Miner Owner - it has the permission to call any method on your Agent. Additionally, it is the only address that is able to: (1) Borrow funds from pools into the Agent, (2) Withdraw funds from the Agent to a recipient, and (3) Remove a miner from the agent. We recommend keeping your Owner private key cold and not kept on a machine that's directly connected to the internet.<br />
 **Operator** - The Operator Address is primarily useful for automation - the operator can (1) Make a payment to the pool, and (2) Push/pull funds from the Agent back and forth with the Agent's miner actors.<br />
-**Requester** - The requester signs your requests to the Agent Data Oracle (ADO) to ensure that only _you_ can request a signed credential for your Agent. 
+**Requester** - The requester signs your requests to the Agent Data Oracle (ADO) to ensure that only _you_ can request a signed credential for your Agent.
 
 To create your Agent, first, we need to create 3 new addresses:
 
