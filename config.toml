@@ -1,6 +1,3 @@
 [daemon]
 rpc-url = 'https://api.node.glif.io/rpc/v1'
 token = ''
-
-[chain]
-chain-id = 314

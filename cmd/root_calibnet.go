@@ -18,6 +18,11 @@ limitations under the License.
 */
 package cmd
 
+import (
+	"github.com/glifio/go-pools/constants"
+)
+
 func init() {
+	chainID = constants.CalibnetChainID
 	rootCmd.PersistentFlags().BoolVar(&useCalibnet, "calibnet", true, "use calibnet")
 }

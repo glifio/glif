@@ -35,11 +35,22 @@ import (
 
 var cfgDir string
 var useCalibnet bool // only set in root_calibnet.go
+var chainID int64 = constants.MainnetChainID
 var PoolsSDK types.PoolsSDK
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use: "glif",
+}
+
+var rootInfoCmd = &cobra.Command{
+	Use:   "info",
+	Short: "Prints information about the CLI",
+	Long:  `Prints information about the CLI`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("Config directory: %s\n", cfgDir)
+		fmt.Printf("Chain ID: %d\n", chainID)
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -55,6 +66,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgDir, "config-dir", "", "config directory")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.AddCommand(rootInfoCmd)
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -103,7 +115,6 @@ func initConfig() {
 		}
 	}
 
-	chainID := viper.GetInt64("chain.chain-id")
 	var extern types.Extern
 
 	switch chainID {
