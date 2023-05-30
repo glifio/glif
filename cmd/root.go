@@ -115,6 +115,20 @@ func initConfig() {
 		log.Fatalf("Unknown chain id %d", chainID)
 	}
 
+	daemonURL := viper.GetString("daemon.rpc-url")
+	if daemonURL != "" {
+		extern.LotusDialAddr = daemonURL
+	}
+	daemonToken := viper.GetString("daemon.token")
+	if daemonToken != "" {
+		extern.LotusToken = daemonToken
+	}
+
+	adoURL := viper.GetString("ado.address")
+	if adoURL != "" {
+		extern.AdoAddr = adoURL
+	}
+
 	sdk, err := sdk.New(context.Background(), big.NewInt(chainID), extern)
 	if err != nil {
 		log.Fatalf("Failed to initialize pools sdk %s", err)

@@ -226,8 +226,6 @@ github.com/gballet/go-libpcsclite v0.0.0-20190607065134-2772fd86a8ff h1:tY80oXqG
 github.com/gbrlsnchs/jwt/v3 v3.0.1 h1:lbUmgAKpxnClrKloyIwpxm4OuWeDl5wLk52G91ODPw4=
 github.com/gbrlsnchs/jwt/v3 v3.0.1/go.mod h1:AncDcjXz18xetI3A6STfXq2w+LuTx8pQ8bGEwRN8zVM=
 github.com/getsentry/sentry-go v0.18.0 h1:MtBW5H9QgdcJabtZcuJG80BMOwaBpkRDZkxRkNC1sN0=
-github.com/glifio/go-pools v0.0.0-20230529052945-6928e448cb05 h1:3PUBoNoyle0/MlJrUqYACzOFLLIqH0f34X7kzk/IlLg=
-github.com/glifio/go-pools v0.0.0-20230529052945-6928e448cb05/go.mod h1:2EMzoAhcvhWxCs8mcrie7imPp5r2LOZ9xx9Jbk6/PzA=
 github.com/glifio/go-pools v0.0.0-20230529191712-1903e98683fe h1:PtJVg95l7PS1knyDhULaz6E3+bEgnm/igLfUnWdwFEE=
 github.com/glifio/go-pools v0.0.0-20230529191712-1903e98683fe/go.mod h1:2EMzoAhcvhWxCs8mcrie7imPp5r2LOZ9xx9Jbk6/PzA=
 github.com/glifio/go-secp256k1 v0.0.1 h1:BzsnpEtMl8RQtuJSfYDYK43MbTdVPtAQePZHn7TgSJk=
