@@ -40,6 +40,7 @@ var payToCurrentCmd = &cobra.Command{
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
+		defer s.Stop()
 
 		tx, err := PoolsSDK.Act().AgentPay(cmd.Context(), agentAddr, poolID, amountOwed, senderKey, requesterKey)
 		if err != nil {
