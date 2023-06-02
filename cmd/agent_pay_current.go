@@ -17,7 +17,6 @@ var payToCurrentCmd = &cobra.Command{
 	Use:   "to-current [flags]",
 	Short: "Make your account current",
 	Long:  "Pays off all fees owed",
-	// Args:  cobra.RangeArgs(1, 2),
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
 		if err != nil {
@@ -55,17 +54,7 @@ var payToCurrentCmd = &cobra.Command{
 
 		s.Stop()
 
-		if len(args) == 0 {
-			fmt.Printf("Successfully paid %s FIL", util.ToFIL(amountOwed).String())
-			return
-		}
-
-		paidAmount, err := parseFILAmount(args[0])
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Printf("Successfully paid %s FIL", util.ToFIL(paidAmount).String())
+		fmt.Printf("Successfully paid %s FIL", util.ToFIL(amountOwed).String())
 	},
 }
 
