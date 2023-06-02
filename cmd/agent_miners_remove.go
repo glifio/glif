@@ -17,8 +17,9 @@ import (
 var rmCmd = &cobra.Command{
 	Use:   "remove <miner address> <new owner address>",
 	Short: "Remove a miner from your agent",
-	Long:  "Removes a specific miner from your Agent by assigning its owner to `new owner address`",
-	Args:  cobra.ExactArgs(2),
+	Long: `Removes a specific miner from your Agent by assigning its owner to "new owner address". 
+	The new owner address must be a filecoin address, not a delegated address.`,
+	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {

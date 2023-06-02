@@ -44,7 +44,8 @@ var payPrincipalCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		log.Printf("Paying %s FIL to the %s", util.ToFIL(amountOwed).String(), poolName)
+		log.Printf("Paying fees of %s FIL to the %s", util.ToFIL(amountOwed).String(), poolName)
+		log.Printf("Paying total of %s FIL to the %s", util.ToFIL(payAmt).String(), poolName)
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()

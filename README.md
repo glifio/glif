@@ -166,5 +166,95 @@ Successfully added miner f0xxx to agent
 
 You can call `glif agent miners list` and you should see your new miner in the returned list!
 
+# Command Reference
 ## Borrow funds
+
+You can borrow funds from the Infinity Pool by calling `glif agent borrow <amount>`. For example, to borrow 1 FIL, you can call:
+
+```
+➜ ✗ glif agent borrow 1
+2023/05/15 14:08:44 Borrowing 1 FIL from Infinity Pool
+|Transaction: 0x....
+Successfully borrowed 1 FIL from Infinity Pool
+```
+
+## Make a payment
+
+### To-Current payment
+
+You can pay all current fees by calling `glif agent pay to-current`. For example, to pay the to-current amount, you can call:
+
+```
+➜ ✗ glif agent pay to-current
+2023/05/15 14:08:44 Making a to-current payment to Infinity Pool
+|Transaction: 0x....
+Successfully paid 5 FIL
+```
+
+### Principal payment
+
+To make a payment against the principal, make the following call `glif agent pay principal`. Note, that the amount specified is how much principle you wish to pay off, but the call will also pay off an outstanding fees, so the total amount paid will be equal to having called `glif agent pay to-current` plus the amount specified against the principle. For example:
+
+```
+➜ ✗ glif agent pay principal 10
+2023/05/15 14:08:44 Paying fees of 5 FIL to the Infinity Pool
+2023/05/15 14:08:45 Paying principle of 10 FIL to the Infinity Pool
+|Transaction: 0x....
+Successfully paid principal amount to Infinity Pool
+```
+
+### Custom payment
+
+You can make a payment to the Infinity Pool by calling `glif agent pay custom <amount>`. For example, to pay 1 FIL, you can call:
+
+```
+➜ ✗ glif agent pay custom 1
+2023/05/15 14:08:44 Paying 1 FIL to the Infinity Pool
+|Transaction: 0x....
+Successfully paid 1 FIL
+```
+
+
+## Push funds to a miner
+
+You can push funds to a miner by calling `glif agent push <miner addr> <amount>`. For example, to push 1 FIL to a miner, you can call:
+
+```
+➜ ✗ glif agent push f0xxx 1
+|Transaction: 0x....
+Successfully pushed funds down to miner f0xxx
+```
+
+## Pull funds from a miner
+
+You can pull funds from a miner by calling `glif agent pull <miner addr> <amount>`. For example, to pull 1 FIL from a miner, you can call:
+
+```
+➜ ✗ glif agent pull f0xxx 1
+2023/05/15 14:08:44 Pulling 1 FIL from miner f0xxx
+|Transaction: 0x....
+Successfully pulled funds up from miner f0xxx
+```
+
+## Withdraw funds from your Agent
+
+You can withdraw funds from your Agent by calling `glif agent withdraw <amount>`. For example, to withdraw 1 FIL from your Agent, you can call:
+
+```
+➜ ✗ glif agent withdraw 1
+2023/05/15 14:08:44 Withdrawing 1 FIL from Agent
+|Transaction: 0x....
+Successfully withdrew 1 FIL
+```
+
+## Remove a miner from your Agent
+
+You can remove a miner from your Agent by calling `glif agent miners remove <miner addr>`. For example, to remove a miner from your Agent, you can call:
+
+```
+➜ ✗ glif agent miners remove f0xxx f3xxx
+2023/05/15 14:08:44 Removing miner f0xxx from agent
+|Transaction: 0x....
+Successfully removed miner f0xxx from Agent
+```
 

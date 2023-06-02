@@ -49,7 +49,7 @@ var withdrawCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		fmt.Printf("Withdrawing %s FIL from your Agent...", args[0])
+		fmt.Printf("Withdrawing %s FIL from your Agent", args[0])
 
 		tx, err := PoolsSDK.Act().AgentWithdraw(cmd.Context(), agentAddr, receiver, amount, ownerKey, requesterKey)
 		if err != nil {
