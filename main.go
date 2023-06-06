@@ -15,8 +15,13 @@ limitations under the License.
 */
 package main
 
-import "github.com/glifio/cli/cmd"
+import (
+	"os"
+
+	"github.com/glifio/cli/cmd"
+)
 
 func main() {
+	defer os.Exit(cmd.ExitCode)
 	cmd.Execute()
 }

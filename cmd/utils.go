@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"math/big"
+	"runtime"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -18,6 +19,23 @@ import (
 	denoms "github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
+
+var ExitCode int
+
+func Exit(code int) {
+	ExitCode = code
+	runtime.Goexit()
+}
+
+func logExit(code int, msg string) {
+	log.Println(msg)
+	Exit(code)
+}
+
+func logFatal(err error) {
+	log.Println(err)
+	Exit(1)
+}
 
 func ParseAddress(ctx context.Context, addr string) (common.Address, error) {
 	lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
