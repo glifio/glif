@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"math/big"
 	"time"
 
@@ -24,7 +23,7 @@ var previewBorrowCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, err := getAgentAddress(cmd)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
@@ -33,28 +32,28 @@ var previewBorrowCmd = &cobra.Command{
 
 		closer, err := PoolsSDK.Extern().ConnectAdoClient(cmd.Context())
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 		defer closer()
 
 		agentDataBefore, err := rpc.ADOClient.AgentData(cmd.Context(), agentAddr)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		attofil, err := parseFILAmount(args[0])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		agentDataAfter, err := rpc.ADOClient.PreviewAction(cmd.Context(), agentAddr, address.Undef, attofil, constants.MethodBorrow)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		rateAfter, err := PoolsSDK.Query().InfPoolRateFromGCRED(cmd.Context(), agentDataAfter.Gcred)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 		wpr := new(big.Float).Mul(rateAfter, big.NewFloat(constants.EpochsInWeek))
 		wprFloat, _ := wpr.Float64()

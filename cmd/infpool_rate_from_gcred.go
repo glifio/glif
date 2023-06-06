@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"math/big"
 	"time"
 
@@ -28,12 +27,12 @@ var rateFromGcredCmd = &cobra.Command{
 
 		gcred, ok := new(big.Int).SetString(args[0], 10)
 		if !ok {
-			log.Fatalf("Failed to parse GCRED %s", args[0])
+			logFatal(fmt.Errorf("Failed to parse GCRED %s", args[0]))
 		}
 
 		rate, err := PoolsSDK.Query().InfPoolRateFromGCRED(cmd.Context(), gcred)
 		if err != nil {
-			log.Fatalf("Failed to get iFIL balance %s", err)
+			logFatal(err)
 		}
 
 		wprFloat, _ := new(big.Float).Mul(rate, big.NewFloat(constants.EpochsInWeek)).Float64()
