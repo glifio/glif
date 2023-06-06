@@ -227,15 +227,14 @@ func getAgentAddress(cmd *cobra.Command) (common.Address, error) {
 		// Check if an agent already exists
 		cachedAddr, err := as.Get("address")
 		if err != nil {
-			log.Fatal(err)
+			return common.Address{}, err
 		}
 
 		agentAddrStr = cachedAddr
 
 		if agentAddrStr == "" {
-			log.Fatalf("Did you forget to create your agent or specify an address? Try `glif agent id --address <address>`")
+			return common.Address{}, errors.New("Did you forget to create your agent or specify an address? Try `glif agent id --address <address>`")
 		}
-
 	}
 
 	return common.HexToAddress(agentAddrStr), nil
