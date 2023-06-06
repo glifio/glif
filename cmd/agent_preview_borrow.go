@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -51,11 +52,20 @@ var previewBorrowCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		rateAfter, err := PoolsSDK.Query().InfPoolRateFromGCRED(cmd.Context(), agentDataAfter.Gcred)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		wprFloat, _ := new(big.Float).Mul(rateAfter, big.NewFloat(constants.EpochsInWeek)).Float64()
+		aprFloat, _ := new(big.Float).Mul(rateAfter, big.NewFloat(constants.EpochsInYear)).Float64()
+
 		s.Stop()
 
 		generateHeader("PREVIEW BORROW")
 		fmt.Printf("Total borrowed before/after: %0.09f => %0.09f\n", util.ToFIL(agentDataBefore.Principal), util.ToFIL(agentDataAfter.Principal))
 		fmt.Printf("GCRED before/after: %s => %s\n", agentDataBefore.Gcred, agentDataAfter.Gcred)
+		fmt.Printf("The weekly/annual fee rate: %.03f%% / %.03f%%\n", wprFloat, aprFloat/52)
 	},
 }
 
