@@ -24,6 +24,7 @@ import (
 	"math/big"
 	"os"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/glifio/cli/util"
 	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/deploy"
@@ -117,15 +118,6 @@ func initConfig() {
 
 	var extern types.Extern
 
-	switch chainID {
-	case constants.MainnetChainID:
-		extern = deploy.Extern
-	case constants.CalibnetChainID:
-		extern = deploy.TestExtern
-	default:
-		log.Fatalf("Unknown chain id %d", chainID)
-	}
-
 	daemonURL := viper.GetString("daemon.rpc-url")
 	if daemonURL != "" {
 		extern.LotusDialAddr = daemonURL
@@ -138,6 +130,25 @@ func initConfig() {
 	adoURL := viper.GetString("ado.address")
 	if adoURL != "" {
 		extern.AdoAddr = adoURL
+	}
+
+	if chainID == constants.LocalnetChainID || chainID == constants.AnvilChainID {
+		routerAddr := viper.GetString("routes.router")
+		router := common.HexToAddress(routerAddr)
+		err := sdk.LazyInit(context.Background(), &PoolsSDK, router, "", "", daemonURL, daemonToken)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
+	switch chainID {
+	case constants.MainnetChainID:
+		extern = deploy.Extern
+	case constants.CalibnetChainID:
+		extern = deploy.TestExtern
+	default:
+		log.Fatalf("Unknown chain id %d", chainID)
 	}
 
 	sdk, err := sdk.New(context.Background(), big.NewInt(chainID), extern)
