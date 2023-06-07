@@ -230,6 +230,8 @@ github.com/glifio/go-pools v0.0.0-20230529191712-1903e98683fe h1:PtJVg95l7PS1kny
 github.com/glifio/go-pools v0.0.0-20230529191712-1903e98683fe/go.mod h1:2EMzoAhcvhWxCs8mcrie7imPp5r2LOZ9xx9Jbk6/PzA=
 github.com/glifio/go-pools v0.0.0-20230531002325-519afb9b38ae h1:fDSu+QJbSHC0jS5DFhVgMa4jvvoyEhqen/LFoOPjAew=
 github.com/glifio/go-pools v0.0.0-20230531002325-519afb9b38ae/go.mod h1:XlDkXUaDKhw+mdUOJ1jDduSRXCQM5T1XAIPY2aH9RZM=
+github.com/glifio/go-pools v0.0.0-20230606200309-89b8c8f38044 h1:ULKDnPUv9FBc2MvR5KAqfK6pO9LxEHWP/uHjWtJeEzs=
+github.com/glifio/go-pools v0.0.0-20230606200309-89b8c8f38044/go.mod h1:XlDkXUaDKhw+mdUOJ1jDduSRXCQM5T1XAIPY2aH9RZM=
 github.com/glifio/go-secp256k1 v0.0.1 h1:BzsnpEtMl8RQtuJSfYDYK43MbTdVPtAQePZHn7TgSJk=
 github.com/glifio/go-secp256k1 v0.0.1/go.mod h1:AuM499x3qhpTvNyjqfLBkeYlEYQxD0ZB7YsYliALcPs=
 github.com/go-check/check v0.0.0-20180628173108-788fd7840127/go.mod h1:9ES+weclKsC9YodN5RgxqK/VD9HM9JsCSh7rNhMZE98=
