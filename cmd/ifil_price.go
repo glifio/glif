@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -22,7 +21,7 @@ var iFILPriceCmd = &cobra.Command{
 
 		price, err := PoolsSDK.Query().IFILPrice(cmd.Context())
 		if err != nil {
-			log.Fatalf("Failed to get iFIL balance %s", err)
+			logFatalf("Failed to get iFIL balance %s", err)
 		}
 
 		priceFIL, _ := price.Float64()

@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/big"
@@ -24,31 +23,31 @@ var reclaimMinerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		minerAddr, err := address.NewFromString(args[0])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		newOwnerAddr, err := address.NewFromString(args[1])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 		if newOwnerAddr.Protocol() != address.ID {
-			log.Fatal("new owner address must be an ID address")
+			logFatal("new owner address must be an ID address")
 		}
 
 		senderAddr, err := address.NewFromString(cmd.Flag("from").Value.String())
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 		defer closer()
 
 		sp, err := actors.SerializeParams(&newOwnerAddr)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		smsg, err := lapi.MpoolPushMessage(cmd.Context(), &types.Message{
@@ -60,19 +59,19 @@ var reclaimMinerCmd = &cobra.Command{
 		}, nil)
 
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		fmt.Println("Message CID:", smsg.Cid())
 
 		wait, err := lapi.StateWaitMsg(cmd.Context(), smsg.Cid(), build.MessageConfidence, 900, true)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		// check it executed successfully
 		if wait.Receipt.ExitCode != 0 {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		fmt.Println("message succeeded!")

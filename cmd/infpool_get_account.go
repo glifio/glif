@@ -21,7 +21,7 @@ var getAccountCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, err := getAgentAddress(cmd)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		fmt.Printf("Querying the Account of agent %s", agentAddr.String())
@@ -32,12 +32,12 @@ var getAccountCmd = &cobra.Command{
 
 		account, err := PoolsSDK.Query().InfPoolGetAccount(cmd.Context(), agentAddr)
 		if err != nil {
-			log.Fatalf("Failed to get iFIL balance %s", err)
+			logFatalf("Failed to get iFIL balance %s", err)
 		}
 
 		chainHeadHeight, err := PoolsSDK.Query().ChainHeight(cmd.Context())
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		s.Stop()

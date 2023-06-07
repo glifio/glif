@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -23,21 +22,21 @@ var rmCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		minerAddr, err := address.NewFromString(args[0])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		newMinerOwnerAddr, err := address.NewFromString(args[1])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 		// IMPORTANT: an ethereum address can not be an owner of a miner, this must be a filecoin address owner
 		if newMinerOwnerAddr.Protocol() == address.Delegated {
-			log.Fatal("New miner owner address must be a filecoin address, not a delegated address")
+			logFatal("New miner owner address must be a filecoin address, not a delegated address")
 		}
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
@@ -48,13 +47,13 @@ var rmCmd = &cobra.Command{
 
 		tx, err := PoolsSDK.Act().AgentRemoveMiner(cmd.Context(), agentAddr, minerAddr, newMinerOwnerAddr, ownerKey, requesterKey)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		// transaction landed on chain or errored
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		s.Stop()

@@ -22,19 +22,19 @@ var changeWorkerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, ownerKey, _, err := commonSetupOwnerCall()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		minerAddr, err := ToMinerID(cmd.Context(), args[0])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 		log.Println(minerAddr)
 
 		workerAddr, err := ToMinerID(cmd.Context(), args[1])
 		if err != nil {
 			log.Print("Error parsing worker address")
-			log.Fatal(err)
+			logFatal(err)
 		}
 		log.Println(workerAddr)
 
@@ -43,7 +43,7 @@ var changeWorkerCmd = &cobra.Command{
 			controlAddr, err := ToMinerID(cmd.Context(), arg)
 			if err != nil {
 				log.Print("Error parsing control address")
-				log.Fatal(err)
+				logFatal(err)
 			}
 			controlAddrs = append(controlAddrs, controlAddr)
 		}
@@ -56,13 +56,13 @@ var changeWorkerCmd = &cobra.Command{
 
 		tx, err := PoolsSDK.Act().AgentChangeMinerWorker(cmd.Context(), agentAddr, minerAddr, workerAddr, controlAddrs, ownerKey)
 		if err != nil {
-			log.Fatalf("tx error: %s", err)
+			logFatalf("tx error: %s", err)
 		}
 
 		// transaction landed on chain or errored
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		s.Stop()

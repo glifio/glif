@@ -32,8 +32,8 @@ func logExit(code int, msg string) {
 	Exit(code)
 }
 
-func logFatal(err error) {
-	log.Println(err)
+func logFatal(arg interface{}) {
+	log.Println(arg)
 	Exit(1)
 }
 

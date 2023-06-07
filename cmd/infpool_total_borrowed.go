@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -25,7 +24,7 @@ var inpoolTotalBorrowedCmd = &cobra.Command{
 
 		assets, err := PoolsSDK.Query().InfPoolTotalBorrowed(cmd.Context())
 		if err != nil {
-			log.Fatalf("Failed to get total borrowed %s", err)
+			logFatalf("Failed to get total borrowed %s", err)
 		}
 
 		fmt.Printf("Infinity Pool outstanding: %.04f FIL\n", assets)

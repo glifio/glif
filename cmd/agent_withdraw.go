@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -22,7 +21,7 @@ var withdrawCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		var receiver common.Address
@@ -32,17 +31,17 @@ var withdrawCmd = &cobra.Command{
 			// if no recipient is specified, use the agent's owner
 			receiver, err = PoolsSDK.Query().AgentOwner(cmd.Context(), agentAddr)
 			if err != nil {
-				log.Fatal(err)
+				logFatal(err)
 			}
 		}
 
 		if !common.IsHexAddress(receiver.String()) {
-			log.Fatal("Invalid withdraw address")
+			logFatal("Invalid withdraw address")
 		}
 
 		amount, err := parseFILAmount(args[0])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
@@ -53,12 +52,12 @@ var withdrawCmd = &cobra.Command{
 
 		tx, err := PoolsSDK.Act().AgentWithdraw(cmd.Context(), agentAddr, receiver, amount, ownerKey, requesterKey)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		s.Stop()

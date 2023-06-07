@@ -17,17 +17,17 @@ var listCmd = &cobra.Command{
 		ks := util.KeyStore()
 		ownerEvm, ownerFevm, err := ks.GetAddrs(util.OwnerKey)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		operatorEvm, operatorFevm, err := ks.GetAddrs(util.OperatorKey)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		requestEvm, requestFevm, err := ks.GetAddrs(util.RequestKey)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		log.Printf("Owner address: %s (EVM), %s (FIL)", ownerEvm, ownerFevm)

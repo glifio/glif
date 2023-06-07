@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -19,7 +18,7 @@ var agentLvlCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentID, err := getAgentID(cmd)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		fmt.Printf("Querying the level of AgentID %s", agentID.String())
@@ -30,7 +29,7 @@ var agentLvlCmd = &cobra.Command{
 
 		lvl, borrowCap, err := PoolsSDK.Query().InfPoolGetAgentLvl(cmd.Context(), agentID)
 		if err != nil {
-			log.Fatalf("Failed to get iFIL balance %s", err)
+			logFatalf("Failed to get iFIL balance %s", err)
 		}
 
 		s.Stop()
