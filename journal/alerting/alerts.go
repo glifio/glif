@@ -2,16 +2,13 @@ package alerting
 
 import (
 	"encoding/json"
+	"log"
 	"sort"
 	"sync"
 	"time"
 
-	logging "github.com/ipfs/go-log/v2"
-
 	"github.com/glifio/cli/journal"
 )
-
-var log = logging.Logger("alerting")
 
 // Alerting provides simple stateful alert system. Consumers can register alerts,
 // which can be raised and resolved.
@@ -84,18 +81,18 @@ func (a *Alerting) update(at AlertType, message interface{}, upd func(Alert, jso
 
 	alert, ok := a.alerts[at]
 	if !ok {
-		log.Errorw("unknown alert", "type", at, "message", message)
+		log.Println("unknown alert", "type", at, "message", message)
 	}
 
 	rawMsg, err := json.Marshal(message)
 	if err != nil {
-		log.Errorw("marshaling alert message failed", "type", at, "error", err)
+		log.Println("marshaling alert message failed", "type", at, "error", err)
 		rawMsg, err = json.Marshal(&struct {
 			AlertError string
 		}{
 			AlertError: err.Error(),
 		})
-		log.Errorw("marshaling marshaling error failed", "type", at, "error", err)
+		log.Println("marshaling marshaling error failed", "type", at, "error", err)
 	}
 
 	a.alerts[at] = upd(alert, rawMsg)
@@ -103,7 +100,7 @@ func (a *Alerting) update(at AlertType, message interface{}, upd func(Alert, jso
 
 // Raise marks the alert condition as active and records related event in the journal
 func (a *Alerting) Raise(at AlertType, message interface{}) {
-	log.Errorw("alert raised", "type", at, "message", message)
+	log.Println("alert raised", "type", at, "message", message)
 
 	a.update(at, message, func(alert Alert, rawMsg json.RawMessage) Alert {
 		alert.Active = true
@@ -123,7 +120,7 @@ func (a *Alerting) Raise(at AlertType, message interface{}) {
 
 // Resolve marks the alert condition as resolved and records related event in the journal
 func (a *Alerting) Resolve(at AlertType, message interface{}) {
-	log.Errorw("alert resolved", "type", at, "message", message)
+	log.Println("alert resolved", "type", at, "message", message)
 
 	a.update(at, message, func(alert Alert, rawMsg json.RawMessage) Alert {
 		alert.Active = false
