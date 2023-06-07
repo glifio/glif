@@ -267,3 +267,11 @@ func getAgentID(cmd *cobra.Command) (*big.Int, error) {
 
 	return agentID, nil
 }
+
+func AddressesToStrings(addrs []address.Address) []string {
+	strs := make([]string, len(addrs))
+	for i, addr := range addrs {
+		strs[i] = addr.String()
+	}
+	return strs
+}

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/glifio/cli/events"
 	"github.com/spf13/cobra"
 )
 
@@ -38,14 +39,26 @@ var pullFundsCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
+		pullevt := journal.RegisterEventType("agent", "pull")
+		evt := &events.AgentMinerPull{
+			AgentID: agentAddr.String(),
+			MinerID: minerAddr.String(),
+			Amount:  amount.String(),
+		}
+		defer journal.Close()
+		defer journal.RecordEvent(pullevt, func() interface{} { return evt })
+
 		tx, err := PoolsSDK.Act().AgentPullFunds(cmd.Context(), agentAddr, amount, minerAddr, senderKey, requesterKey)
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
+		evt.Tx = tx.Hash().String()
 
 		// transaction landed on chain or errored
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
 

@@ -24,6 +24,7 @@ import (
 	"os"
 
 	"github.com/ethereum/go-ethereum/common"
+	jnal "github.com/glifio/cli/journal"
 	"github.com/glifio/cli/util"
 	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/deploy"
@@ -37,6 +38,7 @@ var cfgDir string
 var useCalibnet bool // only set in root_calibnet.go
 var chainID int64 = constants.MainnetChainID
 var PoolsSDK types.PoolsSDK
+var journal jnal.Journal
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -92,6 +94,10 @@ func initConfig() {
 
 	viper.SetConfigType("toml")
 	viper.SetConfigName("config")
+
+	if err := util.NewKeyStore(fmt.Sprintf("%s/keys.toml", cfgDir)); err != nil {
+		logFatal(err)
+	}
 
 	if err := util.NewKeyStore(fmt.Sprintf("%s/keys.toml", cfgDir)); err != nil {
 		logFatal(err)
