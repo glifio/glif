@@ -22,17 +22,17 @@ var payPrincipalCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		amount, err := parseFILAmount(args[0])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		amountOwed, _, err := PoolsSDK.Query().AgentOwes(cmd.Context(), agentAddr)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		payAmt := new(big.Int).Add(amount, amountOwed)
@@ -41,7 +41,7 @@ var payPrincipalCmd = &cobra.Command{
 
 		poolID, err := parsePoolType(poolName)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		log.Printf("Paying fees of %s FIL to the %s", util.ToFIL(amountOwed).String(), poolName)
@@ -53,20 +53,20 @@ var payPrincipalCmd = &cobra.Command{
 
 		tx, err := PoolsSDK.Act().AgentPay(cmd.Context(), agentAddr, poolID, payAmt, senderKey, requesterKey)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		// transaction landed on chain or errored
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		s.Stop()
 
 		paidAmount, err := parseFILAmount(args[0])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		fmt.Printf("Successfully paid %s FIL", util.ToFIL(paidAmount).String())

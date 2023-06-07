@@ -20,19 +20,19 @@ var payToCurrentCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		amountOwed, _, err := PoolsSDK.Query().AgentOwes(cmd.Context(), agentAddr)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		poolName := cmd.Flag("pool-name").Value.String()
 
 		poolID, err := parsePoolType(poolName)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		log.Printf("Paying %s FIL to the %s", util.ToFIL(amountOwed).String(), poolName)
@@ -43,13 +43,13 @@ var payToCurrentCmd = &cobra.Command{
 
 		tx, err := PoolsSDK.Act().AgentPay(cmd.Context(), agentAddr, poolID, amountOwed, senderKey, requesterKey)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		// transaction landed on chain or errored
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		s.Stop()

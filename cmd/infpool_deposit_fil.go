@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -21,17 +20,17 @@ var depositFILCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		_, pk, _, err := commonOwnerOrOperatorSetup(cmd)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		receiver, err := util.DeriveAddressFromPk(pk)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		amount, err := parseFILAmount(args[0])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		fmt.Printf("Depositing %s FIL into the Infinity Pool", amount.String())
@@ -42,21 +41,21 @@ var depositFILCmd = &cobra.Command{
 
 		tx, err := PoolsSDK.Act().InfPoolDepositFIL(cmd.Context(), receiver, amount, pk)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		// transaction landed on chain or errored
 		receipt, err := PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		if receipt == nil {
-			log.Fatal("Failed to get receipt")
+			logFatal("Failed to get receipt")
 		}
 
 		if receipt.Status == 0 {
-			log.Fatal("Transaction failed")
+			logFatal("Transaction failed")
 		}
 
 		s.Stop()

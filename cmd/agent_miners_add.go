@@ -22,12 +22,12 @@ var addCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		minerAddr, err := address.NewFromString(args[0])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		log.Printf("Adding miner %s to agent %s", minerAddr, agentAddr)
@@ -38,13 +38,13 @@ var addCmd = &cobra.Command{
 
 		tx, err := PoolsSDK.Act().AgentAddMiner(cmd.Context(), agentAddr, minerAddr, ownerKey, requesterKey)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		// transaction landed on chain or errored
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		s.Stop()

@@ -6,7 +6,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/big"
 	"strings"
 	"time"
@@ -32,43 +31,43 @@ var agentInfoCmd = &cobra.Command{
 
 		lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 		defer closer()
 
 		agentAddr, err := getAgentAddress(cmd)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		agentAddrEthType, err := ethtypes.ParseEthAddress(agentAddr.String())
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		agentAddrDel, err := agentAddrEthType.ToFilecoinAddress()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		agentID, _, _, _, err := basicInfo(cmd.Context(), agentAddr, agentAddrDel, lapi, s)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		err = econInfo(cmd.Context(), agentAddr, agentID, lapi, s)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		err = infoPoolInfo(cmd.Context(), agentAddr, agentID, s)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		err = agentHealth(cmd.Context(), agentAddr, s)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 	},
 }

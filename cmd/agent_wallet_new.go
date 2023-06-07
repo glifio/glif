@@ -15,11 +15,11 @@ import (
 
 func panicIfKeyExists(key util.KeyType, addr common.Address, err error) {
 	if err != nil {
-		log.Fatal(err)
+		logFatal(err)
 	}
 
 	if !util.IsZeroAddress(addr) {
-		log.Fatalf("Key already exists for %s", key)
+		logFatalf("Key already exists for %s", key)
 	}
 }
 
@@ -43,46 +43,46 @@ var newCmd = &cobra.Command{
 		// Create the Ethereum private key
 		ownerPrivateKey, err := crypto.GenerateKey()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		operatorPrivateKey, err := crypto.GenerateKey()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		requestPrivateKey, err := crypto.GenerateKey()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		if err := ks.SetKey(util.OwnerKey, ownerPrivateKey); err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		if err := ks.SetKey(util.OperatorKey, operatorPrivateKey); err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		if err := ks.SetKey(util.RequestKey, requestPrivateKey); err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		if err := viper.WriteConfig(); err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		ownerAddr, ownerDelAddr, err = ks.GetAddrs(util.OwnerKey)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 		operatorAddr, operatorDelAddr, err = ks.GetAddrs(util.OperatorKey)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 		requestAddr, requestDelAddr, err = ks.GetAddrs(util.RequestKey)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		log.Printf("Owner address: %s (ETH), %s (FIL)\n", ownerAddr, ownerDelAddr)

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -16,7 +15,7 @@ var refreshRoutesCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, pk, _, err := commonOwnerOrOperatorSetup(cmd)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
@@ -25,12 +24,12 @@ var refreshRoutesCmd = &cobra.Command{
 
 		tx, err := PoolsSDK.Act().AgentRefreshRoutes(cmd.Context(), agentAddr, pk)
 		if err != nil {
-			log.Fatalf("Failed to refresh routes %s", err)
+			logFatalf("Failed to refresh routes %s", err)
 		}
 
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
-			log.Fatalf("Failed to refresh routes %s", err)
+			logFatalf("Failed to refresh routes %s", err)
 		}
 
 		s.Stop()

@@ -22,12 +22,12 @@ var confirmWorker = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, ownerKey, _, err := commonSetupOwnerCall()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		minerAddr, err := address.NewFromString(args[0])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		log.Printf("Confirming worker address change for miner %s", minerAddr)
@@ -38,13 +38,13 @@ var confirmWorker = &cobra.Command{
 
 		tx, err := PoolsSDK.Act().AgentConfirmMinerWorkerChange(cmd.Context(), agentAddr, minerAddr, ownerKey)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		// transaction landed on chain or errored
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		s.Stop()

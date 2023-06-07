@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -25,7 +24,7 @@ var infpoolTotalAssetsCmd = &cobra.Command{
 
 		assets, err := PoolsSDK.Query().InfPoolTotalAssets(cmd.Context())
 		if err != nil {
-			log.Fatalf("Failed to get iFIL balance %s", err)
+			logFatalf("Failed to get iFIL balance %s", err)
 		}
 
 		fmt.Printf("Infinity Pool total assets: %.04f FIL\n", assets)

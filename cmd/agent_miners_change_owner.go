@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/big"
@@ -26,45 +25,45 @@ var changeOwnerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, _, _, err := commonSetupOwnerCall()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		minerAddr, err := address.NewFromString(args[0])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 		defer closer()
 
 		ethAddr, err := ethtypes.ParseEthAddress(agentAddr.String())
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		delegated, err := ethAddr.ToFilecoinAddress()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		id, err := lapi.StateLookupID(cmd.Context(), delegated, types.EmptyTSK)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		mi, err := lapi.StateMinerInfo(cmd.Context(), minerAddr, types.EmptyTSK)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		fmt.Println("Miner Owner:", mi.Owner)
 
 		sp, err := actors.SerializeParams(&id)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		smsg, err := lapi.MpoolPushMessage(cmd.Context(), &types.Message{
@@ -76,19 +75,19 @@ var changeOwnerCmd = &cobra.Command{
 		}, nil)
 
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		fmt.Println("Message CID:", smsg.Cid())
 
 		wait, err := lapi.StateWaitMsg(cmd.Context(), smsg.Cid(), build.MessageConfidence, 900, true)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		// check it executed successfully
 		if wait.Receipt.ExitCode != 0 {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		fmt.Println("message succeeded!")

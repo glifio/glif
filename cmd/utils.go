@@ -32,8 +32,13 @@ func logExit(code int, msg string) {
 	Exit(code)
 }
 
-func logFatal(err error) {
-	log.Println(err)
+func logFatal(arg interface{}) {
+	log.Println(arg)
+	Exit(1)
+}
+
+func logFatalf(format string, args ...interface{}) {
+	log.Printf(format, args...)
 	Exit(1)
 }
 
@@ -249,7 +254,7 @@ func getAgentID(cmd *cobra.Command) (*big.Int, error) {
 		as := util.AgentStore()
 		storedAgent, err := as.Get("id")
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		agentIDStr = storedAgent
@@ -257,7 +262,7 @@ func getAgentID(cmd *cobra.Command) (*big.Int, error) {
 
 	agentID := new(big.Int)
 	if _, ok := agentID.SetString(agentIDStr, 10); !ok {
-		log.Fatalf("could not convert agent id %s to big.Int", agentIDStr)
+		logFatalf("could not convert agent id %s to big.Int", agentIDStr)
 	}
 
 	return agentID, nil

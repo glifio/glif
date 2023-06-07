@@ -19,14 +19,14 @@ var exitCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		poolName := cmd.Flag("pool-name").Value.String()
 
 		poolID, err := parsePoolType(poolName)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
@@ -35,12 +35,12 @@ var exitCmd = &cobra.Command{
 
 		account, err := PoolsSDK.Query().InfPoolGetAccount(cmd.Context(), agentAddr)
 		if err != nil {
-			log.Fatalf("Failed to get iFIL balance %s", err)
+			logFatalf("Failed to get iFIL balance %s", err)
 		}
 
 		amountOwed, _, err := PoolsSDK.Query().AgentOwes(cmd.Context(), agentAddr)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		payAmount := new(big.Int).Add(amountOwed, account.Principal)
@@ -48,13 +48,13 @@ var exitCmd = &cobra.Command{
 
 		tx, err := PoolsSDK.Act().AgentPay(cmd.Context(), agentAddr, poolID, payAmount, senderKey, requesterKey)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		// transaction landed on chain or errored
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		s.Stop()

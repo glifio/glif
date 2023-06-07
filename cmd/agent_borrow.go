@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -22,23 +21,23 @@ var borrowCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		amount, err := parseFILAmount(args[0])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		if amount.Cmp(util.WAD) == -1 {
-			log.Fatal("Borrow amount must be greater than 1 FIL")
+			logFatal("Borrow amount must be greater than 1 FIL")
 		}
 
 		poolName := cmd.Flag("pool-name").Value.String()
 
 		poolID, err := parsePoolType(poolName)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		fmt.Printf("Borrowing %s FIL from the %s into agent %s", amount, poolID, agentAddr)
@@ -49,12 +48,12 @@ var borrowCmd = &cobra.Command{
 
 		tx, err := PoolsSDK.Act().AgentBorrow(cmd.Context(), agentAddr, poolID, amount, ownerKey, requesterKey)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		s.Stop()

@@ -19,7 +19,7 @@ var idCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, err := getAgentAddress(cmd)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		log.Printf("Fetching agent ID for %s", util.TruncateAddr(agentAddr.String()))
@@ -29,7 +29,7 @@ var idCmd = &cobra.Command{
 
 		id, err := PoolsSDK.Query().AgentID(cmd.Context(), agentAddr)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		s.Stop()
