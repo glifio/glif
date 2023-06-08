@@ -96,10 +96,6 @@ func initConfig() {
 	viper.SetConfigType("toml")
 	viper.SetConfigName("config")
 
-	daemonURL := viper.GetString("daemon.rpc-url")
-	daemonToken := viper.GetString("daemon.token")
-	adoURL := viper.GetString("ado.address")
-
 	var err error
 	if journal, err = fsjournal.OpenFSJournal(cfgDir, nil); err != nil {
 		logFatal(err)
@@ -126,6 +122,10 @@ func initConfig() {
 			logFatalf("Config file error: %v\n", err)
 		}
 	}
+
+	daemonURL := viper.GetString("daemon.rpc-url")
+	daemonToken := viper.GetString("daemon.token")
+	adoURL := viper.GetString("ado.address")
 
 	if chainID == constants.LocalnetChainID || chainID == constants.AnvilChainID {
 		routerAddr := viper.GetString("routes.router")
