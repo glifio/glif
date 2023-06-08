@@ -25,6 +25,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	jnal "github.com/glifio/cli/journal"
+	"github.com/glifio/cli/journal/fsjournal"
 	"github.com/glifio/cli/util"
 	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/deploy"
@@ -95,7 +96,8 @@ func initConfig() {
 	viper.SetConfigType("toml")
 	viper.SetConfigName("config")
 
-	if err := util.NewKeyStore(fmt.Sprintf("%s/keys.toml", cfgDir)); err != nil {
+	var err error
+	if journal, err = fsjournal.OpenFSJournal(cfgDir, nil); err != nil {
 		logFatal(err)
 	}
 
