@@ -13,6 +13,7 @@ import (
 	"github.com/filecoin-project/lotus/chain/actors"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
+	"github.com/glifio/cli/events"
 	"github.com/spf13/cobra"
 )
 
@@ -66,6 +67,16 @@ var changeOwnerCmd = &cobra.Command{
 			logFatal(err)
 		}
 
+		changeownerevt := journal.RegisterEventType("miner", "changeowner")
+		evt := &events.AgentMinerChangeOwner{
+			AgentID:  agentAddr.String(),
+			MinerID:  minerAddr.String(),
+			OldOwner: mi.Owner.String(),
+			NewOwner: delegated.String(),
+		}
+		defer journal.Close()
+		defer journal.RecordEvent(changeownerevt, func() interface{} { return evt })
+
 		smsg, err := lapi.MpoolPushMessage(cmd.Context(), &types.Message{
 			From:   mi.Owner,
 			To:     minerAddr,
@@ -73,8 +84,8 @@ var changeOwnerCmd = &cobra.Command{
 			Value:  big.Zero(),
 			Params: sp,
 		}, nil)
-
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
 
@@ -82,11 +93,13 @@ var changeOwnerCmd = &cobra.Command{
 
 		wait, err := lapi.StateWaitMsg(cmd.Context(), smsg.Cid(), build.MessageConfidence, 900, true)
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
 
 		// check it executed successfully
 		if wait.Receipt.ExitCode != 0 {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
 

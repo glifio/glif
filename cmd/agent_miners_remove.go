@@ -9,6 +9,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/filecoin-project/go-address"
+	"github.com/glifio/cli/events"
 	"github.com/spf13/cobra"
 )
 
@@ -43,16 +44,28 @@ var rmCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
+		removeevt := journal.RegisterEventType("agent", "removeminer")
+		evt := &events.AgentMinerRemove{
+			AgentID:  agentAddr.String(),
+			MinerID:  minerAddr.String(),
+			NewOwner: newMinerOwnerAddr.String(),
+		}
+		defer journal.Close()
+		defer journal.RecordEvent(removeevt, func() interface{} { return evt })
+
 		fmt.Printf("Removing miner %s from agent %s by changing its owner address to %s", minerAddr, agentAddr, newMinerOwnerAddr)
 
 		tx, err := PoolsSDK.Act().AgentRemoveMiner(cmd.Context(), agentAddr, minerAddr, newMinerOwnerAddr, ownerKey, requesterKey)
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
+		evt.Tx = tx.Hash().String()
 
 		// transaction landed on chain or errored
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
 

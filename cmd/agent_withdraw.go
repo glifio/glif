@@ -9,6 +9,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/glifio/cli/events"
 	"github.com/spf13/cobra"
 )
 
@@ -48,15 +49,27 @@ var withdrawCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
+		withdrawevt := journal.RegisterEventType("agent", "withdraw")
+		evt := &events.AgentWithdraw{
+			AgentID: agentAddr.String(),
+			Amount:  amount.String(),
+			To:      receiver.String(),
+		}
+		defer journal.Close()
+		defer journal.RecordEvent(withdrawevt, func() interface{} { return evt })
+
 		fmt.Printf("Withdrawing %s FIL from your Agent", args[0])
 
 		tx, err := PoolsSDK.Act().AgentWithdraw(cmd.Context(), agentAddr, receiver, amount, ownerKey, requesterKey)
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
+		evt.Tx = tx.Hash().String()
 
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
 

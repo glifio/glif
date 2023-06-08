@@ -12,6 +12,7 @@ import (
 	"github.com/filecoin-project/lotus/build"
 	"github.com/filecoin-project/lotus/chain/actors"
 	"github.com/filecoin-project/lotus/chain/types"
+	"github.com/glifio/cli/events"
 	"github.com/spf13/cobra"
 )
 
@@ -50,6 +51,14 @@ var reclaimMinerCmd = &cobra.Command{
 			logFatal(err)
 		}
 
+		reclaimevt := journal.RegisterEventType("agent", "reclaim")
+		evt := &events.AgentMinerReclaim{
+			MinerID:  minerAddr.String(),
+			NewOwner: newOwnerAddr.String(),
+		}
+		defer journal.Close()
+		defer journal.RecordEvent(reclaimevt, func() interface{} { return evt })
+
 		smsg, err := lapi.MpoolPushMessage(cmd.Context(), &types.Message{
 			From:   senderAddr,
 			To:     minerAddr,
@@ -57,8 +66,8 @@ var reclaimMinerCmd = &cobra.Command{
 			Value:  big.Zero(),
 			Params: sp,
 		}, nil)
-
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
 
@@ -66,11 +75,13 @@ var reclaimMinerCmd = &cobra.Command{
 
 		wait, err := lapi.StateWaitMsg(cmd.Context(), smsg.Cid(), build.MessageConfidence, 900, true)
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
 
 		// check it executed successfully
 		if wait.Receipt.ExitCode != 0 {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
 

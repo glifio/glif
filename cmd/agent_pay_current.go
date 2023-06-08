@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/glifio/cli/events"
 	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
@@ -41,14 +42,27 @@ var payToCurrentCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
+		payevt := journal.RegisterEventType("agent", "pay")
+		evt := &events.AgentPay{
+			AgentID: agentAddr.String(),
+			PoolID:  poolID.String(),
+			Amount:  amountOwed.String(),
+			PayType: "current",
+		}
+		defer journal.Close()
+		defer journal.RecordEvent(payevt, func() interface{} { return evt })
+
 		tx, err := PoolsSDK.Act().AgentPay(cmd.Context(), agentAddr, poolID, amountOwed, senderKey, requesterKey)
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
+		evt.Tx = tx.Hash().String()
 
 		// transaction landed on chain or errored
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
 

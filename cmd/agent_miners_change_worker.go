@@ -10,6 +10,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/filecoin-project/go-address"
+	"github.com/glifio/cli/events"
 	"github.com/spf13/cobra"
 )
 
@@ -54,14 +55,27 @@ var changeWorkerCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
+		changeworkerevt := journal.RegisterEventType("miner", "changeworker")
+		evt := &events.AgentMinerChangeWorker{
+			AgentID:    agentAddr.String(),
+			MinerID:    minerAddr.String(),
+			NewWorker:  workerAddr.String(),
+			NewControl: AddressesToStrings(controlAddrs),
+		}
+		defer journal.Close()
+		defer journal.RecordEvent(changeworkerevt, func() interface{} { return evt })
+
 		tx, err := PoolsSDK.Act().AgentChangeMinerWorker(cmd.Context(), agentAddr, minerAddr, workerAddr, controlAddrs, ownerKey)
 		if err != nil {
+			evt.Error = err.Error()
 			logFatalf("tx error: %s", err)
 		}
+		evt.Tx = tx.Hash().String()
 
 		// transaction landed on chain or errored
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
 
