@@ -96,6 +96,10 @@ func initConfig() {
 	viper.SetConfigType("toml")
 	viper.SetConfigName("config")
 
+	daemonURL := viper.GetString("daemon.rpc-url")
+	daemonToken := viper.GetString("daemon.token")
+	adoURL := viper.GetString("ado.address")
+
 	var err error
 	if journal, err = fsjournal.OpenFSJournal(cfgDir, nil); err != nil {
 		logFatal(err)
@@ -123,22 +127,6 @@ func initConfig() {
 		}
 	}
 
-	var extern types.Extern
-
-	daemonURL := viper.GetString("daemon.rpc-url")
-	if daemonURL != "" {
-		extern.LotusDialAddr = daemonURL
-	}
-	daemonToken := viper.GetString("daemon.token")
-	if daemonToken != "" {
-		extern.LotusToken = daemonToken
-	}
-
-	adoURL := viper.GetString("ado.address")
-	if adoURL != "" {
-		extern.AdoAddr = adoURL
-	}
-
 	if chainID == constants.LocalnetChainID || chainID == constants.AnvilChainID {
 		routerAddr := viper.GetString("routes.router")
 		router := common.HexToAddress(routerAddr)
@@ -149,6 +137,7 @@ func initConfig() {
 		return
 	}
 
+	var extern types.Extern
 	switch chainID {
 	case constants.MainnetChainID:
 		extern = deploy.Extern
@@ -156,6 +145,17 @@ func initConfig() {
 		extern = deploy.TestExtern
 	default:
 		logFatalf("Unknown chain id %d", chainID)
+	}
+
+	if daemonURL != "" {
+		extern.LotusDialAddr = daemonURL
+	}
+	if daemonToken != "" {
+		extern.LotusToken = daemonToken
+	}
+
+	if adoURL != "" {
+		extern.AdoAddr = adoURL
 	}
 
 	sdk, err := sdk.New(context.Background(), big.NewInt(chainID), extern)
