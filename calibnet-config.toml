@@ -1,3 +1,9 @@
 [daemon]
 rpc-url = 'https://api.calibration.node.glif.io/rpc/v1'
 token = ''
+
+[autopilot]
+payment-type = 'to-current'
+# amount is only required for 'principal' and 'custom' payment types
+amount = 0
+frequency = 5

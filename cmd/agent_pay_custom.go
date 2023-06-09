@@ -5,11 +5,8 @@ package cmd
 
 import (
 	"fmt"
-	"log"
-	"time"
 
-	"github.com/briandowns/spinner"
-	"github.com/glifio/cli/events"
+	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
@@ -18,58 +15,12 @@ var payCustomCmd = &cobra.Command{
 	Short: "Pay down a custom amount of FIL",
 	Args:  cobra.ExactArgs(1),
 	Long:  "",
-	// Args:  cobra.RangeArgs(1, 2),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
+		payAmt, err := pay(cmd, args, "custom")
 		if err != nil {
 			logFatal(err)
 		}
-
-		amount, err := parseFILAmount(args[0])
-		if err != nil {
-			logFatal(err)
-		}
-
-		poolName := cmd.Flag("pool-name").Value.String()
-
-		poolID, err := parsePoolType(poolName)
-		if err != nil {
-			logFatal(err)
-		}
-
-		log.Printf("Paying %s FIL to the %s", args[0], poolName)
-
-		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-		s.Start()
-		defer s.Stop()
-
-		payevt := journal.RegisterEventType("agent", "pay")
-		evt := &events.AgentPay{
-			AgentID: agentAddr.String(),
-			PoolID:  poolID.String(),
-			Amount:  amount.String(),
-			PayType: "custom",
-		}
-		defer journal.Close()
-		defer journal.RecordEvent(payevt, func() interface{} { return evt })
-
-		tx, err := PoolsSDK.Act().AgentPay(cmd.Context(), agentAddr, poolID, amount, senderKey, requesterKey)
-		if err != nil {
-			evt.Error = err.Error()
-			logFatal(err)
-		}
-		evt.Tx = tx.Hash().String()
-
-		// transaction landed on chain or errored
-		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
-		if err != nil {
-			evt.Error = err.Error()
-			logFatal(err)
-		}
-
-		s.Stop()
-
-		fmt.Printf("Successfully paid %s FIL", args[0])
+		fmt.Printf("Successfully paid %s FIL", util.ToFIL(payAmt).String())
 	},
 }
 
