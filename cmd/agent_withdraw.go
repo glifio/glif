@@ -25,15 +25,9 @@ var withdrawCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		var receiver common.Address
-		if cmd.Flag("to") != nil && cmd.Flag("to").Changed {
-			receiver = common.HexToAddress(cmd.Flag("to").Value.String())
-		} else {
-			// if no recipient is specified, use the agent's owner
-			receiver, err = PoolsSDK.Query().AgentOwner(cmd.Context(), agentAddr)
-			if err != nil {
-				logFatal(err)
-			}
+		receiver, err := PoolsSDK.Query().AgentOwner(cmd.Context(), agentAddr)
+		if err != nil {
+			logFatal(err)
 		}
 
 		if !common.IsHexAddress(receiver.String()) {
@@ -81,5 +75,4 @@ var withdrawCmd = &cobra.Command{
 
 func init() {
 	agentCmd.AddCommand(withdrawCmd)
-	withdrawCmd.Flags().String("to", "", "Receiver of the funds (agent's owner is chosen if not specified)")
 }
