@@ -64,7 +64,7 @@ func pay(cmd *cobra.Command, args []string, paymentType string) (*big.Int, error
 
 	poolID, err := parsePoolType(poolName)
 	if err != nil {
-		logFatal(err)
+		return nil, err
 	}
 
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)

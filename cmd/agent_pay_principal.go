@@ -16,7 +16,7 @@ var payPrincipalCmd = &cobra.Command{
 	Long:  "<amount> is the amount of principal to pay down, in FIL. Any fees owed will be paid off as well in order to make the principal payment",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		payAmt, err := pay(cmd, args, "principle")
+		payAmt, err := pay(cmd, args, "principal")
 		if err != nil {
 			logFatal(err)
 		}
