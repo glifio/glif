@@ -62,8 +62,6 @@ var previewBorrowCmd = &cobra.Command{
 		weeklyPmt := new(big.Float).Mul(new(big.Float).SetInt(agentDataAfter.Principal), wpr)
 		weeklyPmt.Quo(weeklyPmt, big.NewFloat(1e18))
 
-		s.Stop()
-
 		generateHeader("PREVIEW BORROW")
 		fmt.Printf("Total borrowed before/after: %0.09f => %0.09f\n", util.ToFIL(agentDataBefore.Principal), util.ToFIL(agentDataAfter.Principal))
 		fmt.Printf("GCRED before/after: %s => %s\n", agentDataBefore.Gcred, agentDataAfter.Gcred)
