@@ -23,7 +23,6 @@ var agentAutopilotCmd = &cobra.Command{
 
 		ctx := cmd.Context()
 
-		query := PoolsSDK.Query()
 		log.Println("Starting autopilot...")
 
 		for {
@@ -49,14 +48,14 @@ var agentAutopilotCmd = &cobra.Command{
 					log.Println(err)
 				}
 
-				account, err := query.InfPoolGetAccount(ctx, agent)
+				account, err := PoolsSDK.Query().InfPoolGetAccount(ctx, agent)
 				if err != nil {
 					log.Println(err)
 				}
 
 				chainHeadHeight, err := PoolsSDK.Query().ChainHeight(cmd.Context())
 				if err != nil {
-					logFatal(err)
+					log.Println(err)
 				}
 
 				// calculate epoch frequency
@@ -103,7 +102,13 @@ var agentAutopilotCmd = &cobra.Command{
 				// reset args in case of hot-reload change to the amount config value
 				args = []string{}
 
-				time.Sleep(10 * time.Second)
+				select {
+				case <-time.After(1 * time.Minute):
+					continue
+				case <-sigs:
+					log.Println("Shutting down...")
+					Exit(0)
+				}
 			}
 		}
 	},
