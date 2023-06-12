@@ -103,7 +103,7 @@ var agentAutopilotCmd = &cobra.Command{
 				args = []string{}
 
 				select {
-				case <-time.After(1 * time.Minute):
+				case <-time.After(30 * time.Minute):
 					continue
 				case <-sigs:
 					log.Println("Shutting down...")
