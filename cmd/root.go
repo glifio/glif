@@ -123,6 +123,8 @@ func initConfig() {
 		}
 	}
 
+	viper.WatchConfig()
+
 	daemonURL := viper.GetString("daemon.rpc-url")
 	daemonToken := viper.GetString("daemon.token")
 	adoURL := viper.GetString("ado.address")
