@@ -197,9 +197,9 @@ func infoPoolInfo(ctx context.Context, agent common.Address, agentID *big.Int, s
 
 	principal, _ := filPrincipal.Float64()
 
-	weekOneDeadlineTime := util.EpochHeightToTimestamp(weekOneDeadline)
-	defaultEpochTime := util.EpochHeightToTimestamp(defaultEpoch)
-	epochsPaidTime := util.EpochHeightToTimestamp(account.EpochsPaid)
+	weekOneDeadlineTime := util.EpochHeightToTimestamp(weekOneDeadline, query.ChainID())
+	defaultEpochTime := util.EpochHeightToTimestamp(defaultEpoch, query.ChainID())
+	epochsPaidTime := util.EpochHeightToTimestamp(account.EpochsPaid, query.ChainID())
 
 	s.Stop()
 	generateHeader("INFINITY POOL ACCOUNT")
@@ -208,8 +208,10 @@ func infoPoolInfo(ctx context.Context, agent common.Address, agentID *big.Int, s
 		return nil
 	}
 
-	if lvl.Cmp(big.NewInt(0)) == 0 {
-		fmt.Println("No account exists with the Infinity Pool - please follow the instructions here: https://medium.com/@jonathan_97611/the-storage-providers-guide-to-glif-pools-af6323f4605e")
+	fmt.Println(account.EpochsPaid.String(), weekOneDeadline.String(), account.EpochsPaid.Cmp(weekOneDeadline))
+
+	if lvl.Cmp(big.NewInt(0)) == 0 && chainID == constants.MainnetChainID {
+		fmt.Println("Please follow the instructions here to borrow from the Infinity Pool: https://medium.com/@jonathan_97611/the-storage-providers-guide-to-glif-pools-af6323f4605e")
 	} else {
 		fmt.Printf("Agent's lvl is %s and can borrow %.03f FIL\n", lvl.String(), cap)
 		if principal == 0 {
@@ -217,7 +219,7 @@ func infoPoolInfo(ctx context.Context, agent common.Address, agentID *big.Int, s
 		} else {
 			fmt.Printf("You currently owe: %.08f FIL on %.02f FIL borrowed\n", amountOwedFIL, principal)
 			fmt.Printf("Your current GCRED score is: %s\n", gcred)
-			fmt.Printf("Your account with the Infinity Pool opened at: %s\n", util.EpochHeightToTimestamp(account.StartEpoch).Format(time.RFC3339))
+			fmt.Printf("Your account with the Infinity Pool opened at: %s\n", util.EpochHeightToTimestamp(account.StartEpoch, query.ChainID()).Format(time.RFC3339))
 
 			// check to see we're still in good standing wrt making our weekly payment
 			if account.EpochsPaid.Cmp(weekOneDeadline) == 1 {
