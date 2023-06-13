@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/glifio/cli/events"
 	"github.com/spf13/cobra"
 )
 
@@ -46,14 +47,26 @@ var exitCmd = &cobra.Command{
 		payAmount := new(big.Int).Add(amountOwed, account.Principal)
 		payAmount = addOnePercent(payAmount)
 
+		exitevt := journal.RegisterEventType("agent", "exit")
+		evt := &events.AgentExit{
+			AgentID: agentAddr.String(),
+			PoolID:  poolID.String(),
+			Amount:  payAmount.String(),
+		}
+		defer journal.Close()
+		defer journal.RecordEvent(exitevt, func() interface{} { return evt })
+
 		tx, err := PoolsSDK.Act().AgentPay(cmd.Context(), agentAddr, poolID, payAmount, senderKey, requesterKey)
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
+		evt.Tx = tx.Hash().String()
 
 		// transaction landed on chain or errored
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
 
