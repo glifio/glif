@@ -81,3 +81,10 @@ type AgentWithdraw struct {
 	Amount  string `json:"amount"`
 	To      string `json:"to"`
 }
+
+type AgentExit struct {
+	evtCommon
+	AgentID string `json:"agent_id"`
+	PoolID  string `json:"pool_id"`
+	Amount  string `json:"amount"`
+}
