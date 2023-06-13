@@ -5,6 +5,13 @@ type evtCommon struct {
 	Tx    string `json:"tx,omitempty"`
 }
 
+type AgentBorrow struct {
+	evtCommon
+	AgentID string `json:"agent_id"`
+	PoolID  string `json:"pool_id"`
+	Amount  string `json:"amount"`
+}
+
 type AgentAddMiner struct {
 	evtCommon
 	AgentID string `json:"agent_id"`

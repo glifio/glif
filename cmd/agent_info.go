@@ -208,8 +208,6 @@ func infoPoolInfo(ctx context.Context, agent common.Address, agentID *big.Int, s
 		return nil
 	}
 
-	fmt.Println(account.EpochsPaid.String(), weekOneDeadline.String(), account.EpochsPaid.Cmp(weekOneDeadline))
-
 	if lvl.Cmp(big.NewInt(0)) == 0 && chainID == constants.MainnetChainID {
 		fmt.Println("Please follow the instructions here to borrow from the Infinity Pool: https://medium.com/@jonathan_97611/the-storage-providers-guide-to-glif-pools-af6323f4605e")
 	} else {

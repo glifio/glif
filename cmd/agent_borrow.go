@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/glifio/cli/events"
 	"github.com/glifio/go-pools/util"
+	denoms "github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
@@ -40,16 +42,26 @@ var borrowCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		fmt.Printf("Borrowing %s FIL from the %s into agent %s", amount, poolID, agentAddr)
+		fmt.Printf("Borrowing %v FIL from the %s into agent %s\n", amount, poolName, agentAddr)
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 		defer s.Stop()
 
+		borrowevt := journal.RegisterEventType("agent", "addminer")
+		evt := &events.AgentBorrow{
+			AgentID: agentAddr.String(),
+			PoolID:  poolID.String(),
+			Amount:  amount.String(),
+		}
+		defer journal.Close()
+		defer journal.RecordEvent(borrowevt, func() interface{} { return evt })
+
 		tx, err := PoolsSDK.Act().AgentBorrow(cmd.Context(), agentAddr, poolID, amount, ownerKey, requesterKey)
 		if err != nil {
 			logFatal(err)
 		}
+		evt.Tx = tx.Hash().String()
 
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
@@ -58,11 +70,12 @@ var borrowCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Successfully borrowed %s FIL", args[0])
+		fmt.Printf("Successfully borrowed %0.08f FIL\n", denoms.ToFIL(amount))
 	},
 }
 
 func init() {
 	agentCmd.AddCommand(borrowCmd)
 	borrowCmd.Flags().String("pool-name", "infinity-pool", "name of the pool to borrow from")
+	borrowCmd.Flags().Float64("amount", 0, "amount of FIL to borrow")
 }

@@ -226,10 +226,10 @@ github.com/gballet/go-libpcsclite v0.0.0-20190607065134-2772fd86a8ff h1:tY80oXqG
 github.com/gbrlsnchs/jwt/v3 v3.0.1 h1:lbUmgAKpxnClrKloyIwpxm4OuWeDl5wLk52G91ODPw4=
 github.com/gbrlsnchs/jwt/v3 v3.0.1/go.mod h1:AncDcjXz18xetI3A6STfXq2w+LuTx8pQ8bGEwRN8zVM=
 github.com/getsentry/sentry-go v0.18.0 h1:MtBW5H9QgdcJabtZcuJG80BMOwaBpkRDZkxRkNC1sN0=
-github.com/glifio/go-pools v0.0.0-20230606200309-89b8c8f38044 h1:ULKDnPUv9FBc2MvR5KAqfK6pO9LxEHWP/uHjWtJeEzs=
-github.com/glifio/go-pools v0.0.0-20230606200309-89b8c8f38044/go.mod h1:XlDkXUaDKhw+mdUOJ1jDduSRXCQM5T1XAIPY2aH9RZM=
 github.com/glifio/go-pools v0.0.0-20230612014252-4bfcd71af376 h1:fVFLuHZATnXZWJGhhCJoYHc5RAMd1h8ZojgdBgqYvUc=
 github.com/glifio/go-pools v0.0.0-20230612014252-4bfcd71af376/go.mod h1:GDFTShuXRphwMYhF8Ztd/0l1/MpLjwcq87Ux+29ZfDs=
+github.com/glifio/go-pools v0.0.0-20230613163904-bcdd3dac557e h1:BjW7AfAkagLAr2dF0mNXgypXz4k4vrNXWVCuB9Eh8wk=
+github.com/glifio/go-pools v0.0.0-20230613163904-bcdd3dac557e/go.mod h1:GDFTShuXRphwMYhF8Ztd/0l1/MpLjwcq87Ux+29ZfDs=
 github.com/glifio/go-secp256k1 v0.0.1 h1:BzsnpEtMl8RQtuJSfYDYK43MbTdVPtAQePZHn7TgSJk=
 github.com/glifio/go-secp256k1 v0.0.1/go.mod h1:AuM499x3qhpTvNyjqfLBkeYlEYQxD0ZB7YsYliALcPs=
 github.com/go-check/check v0.0.0-20180628173108-788fd7840127/go.mod h1:9ES+weclKsC9YodN5RgxqK/VD9HM9JsCSh7rNhMZE98=
