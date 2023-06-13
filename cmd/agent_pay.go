@@ -21,7 +21,7 @@ func init() {
 	agentCmd.AddCommand(payCmd)
 }
 
-func pay(cmd *cobra.Command, args []string, paymentType string) (*big.Int, error) {
+func pay(cmd *cobra.Command, args []string, paymentType string, daemon bool) (*big.Int, error) {
 	agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,9 @@ func pay(cmd *cobra.Command, args []string, paymentType string) (*big.Int, error
 		Amount:  payAmt.String(),
 		PayType: paymentType,
 	}
-	defer journal.Close()
+	if !daemon {
+		defer journal.Close()
+	}
 	defer journal.RecordEvent(payevt, func() interface{} { return evt })
 
 	tx, err := PoolsSDK.Act().AgentPay(cmd.Context(), agentAddr, poolID, payAmt, senderKey, requesterKey)

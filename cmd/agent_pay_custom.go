@@ -16,7 +16,7 @@ var payCustomCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Long:  "",
 	Run: func(cmd *cobra.Command, args []string) {
-		payAmt, err := pay(cmd, args, "custom")
+		payAmt, err := pay(cmd, args, "custom", false)
 		if err != nil {
 			logFatal(err)
 		}

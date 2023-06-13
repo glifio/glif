@@ -18,6 +18,8 @@ var agentAutopilotCmd = &cobra.Command{
 	Short: "Background service that automatically repays FIL to pools",
 	Long:  `Background service that automatically repays FIL to pools.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		defer journal.Close()
+
 		sigs := make(chan os.Signal, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
@@ -76,19 +78,19 @@ var agentAutopilotCmd = &cobra.Command{
 				if dueEpoch.Cmp(epochFreqInt) >= 0 {
 					switch paymentType {
 					case "principle":
-						_, err := pay(cmd, args, paymentType)
+						_, err := pay(cmd, args, paymentType, true)
 						if err != nil {
 							log.Println(err)
 						}
 
 					case "to-current":
-						_, err := pay(cmd, args, paymentType)
+						_, err := pay(cmd, args, paymentType, true)
 						if err != nil {
 							log.Println(err)
 						}
 
 					case "custom":
-						_, err := pay(cmd, args, paymentType)
+						_, err := pay(cmd, args, paymentType, true)
 						if err != nil {
 							log.Println(err)
 						}

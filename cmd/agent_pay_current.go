@@ -15,7 +15,7 @@ var payToCurrentCmd = &cobra.Command{
 	Short: "Make your account current",
 	Long:  "Pays off all fees owed",
 	Run: func(cmd *cobra.Command, args []string) {
-		payAmt, err := pay(cmd, args, "to-current")
+		payAmt, err := pay(cmd, args, "to-current", false)
 		if err != nil {
 			logFatal(err)
 		}
