@@ -42,9 +42,10 @@ var agentAutopilotCmd = &cobra.Command{
 					continue
 				}
 				log.Println("Payment type: ", paymentType)
+				payargs := []string{}
 				if paymentType == Principal || paymentType == Custom {
 					amount := viper.GetInt64("autopilot.amount")
-					args = append(args, fmt.Sprintf("%d", amount))
+					payargs = append(payargs, fmt.Sprintf("%d", amount))
 				}
 
 				//TODO: maybe change frequency to max debt or max epoch difference
@@ -81,19 +82,19 @@ var agentAutopilotCmd = &cobra.Command{
 				if dueEpoch.Cmp(epochFreqInt) >= 0 {
 					switch paymentType {
 					case Principal:
-						_, err := pay(cmd, args, paymentType, true)
+						_, err := pay(cmd, payargs, paymentType, true)
 						if err != nil {
 							log.Println(err)
 						}
 
 					case ToCurrent:
-						_, err := pay(cmd, args, paymentType, true)
+						_, err := pay(cmd, payargs, paymentType, true)
 						if err != nil {
 							log.Println(err)
 						}
 
 					case Custom:
-						_, err := pay(cmd, args, paymentType, true)
+						_, err := pay(cmd, payargs, paymentType, true)
 						if err != nil {
 							log.Println(err)
 						}
@@ -103,9 +104,6 @@ var agentAutopilotCmd = &cobra.Command{
 					}
 				}
 				log.Println("reseting args...")
-
-				// reset args in case of hot-reload change to the amount config value
-				args = []string{}
 
 				select {
 				case <-time.After(30 * time.Minute):
