@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/glifio/go-pools/constants"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -35,9 +36,13 @@ var agentAutopilotCmd = &cobra.Command{
 			default:
 				log.Println("Checking for payments...")
 				// each loop retrieve config values aka hot-reload
-				paymentType := viper.GetString("autopilot.payment-type")
+				paymentType, err := ParsePaymentType(viper.GetString("autopilot.payment-type"))
+				if err != nil {
+					log.Println(err)
+					continue
+				}
 				log.Println("Payment type: ", paymentType)
-				if paymentType == "principal" || paymentType == "custom" {
+				if paymentType == Principal || paymentType == Custom {
 					amount := viper.GetInt64("autopilot.amount")
 					args = append(args, fmt.Sprintf("%d", amount))
 				}
@@ -61,9 +66,7 @@ var agentAutopilotCmd = &cobra.Command{
 				}
 
 				// calculate epoch frequency
-				// frequency is in days so multiply by 24 hours, 60 minutes, 60 seconds to get seconds
-				// divide by 30 seconds to get epochs
-				epochFreq := big.NewFloat(float64(frequency * 24 * 60 * 60 / 30))
+				epochFreq := big.NewFloat(float64(frequency * constants.EpochsInDay))
 				log.Println("Payment Frequency: ", epochFreq, " epochs")
 
 				dueEpoch := new(big.Int).Sub(new(big.Int).SetUint64(chainHeadHeight.Uint64()), account.EpochsPaid)
@@ -77,19 +80,19 @@ var agentAutopilotCmd = &cobra.Command{
 				// if so, make payment
 				if dueEpoch.Cmp(epochFreqInt) >= 0 {
 					switch paymentType {
-					case "principle":
+					case Principal:
 						_, err := pay(cmd, args, paymentType, true)
 						if err != nil {
 							log.Println(err)
 						}
 
-					case "to-current":
+					case ToCurrent:
 						_, err := pay(cmd, args, paymentType, true)
 						if err != nil {
 							log.Println(err)
 						}
 
-					case "custom":
+					case Custom:
 						_, err := pay(cmd, args, paymentType, true)
 						if err != nil {
 							log.Println(err)

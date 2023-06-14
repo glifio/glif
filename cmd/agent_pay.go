@@ -13,6 +13,38 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type PaymentType int
+
+const (
+	Principal PaymentType = iota
+	ToCurrent
+	Custom
+)
+
+var toString = map[PaymentType]string{
+	Principal: "principal",
+	ToCurrent: "to-current",
+	Custom:    "custom",
+}
+
+var toPaymentType = map[string]PaymentType{
+	"principal":  Principal,
+	"to-current": ToCurrent,
+	"custom":     Custom,
+}
+
+func (p PaymentType) String() string {
+	return toString[p]
+}
+
+func ParsePaymentType(s string) (PaymentType, error) {
+	p, ok := toPaymentType[s]
+	if !ok {
+		return 0, fmt.Errorf("invalid payment type %s", s)
+	}
+	return p, nil
+}
+
 var payCmd = &cobra.Command{
 	Use: "pay",
 }
@@ -21,7 +53,7 @@ func init() {
 	agentCmd.AddCommand(payCmd)
 }
 
-func pay(cmd *cobra.Command, args []string, paymentType string, daemon bool) (*big.Int, error) {
+func pay(cmd *cobra.Command, args []string, paymentType PaymentType, daemon bool) (*big.Int, error) {
 	agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
 	if err != nil {
 		return nil, err
@@ -30,7 +62,7 @@ func pay(cmd *cobra.Command, args []string, paymentType string, daemon bool) (*b
 	var payAmt *big.Int
 
 	switch paymentType {
-	case "principal":
+	case Principal:
 		amount, err := parseFILAmount(args[0])
 		if err != nil {
 			return nil, err
@@ -42,14 +74,14 @@ func pay(cmd *cobra.Command, args []string, paymentType string, daemon bool) (*b
 		}
 
 		payAmt = new(big.Int).Add(amount, amountOwed)
-	case "to-current":
+	case ToCurrent:
 		amountOwed, _, err := PoolsSDK.Query().AgentOwes(cmd.Context(), agentAddr)
 		if err != nil {
 			return nil, err
 		}
 
 		payAmt = amountOwed
-	case "custom":
+	case Custom:
 		amount, err := parseFILAmount(args[0])
 		if err != nil {
 			return nil, err
@@ -76,7 +108,7 @@ func pay(cmd *cobra.Command, args []string, paymentType string, daemon bool) (*b
 		AgentID: agentAddr.String(),
 		PoolID:  poolID.String(),
 		Amount:  payAmt.String(),
-		PayType: paymentType,
+		PayType: paymentType.String(),
 	}
 	if !daemon {
 		defer journal.Close()
