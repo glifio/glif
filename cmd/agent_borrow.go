@@ -14,13 +14,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var preview bool
+
 // borrowCmd represents the borrow command
 var borrowCmd = &cobra.Command{
 	Use:   "borrow <amount> [flags]",
 	Short: "Borrow FIL from a Pool",
 	Long:  "Borrow FIL from a Pool. If you do not pass a `pool-name` flag, the default pool is the Infinity Pool.",
-	Args:  cobra.RangeArgs(1, 2),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		if preview {
+			previewBorrowCmd.Run(cmd, args)
+			return
+		}
+
 		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
 			logFatal(err)
@@ -78,6 +85,7 @@ var borrowCmd = &cobra.Command{
 
 func init() {
 	agentCmd.AddCommand(borrowCmd)
+	borrowCmd.Flags().String("agent-addr", "", "Agent address")
 	borrowCmd.Flags().String("pool-name", "infinity-pool", "name of the pool to borrow from")
-	borrowCmd.Flags().Float64("amount", 0, "amount of FIL to borrow")
+	borrowCmd.Flags().BoolVar(&preview, "preview", false, "preview the financial outcome of a borrow action")
 }
