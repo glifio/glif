@@ -10,8 +10,11 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/glifio/cli/events"
+	"github.com/glifio/go-pools/constants"
 	"github.com/spf13/cobra"
 )
+
+var withdrawPreview bool
 
 // borrowCmd represents the borrow command
 var withdrawCmd = &cobra.Command{
@@ -20,6 +23,11 @@ var withdrawCmd = &cobra.Command{
 	Long:  "",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		if withdrawPreview {
+			previewAction(cmd, args, constants.MethodWithdraw)
+			return
+		}
+
 		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
 			logFatal(err)
@@ -75,4 +83,5 @@ var withdrawCmd = &cobra.Command{
 
 func init() {
 	agentCmd.AddCommand(withdrawCmd)
+	withdrawCmd.Flags().BoolVar(&withdrawPreview, "preview", false, "preview the financial outcome of a withdraw action")
 }
