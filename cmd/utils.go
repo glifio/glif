@@ -225,10 +225,11 @@ func parseFILAmount(amount string) (*big.Int, error) {
 
 func getAgentAddress(cmd *cobra.Command) (common.Address, error) {
 	as := util.AgentStore()
+	var agentAddrStr string
 
-	agentAddrStr := cmd.Flag("agent-addr").Value.String()
-
-	if agentAddrStr == "" {
+	if cmd.Flag("agent-addr") != nil && cmd.Flag("agent-addr").Changed {
+		agentAddrStr = cmd.Flag("agent-addr").Value.String()
+	} else {
 		// Check if an agent already exists
 		cachedAddr, err := as.Get("address")
 		if err != nil {
