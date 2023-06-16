@@ -9,6 +9,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/glifio/cli/events"
+	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/util"
 	denoms "github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
@@ -24,7 +25,7 @@ var borrowCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if borrowPreview {
-			previewBorrowCmd.Run(cmd, args)
+			previewAction(cmd, args, constants.MethodBorrow)
 			return
 		}
 
