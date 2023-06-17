@@ -154,25 +154,32 @@ func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.Priv
 	var pk *ecdsa.PrivateKey
 	// if no flag was passed, we just use the operator address by default
 	from := cmd.Flag("from").Value.String()
-	funded, err := callerIsFunded(cmd.Context(), opFevm)
-	if err != nil {
-		if !errors.As(err, &lotusapi.ErrActorNotFound{}) {
-			return common.Address{}, nil, nil, err
+	switch from {
+	case "", opEvm.String(), opFevm.String():
+		funded, err := ks.IsFunded(util.OperatorFunded)
+		if err != nil {
+			// means that the key value has not been set yet
+			// do a state lookup to see if it has been funded
+			b, err := callerIsFunded(cmd.Context(), opFevm)
+			if errors.As(err, &lotusapi.ErrActorNotFound{}) {
+				log.Println("Operator address has no balance. Fund the operator, or pass `--from` flag to override")
+				return common.Address{}, nil, nil, err
+			}
+			if b {
+				err = ks.SetFunded(util.OperatorFunded, b)
+				funded = true
+			}
 		}
-		// passthrough if the error is ErrActorNotFound
-		// we will just use the owner instead of operator
-	}
-	if from == "" || funded {
-		from = opEvm.String()
-		pk, err = ks.GetPrivate(util.OperatorKey)
-	} else if from == opEvm.String() || from == opFevm.String() {
-		pk, err = ks.GetPrivate(util.OperatorKey)
-	} else if from == owEvm.String() || from == owFevm.String() {
+		if funded {
+			pk, err = ks.GetPrivate(util.OperatorKey)
+		} else {
+			pk, err = ks.GetPrivate(util.OwnerKey)
+		}
+	case owEvm.String(), owFevm.String():
 		pk, err = ks.GetPrivate(util.OwnerKey)
-	} else {
+	default:
 		return common.Address{}, nil, nil, errors.New("invalid from address")
 	}
-
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}

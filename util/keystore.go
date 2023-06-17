@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -16,9 +17,11 @@ import (
 type KeyType string
 
 const (
-	OwnerKey    KeyType = "owner"
-	OperatorKey KeyType = "operator"
-	RequestKey  KeyType = "request"
+	OwnerKey       KeyType = "owner"
+	OwnerFunded    KeyType = "owner-funded"
+	OperatorKey    KeyType = "operator"
+	OperatorFunded KeyType = "operator-funded"
+	RequestKey     KeyType = "request"
 )
 
 type KeyStorage struct {
@@ -33,9 +36,11 @@ func KeyStore() *KeyStorage {
 
 func NewKeyStore(filename string) error {
 	keyDefault := map[string]string{
-		string(OwnerKey):    "",
-		string(OperatorKey): "",
-		string(RequestKey):  "",
+		string(OwnerKey):       "",
+		string(OwnerFunded):    "",
+		string(OperatorKey):    "",
+		string(OperatorFunded): "",
+		string(RequestKey):     "",
 	}
 
 	s, err := NewStorage(filename, keyDefault)
@@ -62,7 +67,6 @@ func (s *KeyStorage) GetPrivate(key KeyType) (*ecdsa.PrivateKey, error) {
 	return pkECDSA, nil
 }
 
-// returns
 func (s *KeyStorage) GetAddrs(key KeyType) (common.Address, address.Address, error) {
 	pk, ok := s.data[string(key)]
 	if !ok {
@@ -86,6 +90,29 @@ func (s *KeyStorage) SetKey(key KeyType, pk *ecdsa.PrivateKey) error {
 	err := s.Set(string(key), pkStr)
 
 	return err
+}
+
+func (s *KeyStorage) IsFunded(key KeyType) (bool, error) {
+	switch key {
+	case OwnerFunded, OperatorFunded:
+		f, ok := s.data[string(key)]
+		if !ok {
+			return false, fmt.Errorf("key not found: %s", key)
+		}
+
+		return strconv.ParseBool(f)
+	default:
+		return false, fmt.Errorf("not supported key type for funded operation")
+	}
+}
+
+func (s *KeyStorage) SetFunded(key KeyType, funded bool) error {
+	switch key {
+	case OwnerFunded, OperatorFunded:
+		return s.Set(string(key), strconv.FormatBool(funded))
+	default:
+		return fmt.Errorf("not supported key type for funded operation")
+	}
 }
 
 func DeriveAddrFromPkString(pk string) (common.Address, address.Address, error) {
