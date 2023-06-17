@@ -145,6 +145,7 @@ func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.Priv
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
+
 	owEvm, owFevm, err := ks.GetAddrs(util.OwnerKey)
 	if err != nil {
 		return common.Address{}, nil, nil, err
@@ -153,7 +154,15 @@ func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.Priv
 	var pk *ecdsa.PrivateKey
 	// if no flag was passed, we just use the operator address by default
 	from := cmd.Flag("from").Value.String()
-	if from == "" {
+	funded, err := callerIsFunded(cmd.Context(), opFevm)
+	if err != nil {
+		if !errors.As(err, &lotusapi.ErrActorNotFound{}) {
+			return common.Address{}, nil, nil, err
+		}
+		// passthrough if the error is ErrActorNotFound
+		// we will just use the owner instead of operator
+	}
+	if from == "" || funded {
 		from = opEvm.String()
 		pk, err = ks.GetPrivate(util.OperatorKey)
 	} else if from == opEvm.String() || from == opFevm.String() {
@@ -189,6 +198,20 @@ func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.Priv
 	}
 
 	return agentAddr, pk, requesterKey, nil
+}
+
+func callerIsFunded(ctx context.Context, caller address.Address) (bool, error) {
+	lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
+	if err != nil {
+		logFatalf("failed to instantiate lotus client %s", err)
+	}
+	defer closer()
+
+	_, err = lapi.StateLookupID(ctx, caller, types.EmptyTSK)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 type PoolType uint64
