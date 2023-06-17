@@ -61,7 +61,7 @@ var pushFundsCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Successfully pushed funds down to miner %s", minerAddr)
+		fmt.Printf("Successfully pushed funds down to miner %s\n", minerAddr)
 	},
 }
 

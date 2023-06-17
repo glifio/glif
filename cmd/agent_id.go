@@ -34,7 +34,7 @@ var idCmd = &cobra.Command{
 
 		s.Stop()
 
-		log.Printf("Agent %s ID: %s", util.TruncateAddr(agentAddr.String()), id)
+		log.Printf("Agent %s ID: %s\n", util.TruncateAddr(agentAddr.String()), id)
 	},
 }
 

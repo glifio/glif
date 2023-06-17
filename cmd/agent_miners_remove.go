@@ -53,7 +53,7 @@ var rmCmd = &cobra.Command{
 		defer journal.Close()
 		defer journal.RecordEvent(removeevt, func() interface{} { return evt })
 
-		fmt.Printf("Removing miner %s from agent %s by changing its owner address to %s", minerAddr, agentAddr, newMinerOwnerAddr)
+		fmt.Printf("Removing miner %s from agent %s by changing its owner address to %s\n", minerAddr, agentAddr, newMinerOwnerAddr)
 
 		tx, err := PoolsSDK.Act().AgentRemoveMiner(cmd.Context(), agentAddr, minerAddr, newMinerOwnerAddr, ownerKey, requesterKey)
 		if err != nil {
@@ -71,7 +71,7 @@ var rmCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Successfully proposed an ownership change to miner %s, passing %s as the new owner", minerAddr, newMinerOwnerAddr)
+		fmt.Printf("Successfully proposed an ownership change to miner %s, passing %s as the new owner\n", minerAddr, newMinerOwnerAddr)
 	},
 }
 

@@ -60,7 +60,7 @@ var depositFILCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Successfully deposited funds into the Infinity Pool")
+		fmt.Printf("Successfully deposited funds into the Infinity Pool\n")
 	},
 }
 

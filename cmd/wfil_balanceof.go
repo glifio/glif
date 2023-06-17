@@ -34,7 +34,7 @@ var wFILBalanceOfCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("wFIL balance of %s is %.09f", strAddr, balFIL)
+		fmt.Printf("wFIL balance of %s is %.09f\n", strAddr, balFIL)
 	},
 }
 

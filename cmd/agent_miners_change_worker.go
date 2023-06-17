@@ -49,7 +49,7 @@ var changeWorkerCmd = &cobra.Command{
 			controlAddrs = append(controlAddrs, controlAddr)
 		}
 
-		log.Printf("Changing worker address for miner %s to %s", minerAddr, workerAddr)
+		log.Printf("Changing worker address for miner %s to %s\n", minerAddr, workerAddr)
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()

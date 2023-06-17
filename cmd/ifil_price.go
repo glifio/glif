@@ -28,7 +28,7 @@ var iFILPriceCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("1 iFIL is worth %.09f FIL", priceFIL)
+		fmt.Printf("1 iFIL is worth %.09f FIL\n", priceFIL)
 	},
 }
 

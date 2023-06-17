@@ -31,7 +31,7 @@ var availLiquidityCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Total available liquidity in the Pool is %.08f FIL", liquidFIL)
+		fmt.Printf("Total available liquidity in the Pool is %.08f FIL\n", liquidFIL)
 	},
 }
 
