@@ -277,7 +277,7 @@ func agentHealth(ctx context.Context, agent common.Address, s *spinner.Spinner) 
 
 		if liableForFaultySectorDefault {
 			fmt.Printf("🔴 Status unhealthy - you are at risk of liquidation due to consecutive faulty sectors 🔴\n")
-			fmt.Printf("Faulty sector start epoch: %v", faultySectorStart)
+			fmt.Printf("Faulty sector start epoch: %v\n", faultySectorStart)
 		} else {
 			epochsBeforeZeroTolerance := new(big.Int).Sub(consecutiveFaultEpochTolerance, consecutiveFaultEpochs)
 			fmt.Printf("🟡 Status unhealthy - you are approaching risk of liquidation due to consecutive faulty sectors 🟡\n")

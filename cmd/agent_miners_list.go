@@ -24,7 +24,7 @@ var minersListCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		fmt.Printf("Agent's miners: %s", util.StringifyArg(list))
+		fmt.Printf("Agent's miners: %s\n", util.StringifyArg(list))
 	},
 }
 

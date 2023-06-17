@@ -21,7 +21,7 @@ var poolsListCmd = &cobra.Command{
 
 		poolsStr := util.StringifyArg(poolsList)
 
-		fmt.Printf("Pools: %s", poolsStr)
+		fmt.Printf("Pools: %s\n", poolsStr)
 	},
 }
 

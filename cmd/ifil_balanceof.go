@@ -34,7 +34,7 @@ var iFILBalanceOfCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("iFIL balance of %s is %.09f", strAddr, balFIL)
+		fmt.Printf("iFIL balance of %s is %.09f\n", strAddr, balFIL)
 	},
 }
 

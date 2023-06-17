@@ -64,7 +64,7 @@ var pullFundsCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Successfully pulled funds up from miner %s", minerAddr)
+		fmt.Printf("Successfully pulled funds up from miner %s\n", minerAddr)
 	},
 }
 

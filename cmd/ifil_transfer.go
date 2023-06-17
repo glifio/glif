@@ -56,7 +56,7 @@ var iFILTransferCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("iFIL sent!")
+		fmt.Printf("iFIL sent!\n")
 	},
 }
 

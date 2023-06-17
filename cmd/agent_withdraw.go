@@ -69,7 +69,7 @@ var withdrawCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Successfully withdrew %s FIL", args[0])
+		fmt.Printf("Successfully withdrew %s FIL\n", args[0])
 	},
 }
 

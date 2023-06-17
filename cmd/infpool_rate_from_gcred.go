@@ -40,7 +40,7 @@ var rateFromGcredCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("%.03f%% annually, %.03f%% weekly", aprFloat*100, wprFloat*100)
+		fmt.Printf("%.03f%% annually, %.03f%% weekly\n", aprFloat*100, wprFloat*100)
 	},
 }
 

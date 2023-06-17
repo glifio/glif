@@ -50,7 +50,7 @@ var iFILApproveCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("iFIL approved!")
+		fmt.Printf("iFIL approved!\n")
 	},
 }
 

@@ -34,7 +34,7 @@ var refreshRoutesCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Routes refreshed!")
+		fmt.Printf("Routes refreshed!\n")
 	},
 }
 

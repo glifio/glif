@@ -34,7 +34,7 @@ var agentLvlCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Agent's lvl is %s and can borrow %.03f FIL", lvl.String(), borrowCap)
+		fmt.Printf("Agent's lvl is %s and can borrow %.03f FIL\n", lvl.String(), borrowCap)
 	},
 }
 

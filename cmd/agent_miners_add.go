@@ -61,7 +61,7 @@ var addCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Successfully added miner %s to agent %s", minerAddr, agentAddr)
+		fmt.Printf("Successfully added miner %s to agent %s\n", minerAddr, agentAddr)
 	},
 }
 
