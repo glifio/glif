@@ -15,7 +15,7 @@ import (
 
 var exitCmd = &cobra.Command{
 	Use:   "exit",
-	Short: "Exits from the Infintiy Pool",
+	Short: "Exits from the Infinity Pool",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
