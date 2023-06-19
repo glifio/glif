@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -64,6 +65,29 @@ var borrowCmd = &cobra.Command{
 		}
 		defer journal.Close()
 		defer journal.RecordEvent(borrowevt, func() interface{} { return evt })
+
+		// prevent attempting borrow action if the agent would get a PayUp error
+		// a PayUp is triggered in the smart contract if
+		// the agent epochs paid + max owed tolerance < current block height
+		bh, err := PoolsSDK.Query().ChainHeight(cmd.Context())
+		if err != nil {
+			evt.Error = err.Error()
+			logFatal(err)
+		}
+
+		account, err := PoolsSDK.Query().AgentAccount(cmd.Context(), agentAddr, big.NewInt(0))
+		if err != nil {
+			evt.Error = err.Error()
+			logFatal(err)
+		}
+
+		tolerance, err := PoolsSDK.Query().InfPoolMaxEpochsOwedTolerance(cmd.Context(), agentAddr)
+		agentState := big.NewInt(0).Add(account.EpochsPaid, tolerance)
+
+		if agentState.Cmp(bh) < 0 {
+			evt.Error = fmt.Errorf("Agent needs to pay current debt before borrow more funds").Error()
+			logFatal(err)
+		}
 
 		tx, err := PoolsSDK.Act().AgentBorrow(cmd.Context(), agentAddr, poolID, amount, ownerKey, requesterKey)
 		if err != nil {
