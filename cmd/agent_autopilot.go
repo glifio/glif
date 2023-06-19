@@ -68,14 +68,11 @@ var agentAutopilotCmd = &cobra.Command{
 
 				// calculate epoch frequency
 				epochFreq := big.NewFloat(float64(frequency * constants.EpochsInDay))
-				log.Println("Payment Frequency: ", epochFreq, " epochs")
 
 				dueEpoch := new(big.Int).Sub(new(big.Int).SetUint64(chainHeadHeight.Uint64()), account.EpochsPaid)
-				log.Println("Last Payment Made: ", dueEpoch, " epochs ago")
 
 				epochFreqInt64, _ := epochFreq.Int64()
 				epochFreqInt := big.NewInt(epochFreqInt64)
-				log.Println("Should a Payment be made: ", dueEpoch.Cmp(epochFreqInt))
 
 				// check if payment is due
 				// if so, make payment
@@ -103,7 +100,6 @@ var agentAutopilotCmd = &cobra.Command{
 						log.Println("Invalid payment type")
 					}
 				}
-				log.Println("reseting args...")
 
 				select {
 				case <-time.After(30 * time.Minute):
