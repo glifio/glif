@@ -1,3 +1,10 @@
 [daemon]
 rpc-url = 'https://api.node.glif.io/rpc/v1'
 token = ''
+
+[autopilot]
+# <to-current|principal|custom>
+payment-type = 'to-current'
+# amount is only required for 'principal' and 'custom' payment types
+amount = 0
+frequency = 5
