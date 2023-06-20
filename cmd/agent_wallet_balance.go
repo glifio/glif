@@ -32,7 +32,7 @@ func getBalances(
 ) {
 	lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
 	if err != nil {
-		log.Fatalf("Failed to instantiate eth client %s", err)
+		logFatalf("Failed to instantiate eth client %s", err)
 	}
 	defer closer()
 
@@ -105,17 +105,17 @@ var balCmd = &cobra.Command{
 		ks := util.KeyStore()
 		ownerEvm, ownerFevm, err := ks.GetAddrs(util.OwnerKey)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		operatorEvm, operatorFevm, err := ks.GetAddrs(util.OperatorKey)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		requestEvm, requestFevm, err := ks.GetAddrs(util.RequestKey)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		ownerBal, operatorBal, requesterBal, err := getBalances(

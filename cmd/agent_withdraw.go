@@ -5,13 +5,16 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/glifio/cli/events"
+	"github.com/glifio/go-pools/constants"
 	"github.com/spf13/cobra"
 )
+
+var withdrawPreview bool
 
 // borrowCmd represents the borrow command
 var withdrawCmd = &cobra.Command{
@@ -20,54 +23,65 @@ var withdrawCmd = &cobra.Command{
 	Long:  "",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall()
-		if err != nil {
-			log.Fatal(err)
+		if withdrawPreview {
+			previewAction(cmd, args, constants.MethodWithdraw)
+			return
 		}
 
-		var receiver common.Address
-		if cmd.Flag("to") != nil && cmd.Flag("to").Changed {
-			receiver = common.HexToAddress(cmd.Flag("to").Value.String())
-		} else {
-			// if no recipient is specified, use the agent's owner
-			receiver, err = PoolsSDK.Query().AgentOwner(cmd.Context(), agentAddr)
-			if err != nil {
-				log.Fatal(err)
-			}
+		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall()
+		if err != nil {
+			logFatal(err)
+		}
+
+		receiver, err := PoolsSDK.Query().AgentOwner(cmd.Context(), agentAddr)
+		if err != nil {
+			logFatal(err)
 		}
 
 		if !common.IsHexAddress(receiver.String()) {
-			log.Fatal("Invalid withdraw address")
+			logFatal("Invalid withdraw address")
 		}
 
 		amount, err := parseFILAmount(args[0])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 		defer s.Stop()
 
+		withdrawevt := journal.RegisterEventType("agent", "withdraw")
+		evt := &events.AgentWithdraw{
+			AgentID: agentAddr.String(),
+			Amount:  amount.String(),
+			To:      receiver.String(),
+		}
+		defer journal.Close()
+		defer journal.RecordEvent(withdrawevt, func() interface{} { return evt })
+
 		fmt.Printf("Withdrawing %s FIL from your Agent", args[0])
 
 		tx, err := PoolsSDK.Act().AgentWithdraw(cmd.Context(), agentAddr, receiver, amount, ownerKey, requesterKey)
 		if err != nil {
-			log.Fatal(err)
+			evt.Error = err.Error()
+			logFatal(err)
 		}
+		evt.Tx = tx.Hash().String()
 
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
-			log.Fatal(err)
+			evt.Error = err.Error()
+			logFatal(err)
 		}
 
 		s.Stop()
 
-		fmt.Printf("Successfully withdrew %s FIL", args[0])
+		fmt.Printf("Successfully withdrew %s FIL\n", args[0])
 	},
 }
 
 func init() {
 	agentCmd.AddCommand(withdrawCmd)
-	withdrawCmd.Flags().String("to", "", "Receiver of the funds (agent's owner is chosen if not specified)")
+	withdrawCmd.Flags().BoolVar(&withdrawPreview, "preview", false, "preview the financial outcome of a withdraw action")
 }

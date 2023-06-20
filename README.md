@@ -258,3 +258,21 @@ You can remove a miner from your Agent by calling `glif agent miners remove <min
 Successfully removed miner f0xxx from Agent
 ```
 
+# Glif Autopilot
+
+Glif Autopilot allows for the automatic payment of fees and/or principal to the Infinity Pool. It is a daemon that runs in the background and will automatically make payments to the Infinity Pool on your behalf. It is configured via a `config.toml` file that is located in your `~/.glif` directory.
+
+## Configuration
+
+The `config.toml` file is located in your `~/.glif` directory. It is a TOML file that looks like:
+
+```
+[autopilot]
+# payment-type can be one of "to-current", "principal", or "custom", each working as described by the matching cli commands
+payment-type = "principal"
+# amount is in FIL and only applies to payment-type = "custom" or "principal"
+amount = 5
+# frequency is the frequency at which payments are made in days
+frequency = 5
+```
+

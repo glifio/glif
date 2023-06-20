@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/big"
@@ -14,6 +13,7 @@ import (
 	"github.com/filecoin-project/lotus/chain/actors"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
+	"github.com/glifio/cli/events"
 	"github.com/spf13/cobra"
 )
 
@@ -26,46 +26,56 @@ var changeOwnerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, _, _, err := commonSetupOwnerCall()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		minerAddr, err := address.NewFromString(args[0])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 		defer closer()
 
 		ethAddr, err := ethtypes.ParseEthAddress(agentAddr.String())
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		delegated, err := ethAddr.ToFilecoinAddress()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		id, err := lapi.StateLookupID(cmd.Context(), delegated, types.EmptyTSK)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		mi, err := lapi.StateMinerInfo(cmd.Context(), minerAddr, types.EmptyTSK)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		fmt.Println("Miner Owner:", mi.Owner)
 
 		sp, err := actors.SerializeParams(&id)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
+
+		changeownerevt := journal.RegisterEventType("miner", "changeowner")
+		evt := &events.AgentMinerChangeOwner{
+			AgentID:  agentAddr.String(),
+			MinerID:  minerAddr.String(),
+			OldOwner: mi.Owner.String(),
+			NewOwner: delegated.String(),
+		}
+		defer journal.Close()
+		defer journal.RecordEvent(changeownerevt, func() interface{} { return evt })
 
 		smsg, err := lapi.MpoolPushMessage(cmd.Context(), &types.Message{
 			From:   mi.Owner,
@@ -74,21 +84,23 @@ var changeOwnerCmd = &cobra.Command{
 			Value:  big.Zero(),
 			Params: sp,
 		}, nil)
-
 		if err != nil {
-			log.Fatal(err)
+			evt.Error = err.Error()
+			logFatal(err)
 		}
 
 		fmt.Println("Message CID:", smsg.Cid())
 
 		wait, err := lapi.StateWaitMsg(cmd.Context(), smsg.Cid(), build.MessageConfidence, 900, true)
 		if err != nil {
-			log.Fatal(err)
+			evt.Error = err.Error()
+			logFatal(err)
 		}
 
 		// check it executed successfully
 		if wait.Receipt.ExitCode != 0 {
-			log.Fatal(err)
+			evt.Error = err.Error()
+			logFatal(err)
 		}
 
 		fmt.Println("message succeeded!")

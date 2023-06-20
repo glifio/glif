@@ -9,24 +9,25 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/glifio/cli/events"
 	"github.com/spf13/cobra"
 )
 
 var exitCmd = &cobra.Command{
 	Use:   "exit",
-	Short: "Exits from the Infintiy Pool",
+	Short: "Exits from the Infinity Pool",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		poolName := cmd.Flag("pool-name").Value.String()
 
 		poolID, err := parsePoolType(poolName)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
@@ -35,26 +36,38 @@ var exitCmd = &cobra.Command{
 
 		account, err := PoolsSDK.Query().InfPoolGetAccount(cmd.Context(), agentAddr)
 		if err != nil {
-			log.Fatalf("Failed to get iFIL balance %s", err)
+			logFatalf("Failed to get iFIL balance %s", err)
 		}
 
 		amountOwed, _, err := PoolsSDK.Query().AgentOwes(cmd.Context(), agentAddr)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		payAmount := new(big.Int).Add(amountOwed, account.Principal)
 		payAmount = addOnePercent(payAmount)
 
+		exitevt := journal.RegisterEventType("agent", "exit")
+		evt := &events.AgentExit{
+			AgentID: agentAddr.String(),
+			PoolID:  poolID.String(),
+			Amount:  payAmount.String(),
+		}
+		defer journal.Close()
+		defer journal.RecordEvent(exitevt, func() interface{} { return evt })
+
 		tx, err := PoolsSDK.Act().AgentPay(cmd.Context(), agentAddr, poolID, payAmount, senderKey, requesterKey)
 		if err != nil {
-			log.Fatal(err)
+			evt.Error = err.Error()
+			logFatal(err)
 		}
+		evt.Tx = tx.Hash().String()
 
 		// transaction landed on chain or errored
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
-			log.Fatal(err)
+			evt.Error = err.Error()
+			logFatal(err)
 		}
 
 		s.Stop()

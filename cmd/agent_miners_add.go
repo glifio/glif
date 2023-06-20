@@ -10,8 +10,12 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/filecoin-project/go-address"
+	"github.com/glifio/cli/events"
+	"github.com/glifio/go-pools/constants"
 	"github.com/spf13/cobra"
 )
+
+var addPreview bool
 
 // addCmd represents the add command
 var addCmd = &cobra.Command{
@@ -20,14 +24,18 @@ var addCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		if addPreview {
+			previewAction(cmd, args, constants.MethodAddMiner)
+			return
+		}
 		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		minerAddr, err := address.NewFromString(args[0])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		log.Printf("Adding miner %s to agent %s", minerAddr, agentAddr)
@@ -36,23 +44,35 @@ var addCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
+		addminerevt := journal.RegisterEventType("agent", "addminer")
+		evt := &events.AgentAddMiner{
+			AgentID: agentAddr.String(),
+			MinerID: minerAddr.String(),
+		}
+		defer journal.Close()
+		defer journal.RecordEvent(addminerevt, func() interface{} { return evt })
+
 		tx, err := PoolsSDK.Act().AgentAddMiner(cmd.Context(), agentAddr, minerAddr, ownerKey, requesterKey)
 		if err != nil {
-			log.Fatal(err)
+			evt.Error = err.Error()
+			logFatal(err)
 		}
+		evt.Tx = tx.Hash().String()
 
 		// transaction landed on chain or errored
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
-			log.Fatal(err)
+			evt.Error = err.Error()
+			logFatal(err)
 		}
 
 		s.Stop()
 
-		fmt.Printf("Successfully added miner %s to agent %s", minerAddr, agentAddr)
+		fmt.Printf("Successfully added miner %s to agent %s\n", minerAddr, agentAddr)
 	},
 }
 
 func init() {
 	minersCmd.AddCommand(addCmd)
+	addCmd.Flags().BoolVar(&addPreview, "preview", false, "preview the financial outcome of an add miner action")
 }

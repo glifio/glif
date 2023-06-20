@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/big"
@@ -13,6 +12,7 @@ import (
 	"github.com/filecoin-project/lotus/build"
 	"github.com/filecoin-project/lotus/chain/actors"
 	"github.com/filecoin-project/lotus/chain/types"
+	"github.com/glifio/cli/events"
 	"github.com/spf13/cobra"
 )
 
@@ -24,32 +24,40 @@ var reclaimMinerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		minerAddr, err := address.NewFromString(args[0])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		newOwnerAddr, err := address.NewFromString(args[1])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 		if newOwnerAddr.Protocol() != address.ID {
-			log.Fatal("new owner address must be an ID address")
+			logFatal("new owner address must be an ID address")
 		}
 
 		senderAddr, err := address.NewFromString(cmd.Flag("from").Value.String())
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 		defer closer()
 
 		sp, err := actors.SerializeParams(&newOwnerAddr)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
+
+		reclaimevt := journal.RegisterEventType("agent", "reclaim")
+		evt := &events.AgentMinerReclaim{
+			MinerID:  minerAddr.String(),
+			NewOwner: newOwnerAddr.String(),
+		}
+		defer journal.Close()
+		defer journal.RecordEvent(reclaimevt, func() interface{} { return evt })
 
 		smsg, err := lapi.MpoolPushMessage(cmd.Context(), &types.Message{
 			From:   senderAddr,
@@ -58,21 +66,23 @@ var reclaimMinerCmd = &cobra.Command{
 			Value:  big.Zero(),
 			Params: sp,
 		}, nil)
-
 		if err != nil {
-			log.Fatal(err)
+			evt.Error = err.Error()
+			logFatal(err)
 		}
 
 		fmt.Println("Message CID:", smsg.Cid())
 
 		wait, err := lapi.StateWaitMsg(cmd.Context(), smsg.Cid(), build.MessageConfidence, 900, true)
 		if err != nil {
-			log.Fatal(err)
+			evt.Error = err.Error()
+			logFatal(err)
 		}
 
 		// check it executed successfully
 		if wait.Receipt.ExitCode != 0 {
-			log.Fatal(err)
+			evt.Error = err.Error()
+			logFatal(err)
 		}
 
 		fmt.Println("message succeeded!")

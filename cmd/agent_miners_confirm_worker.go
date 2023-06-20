@@ -10,6 +10,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/filecoin-project/go-address"
+	"github.com/glifio/cli/events"
 	"github.com/spf13/cobra"
 )
 
@@ -22,12 +23,12 @@ var confirmWorker = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, ownerKey, _, err := commonSetupOwnerCall()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		minerAddr, err := address.NewFromString(args[0])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		log.Printf("Confirming worker address change for miner %s", minerAddr)
@@ -36,15 +37,26 @@ var confirmWorker = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
+		confirmworkerevt := journal.RegisterEventType("miner", "confirmworker")
+		evt := &events.AgentMinerConfirmWorker{
+			AgentID: agentAddr.String(),
+			MinerID: minerAddr.String(),
+		}
+		defer journal.Close()
+		defer journal.RecordEvent(confirmworkerevt, func() interface{} { return evt })
+
 		tx, err := PoolsSDK.Act().AgentConfirmMinerWorkerChange(cmd.Context(), agentAddr, minerAddr, ownerKey)
 		if err != nil {
-			log.Fatal(err)
+			evt.Error = err.Error()
+			logFatal(err)
 		}
+		evt.Tx = tx.Hash().String()
 
 		// transaction landed on chain or errored
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
-			log.Fatal(err)
+			evt.Error = err.Error()
+			logFatal(err)
 		}
 
 		s.Stop()

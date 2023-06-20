@@ -5,10 +5,10 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/glifio/cli/events"
 	"github.com/spf13/cobra"
 )
 
@@ -20,17 +20,17 @@ var pullFundsCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		minerAddr, err := ToMinerID(cmd.Context(), args[0])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		amount, err := parseFILAmount(args[1])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		fmt.Printf("Pulling %s FIL from %s", amount.String(), minerAddr.String())
@@ -39,20 +39,32 @@ var pullFundsCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
+		pullevt := journal.RegisterEventType("agent", "pull")
+		evt := &events.AgentMinerPull{
+			AgentID: agentAddr.String(),
+			MinerID: minerAddr.String(),
+			Amount:  amount.String(),
+		}
+		defer journal.Close()
+		defer journal.RecordEvent(pullevt, func() interface{} { return evt })
+
 		tx, err := PoolsSDK.Act().AgentPullFunds(cmd.Context(), agentAddr, amount, minerAddr, senderKey, requesterKey)
 		if err != nil {
-			log.Fatal(err)
+			evt.Error = err.Error()
+			logFatal(err)
 		}
+		evt.Tx = tx.Hash().String()
 
 		// transaction landed on chain or errored
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
-			log.Fatal(err)
+			evt.Error = err.Error()
+			logFatal(err)
 		}
 
 		s.Stop()
 
-		fmt.Printf("Successfully pulled funds up from miner %s", minerAddr)
+		fmt.Printf("Successfully pulled funds up from miner %s\n", minerAddr)
 	},
 }
 

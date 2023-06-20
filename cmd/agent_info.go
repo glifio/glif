@@ -6,7 +6,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/big"
 	"strings"
 	"time"
@@ -17,6 +16,7 @@ import (
 	"github.com/filecoin-project/lotus/api"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
+	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
@@ -25,132 +25,50 @@ var agentInfoCmd = &cobra.Command{
 	Use:   "info",
 	Short: "Get the info associated with your Agent",
 	Run: func(cmd *cobra.Command, args []string) {
+		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+		s.Start()
+		defer s.Stop()
+
 		lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 		defer closer()
 
 		agentAddr, err := getAgentAddress(cmd)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		agentAddrEthType, err := ethtypes.ParseEthAddress(agentAddr.String())
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		agentAddrDel, err := agentAddrEthType.ToFilecoinAddress()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
-		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-		s.Start()
-		defer s.Stop()
-
-		query := PoolsSDK.Query()
-
-		agentID, _, _, _, agentAdmin, err := basicInfo(cmd.Context(), agentAddr, agentAddrDel, lapi, s)
+		agentID, _, _, _, err := basicInfo(cmd.Context(), agentAddr, agentAddrDel, lapi, s)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		err = econInfo(cmd.Context(), agentAddr, agentID, lapi, s)
-
-		lvl, cap, err := query.InfPoolGetAgentLvl(cmd.Context(), agentID)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
-		s.Stop()
-
-		fmt.Printf("Agent's lvl is %s and can borrow %.03f FIL\n", lvl.String(), cap)
-
-		s.Start()
-
-		account, err := query.InfPoolGetAccount(cmd.Context(), agentAddr)
+		err = infoPoolInfo(cmd.Context(), agentAddr, agentID, s)
 		if err != nil {
-			log.Fatalf("Failed to get iFIL balance %s", err)
+			logFatal(err)
 		}
 
-		defaultEpoch, err := query.DefaultEpoch(cmd.Context())
+		err = agentHealth(cmd.Context(), agentAddr, s)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
-
-		amountOwed, gcred, err := query.AgentOwes(cmd.Context(), agentAddr)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		s.Stop()
-
-		amountOwedFIL, _ := util.ToFIL(amountOwed).Float64()
-
-		filPrincipal := util.ToFIL(account.Principal)
-		generateHeader("INFINITY POOL ACCOUNT")
-
-		principal, _ := filPrincipal.Float64()
-
-		if principal == 0 {
-			fmt.Println("No account exists with the Infinity Pool")
-		} else {
-			defaultEpochTime := util.EpochHeightToTimestamp(defaultEpoch)
-			epochsPaidTime := util.EpochHeightToTimestamp(account.EpochsPaid)
-			fmt.Println("Your account with the Infinity Pool is open", defaultEpoch, account.EpochsPaid)
-			fmt.Printf("You currently owe: %.08f FIL on %.02f FIL borrowed\n", amountOwedFIL, principal)
-			fmt.Printf("Your current GCRED score is: %s\n", gcred)
-			fmt.Printf("Your account must make a payment to-current within the next: %s (by epoch # %s)\n", formatSinceDuration(defaultEpochTime, epochsPaidTime), defaultEpoch)
-			fmt.Println()
-
-			fmt.Printf("Your account with the Infinity Pool opened at: %s\n", util.EpochHeightToTimestamp(account.StartEpoch).Format(time.RFC3339))
-		}
-
-		defaulted, err := query.AgentDefaulted(cmd.Context(), agentAddr)
-		if err != nil {
-			s.Stop()
-			log.Fatal(err)
-		}
-
-		faultySectorStart, err := query.AgentFaultyEpochStart(cmd.Context(), agentAddr)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		generateHeader("HEALTH")
-		fmt.Printf("Agent's administrator: %s\n", agentAdmin)
-		fmt.Printf("Agent in default: %t\n\n", defaulted)
-		if faultySectorStart.Cmp(big.NewInt(0)) == 0 {
-			fmt.Printf("Status healthy 🟢\n")
-		} else {
-			chainHeight, err := query.ChainHeight(cmd.Context())
-			if err != nil {
-				s.Stop()
-				log.Fatal(err)
-			}
-
-			consecutiveFaultEpochTolerance, err := query.MaxConsecutiveFaultEpochs(cmd.Context())
-			if err != nil {
-				s.Stop()
-				log.Fatal(err)
-			}
-
-			consecutiveFaultEpochs := new(big.Int).Sub(chainHeight, faultySectorStart)
-
-			liableForFaultySectorDefault := consecutiveFaultEpochs.Cmp(consecutiveFaultEpochTolerance) >= 0
-
-			if liableForFaultySectorDefault {
-				fmt.Printf("🔴 Status unhealthy - you are at risk of liquidation due to consecutive faulty sectors 🔴\n")
-				fmt.Printf("Faulty sector start epoch: %v", faultySectorStart)
-			} else {
-				epochsBeforeZeroTolerance := new(big.Int).Sub(consecutiveFaultEpochTolerance, consecutiveFaultEpochs)
-				fmt.Printf("🟡 Status unhealthy - you are approaching risk of liquidation due to consecutive faulty sectors 🟡\n")
-				fmt.Printf("- With %v more consecutive faulty sectors, you will be at risk of liquidation\n", epochsBeforeZeroTolerance)
-			}
-		}
-		fmt.Println()
 	},
 }
 
@@ -159,29 +77,23 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 	agentFILIDAddr address.Address,
 	agVersion uint8,
 	ntwVersion uint8,
-	agentAdmin common.Address,
 	err error,
 ) {
 	query := PoolsSDK.Query()
 
 	agentID, err = query.AgentID(ctx, agent)
 	if err != nil {
-		return common.Big0, address.Undef, 0, 0, common.Address{}, err
+		return common.Big0, address.Undef, 0, 0, err
 	}
 
 	agentFILIDAddr, err = lapi.StateLookupID(ctx, agentDel, types.EmptyTSK)
 	if err != nil {
-		return common.Big0, address.Undef, 0, 0, common.Address{}, err
+		return common.Big0, address.Undef, 0, 0, err
 	}
 
 	agVersion, ntwVersion, err = query.AgentVersion(ctx, agent)
 	if err != nil {
-		return common.Big0, address.Undef, 0, 0, common.Address{}, err
-	}
-
-	agentAdmin, err = query.AgentAdministrator(ctx, agent)
-	if err != nil {
-		return common.Big0, address.Undef, 0, 0, common.Address{}, err
+		return common.Big0, address.Undef, 0, 0, err
 	}
 
 	goodVersion := agVersion == ntwVersion
@@ -200,7 +112,7 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 	}
 	s.Start()
 
-	return agentID, agentFILIDAddr, agVersion, ntwVersion, agentAdmin, nil
+	return agentID, agentFILIDAddr, agVersion, ntwVersion, nil
 }
 
 func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi *api.FullNodeStruct, s *spinner.Spinner) error {
@@ -245,8 +157,135 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 		totalMinerCollaterals.Add(totalMinerCollaterals, bal.(*big.Int))
 	}
 
+	s.Stop()
 	fmt.Printf("Agent's liquid assets: %0.08f FIL\n", assetsFIL)
 	fmt.Printf("Agent's pledged miner count: %v\n", len(agentMiners))
+	s.Start()
+
+	return nil
+}
+
+func infoPoolInfo(ctx context.Context, agent common.Address, agentID *big.Int, s *spinner.Spinner) error {
+
+	query := PoolsSDK.Query()
+
+	lvl, cap, err := query.InfPoolGetAgentLvl(ctx, agentID)
+	if err != nil {
+		return err
+	}
+
+	defaultEpoch, err := query.DefaultEpoch(ctx)
+	if err != nil {
+		return err
+	}
+
+	account, err := query.InfPoolGetAccount(ctx, agent)
+	if err != nil {
+		return err
+	}
+
+	amountOwed, gcred, err := query.AgentOwes(ctx, agent)
+	if err != nil {
+		return err
+	}
+
+	weekOneDeadline := new(big.Int).Add(defaultEpoch, big.NewInt(constants.EpochsInWeek*2))
+
+	amountOwedFIL, _ := util.ToFIL(amountOwed).Float64()
+
+	filPrincipal := util.ToFIL(account.Principal)
+
+	principal, _ := filPrincipal.Float64()
+
+	weekOneDeadlineTime := util.EpochHeightToTimestamp(weekOneDeadline, query.ChainID())
+	defaultEpochTime := util.EpochHeightToTimestamp(defaultEpoch, query.ChainID())
+	epochsPaidTime := util.EpochHeightToTimestamp(account.EpochsPaid, query.ChainID())
+
+	s.Stop()
+	generateHeader("INFINITY POOL ACCOUNT")
+	if account.Defaulted {
+		fmt.Println("Your account with the Infinity Pool has defaulted. Expect liquidations.")
+		return nil
+	}
+
+	if lvl.Cmp(big.NewInt(0)) == 0 && chainID == constants.MainnetChainID {
+		fmt.Println("Please follow the instructions here to borrow from the Infinity Pool: https://medium.com/@jonathan_97611/the-storage-providers-guide-to-glif-pools-af6323f4605e")
+	} else {
+		fmt.Printf("Agent's lvl is %s and can borrow %.03f FIL\n", lvl.String(), cap)
+		if principal == 0 {
+			fmt.Println("No account exists with the Infinity Pool")
+		} else {
+			fmt.Printf("You currently owe: %.08f FIL on %.02f FIL borrowed\n", amountOwedFIL, principal)
+			fmt.Printf("Your current GCRED score is: %s\n", gcred)
+			fmt.Printf("Your account with the Infinity Pool opened at: %s\n", util.EpochHeightToTimestamp(account.StartEpoch, query.ChainID()).Format(time.RFC3339))
+
+			// check to see we're still in good standing wrt making our weekly payment
+			if account.EpochsPaid.Cmp(weekOneDeadline) == 1 {
+				fmt.Printf("Your account owes its weekly payment (`to-current`) within the next: %s (by epoch # %s)\n", formatSinceDuration(weekOneDeadlineTime, epochsPaidTime), weekOneDeadline)
+			} else {
+				fmt.Printf("🔴 Overdue weekly payment 🔴\n")
+				fmt.Printf("Your account *must* make a payment to-current within the next: %s (by epoch # %s)\n", formatSinceDuration(defaultEpochTime, epochsPaidTime), defaultEpoch)
+			}
+			fmt.Println()
+		}
+	}
+
+	s.Start()
+
+	return nil
+}
+
+func agentHealth(ctx context.Context, agent common.Address, s *spinner.Spinner) error {
+	query := PoolsSDK.Query()
+
+	agentAdmin, err := query.AgentAdministrator(ctx, agent)
+	if err != nil {
+		return err
+	}
+
+	defaulted, err := query.AgentDefaulted(ctx, agent)
+	if err != nil {
+		return err
+	}
+
+	faultySectorStart, err := query.AgentFaultyEpochStart(ctx, agent)
+	if err != nil {
+		return err
+	}
+
+	s.Stop()
+
+	generateHeader("HEALTH")
+	fmt.Printf("Agent's administrator: %s\n", agentAdmin)
+	fmt.Printf("Agent in default: %t\n\n", defaulted)
+	if faultySectorStart.Cmp(big.NewInt(0)) == 0 {
+		fmt.Printf("Status healthy 🟢\n")
+	} else {
+		chainHeight, err := query.ChainHeight(ctx)
+		if err != nil {
+			return err
+		}
+
+		consecutiveFaultEpochTolerance, err := query.MaxConsecutiveFaultEpochs(ctx)
+		if err != nil {
+			return err
+		}
+
+		consecutiveFaultEpochs := new(big.Int).Sub(chainHeight, faultySectorStart)
+
+		liableForFaultySectorDefault := consecutiveFaultEpochs.Cmp(consecutiveFaultEpochTolerance) >= 0
+
+		if liableForFaultySectorDefault {
+			fmt.Printf("🔴 Status unhealthy - you are at risk of liquidation due to consecutive faulty sectors 🔴\n")
+			fmt.Printf("Faulty sector start epoch: %v\n", faultySectorStart)
+		} else {
+			epochsBeforeZeroTolerance := new(big.Int).Sub(consecutiveFaultEpochTolerance, consecutiveFaultEpochs)
+			fmt.Printf("🟡 Status unhealthy - you are approaching risk of liquidation due to consecutive faulty sectors 🟡\n")
+			fmt.Printf("- With %v more consecutive faulty sectors, you will be at risk of liquidation\n", epochsBeforeZeroTolerance)
+		}
+	}
+	fmt.Println()
+
 	return nil
 }
 

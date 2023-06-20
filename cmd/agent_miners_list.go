@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
@@ -17,15 +16,15 @@ var minersListCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, err := getAgentAddress(cmd)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		list, err := PoolsSDK.Query().AgentMiners(cmd.Context(), agentAddr)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
-		fmt.Printf("Agent's miners: %s", util.StringifyArg(list))
+		fmt.Printf("Agent's miners: %s\n", util.StringifyArg(list))
 	},
 }
 

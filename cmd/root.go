@@ -20,11 +20,12 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"log"
 	"math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum/common"
+	jnal "github.com/glifio/cli/journal"
+	"github.com/glifio/cli/journal/fsjournal"
 	"github.com/glifio/cli/util"
 	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/deploy"
@@ -38,6 +39,7 @@ var cfgDir string
 var useCalibnet bool // only set in root_calibnet.go
 var chainID int64 = constants.MainnetChainID
 var PoolsSDK types.PoolsSDK
+var journal jnal.Journal
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -94,12 +96,17 @@ func initConfig() {
 	viper.SetConfigType("toml")
 	viper.SetConfigName("config")
 
+	var err error
+	if journal, err = fsjournal.OpenFSJournal(cfgDir, nil); err != nil {
+		logFatal(err)
+	}
+
 	if err := util.NewKeyStore(fmt.Sprintf("%s/keys.toml", cfgDir)); err != nil {
-		log.Fatal(err)
+		logFatal(err)
 	}
 
 	if err := util.NewAgentStore(fmt.Sprintf("%s/agent.toml", cfgDir)); err != nil {
-		log.Fatal(err)
+		logFatal(err)
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
@@ -107,53 +114,55 @@ func initConfig() {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			log.Fatalf("No config file found at %s\n", viper.ConfigFileUsed())
+			logFatalf("No config file found at %s\n", viper.ConfigFileUsed())
 		} else if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// Config file not found; ignore error if desired
 			fmt.Fprintln(os.Stderr, "Warning: No config file found.")
 		} else {
-			log.Fatalf("Config file error: %v\n", err)
+			logFatalf("Config file error: %v\n", err)
 		}
 	}
 
-	var extern types.Extern
+	viper.WatchConfig()
 
 	daemonURL := viper.GetString("daemon.rpc-url")
-	if daemonURL != "" {
-		extern.LotusDialAddr = daemonURL
-	}
 	daemonToken := viper.GetString("daemon.token")
-	if daemonToken != "" {
-		extern.LotusToken = daemonToken
-	}
-
 	adoURL := viper.GetString("ado.address")
-	if adoURL != "" {
-		extern.AdoAddr = adoURL
-	}
 
 	if chainID == constants.LocalnetChainID || chainID == constants.AnvilChainID {
 		routerAddr := viper.GetString("routes.router")
 		router := common.HexToAddress(routerAddr)
 		err := sdk.LazyInit(context.Background(), &PoolsSDK, router, adoURL, "Mock", daemonURL, daemonToken)
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 		return
 	}
 
+	var extern types.Extern
 	switch chainID {
 	case constants.MainnetChainID:
 		extern = deploy.Extern
 	case constants.CalibnetChainID:
 		extern = deploy.TestExtern
 	default:
-		log.Fatalf("Unknown chain id %d", chainID)
+		logFatalf("Unknown chain id %d", chainID)
+	}
+
+	if daemonURL != "" {
+		extern.LotusDialAddr = daemonURL
+	}
+	if daemonToken != "" {
+		extern.LotusToken = daemonToken
+	}
+
+	if adoURL != "" {
+		extern.AdoAddr = adoURL
 	}
 
 	sdk, err := sdk.New(context.Background(), big.NewInt(chainID), extern)
 	if err != nil {
-		log.Fatalf("Failed to initialize pools sdk %s", err)
+		logFatalf("Failed to initialize pools sdk %s", err)
 	}
 	PoolsSDK = sdk
 }

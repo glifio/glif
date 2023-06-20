@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -19,7 +18,7 @@ var wFILBalanceOfCmd = &cobra.Command{
 
 		addr, err := ParseAddress(cmd.Context(), strAddr)
 		if err != nil {
-			log.Fatalf("Failed to parse address %s", err)
+			logFatalf("Failed to parse address %s", err)
 		}
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
@@ -28,14 +27,14 @@ var wFILBalanceOfCmd = &cobra.Command{
 
 		bal, err := PoolsSDK.Query().WFILBalanceOf(cmd.Context(), addr)
 		if err != nil {
-			log.Fatalf("Failed to get wFIL balance %s", err)
+			logFatalf("Failed to get wFIL balance %s", err)
 		}
 
 		balFIL, _ := bal.Float64()
 
 		s.Stop()
 
-		fmt.Printf("wFIL balance of %s is %.09f", strAddr, balFIL)
+		fmt.Printf("wFIL balance of %s is %.09f\n", strAddr, balFIL)
 	},
 }
 

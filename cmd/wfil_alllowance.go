@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -21,12 +20,12 @@ var wFILAllowanceCmd = &cobra.Command{
 
 		holder, err := ParseAddress(cmd.Context(), holderStr)
 		if err != nil {
-			log.Fatalf("Failed to parse address %s\n", err)
+			logFatalf("Failed to parse address %s\n", err)
 		}
 
 		spender, err := ParseAddress(cmd.Context(), spenderStr)
 		if err != nil {
-			log.Fatalf("Failed to parse address %s\n", err)
+			logFatalf("Failed to parse address %s\n", err)
 		}
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
@@ -35,7 +34,7 @@ var wFILAllowanceCmd = &cobra.Command{
 
 		allowance, err := PoolsSDK.Query().WFILAllowance(cmd.Context(), holder, spender)
 		if err != nil {
-			log.Fatalf("Failed to get wFIL allowance %s\n", err)
+			logFatalf("Failed to get wFIL allowance %s\n", err)
 		}
 
 		s.Stop()

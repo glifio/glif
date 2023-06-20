@@ -32,8 +32,13 @@ func logExit(code int, msg string) {
 	Exit(code)
 }
 
-func logFatal(err error) {
-	log.Println(err)
+func logFatal(arg interface{}) {
+	log.Println(arg)
+	Exit(1)
+}
+
+func logFatalf(format string, args ...interface{}) {
+	log.Printf(format, args...)
 	Exit(1)
 }
 
@@ -220,22 +225,22 @@ func parseFILAmount(amount string) (*big.Int, error) {
 
 func getAgentAddress(cmd *cobra.Command) (common.Address, error) {
 	as := util.AgentStore()
+	var agentAddrStr string
 
-	agentAddrStr := cmd.Flag("agent-addr").Value.String()
-
-	if agentAddrStr == "" {
+	if cmd.Flag("agent-addr") != nil && cmd.Flag("agent-addr").Changed {
+		agentAddrStr = cmd.Flag("agent-addr").Value.String()
+	} else {
 		// Check if an agent already exists
 		cachedAddr, err := as.Get("address")
 		if err != nil {
-			log.Fatal(err)
+			return common.Address{}, err
 		}
 
 		agentAddrStr = cachedAddr
 
 		if agentAddrStr == "" {
-			log.Fatalf("Did you forget to create your agent or specify an address? Try `glif agent id --address <address>`")
+			return common.Address{}, errors.New("Did you forget to create your agent or specify an address? Try `glif agent id --address <address>`")
 		}
-
 	}
 
 	return common.HexToAddress(agentAddrStr), nil
@@ -250,7 +255,7 @@ func getAgentID(cmd *cobra.Command) (*big.Int, error) {
 		as := util.AgentStore()
 		storedAgent, err := as.Get("id")
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		agentIDStr = storedAgent
@@ -258,8 +263,16 @@ func getAgentID(cmd *cobra.Command) (*big.Int, error) {
 
 	agentID := new(big.Int)
 	if _, ok := agentID.SetString(agentIDStr, 10); !ok {
-		log.Fatalf("could not convert agent id %s to big.Int", agentIDStr)
+		logFatalf("could not convert agent id %s to big.Int", agentIDStr)
 	}
 
 	return agentID, nil
+}
+
+func AddressesToStrings(addrs []address.Address) []string {
+	strs := make([]string, len(addrs))
+	for i, addr := range addrs {
+		strs[i] = addr.String()
+	}
+	return strs
 }

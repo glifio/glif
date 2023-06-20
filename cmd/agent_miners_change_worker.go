@@ -10,6 +10,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/filecoin-project/go-address"
+	"github.com/glifio/cli/events"
 	"github.com/spf13/cobra"
 )
 
@@ -22,19 +23,19 @@ var changeWorkerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		agentAddr, ownerKey, _, err := commonSetupOwnerCall()
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 
 		minerAddr, err := ToMinerID(cmd.Context(), args[0])
 		if err != nil {
-			log.Fatal(err)
+			logFatal(err)
 		}
 		log.Println(minerAddr)
 
 		workerAddr, err := ToMinerID(cmd.Context(), args[1])
 		if err != nil {
 			log.Print("Error parsing worker address")
-			log.Fatal(err)
+			logFatal(err)
 		}
 		log.Println(workerAddr)
 
@@ -43,26 +44,39 @@ var changeWorkerCmd = &cobra.Command{
 			controlAddr, err := ToMinerID(cmd.Context(), arg)
 			if err != nil {
 				log.Print("Error parsing control address")
-				log.Fatal(err)
+				logFatal(err)
 			}
 			controlAddrs = append(controlAddrs, controlAddr)
 		}
 
-		log.Printf("Changing worker address for miner %s to %s", minerAddr, workerAddr)
+		log.Printf("Changing worker address for miner %s to %s\n", minerAddr, workerAddr)
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 		defer s.Stop()
 
+		changeworkerevt := journal.RegisterEventType("miner", "changeworker")
+		evt := &events.AgentMinerChangeWorker{
+			AgentID:    agentAddr.String(),
+			MinerID:    minerAddr.String(),
+			NewWorker:  workerAddr.String(),
+			NewControl: AddressesToStrings(controlAddrs),
+		}
+		defer journal.Close()
+		defer journal.RecordEvent(changeworkerevt, func() interface{} { return evt })
+
 		tx, err := PoolsSDK.Act().AgentChangeMinerWorker(cmd.Context(), agentAddr, minerAddr, workerAddr, controlAddrs, ownerKey)
 		if err != nil {
-			log.Fatalf("tx error: %s", err)
+			evt.Error = err.Error()
+			logFatalf("tx error: %s", err)
 		}
+		evt.Tx = tx.Hash().String()
 
 		// transaction landed on chain or errored
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
-			log.Fatal(err)
+			evt.Error = err.Error()
+			logFatal(err)
 		}
 
 		s.Stop()

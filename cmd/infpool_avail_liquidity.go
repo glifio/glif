@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -25,14 +24,14 @@ var availLiquidityCmd = &cobra.Command{
 
 		liquid, err := PoolsSDK.Query().InfPoolBorrowableLiquidity(cmd.Context())
 		if err != nil {
-			log.Fatalf("Failed to get iFIL balance %s", err)
+			logFatalf("Failed to get iFIL balance %s", err)
 		}
 
 		liquidFIL, _ := liquid.Float64()
 
 		s.Stop()
 
-		fmt.Printf("Total available liquidity in the Pool is %.08f FIL", liquidFIL)
+		fmt.Printf("Total available liquidity in the Pool is %.08f FIL\n", liquidFIL)
 	},
 }
 
