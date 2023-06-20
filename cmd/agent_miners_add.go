@@ -11,8 +11,11 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/filecoin-project/go-address"
 	"github.com/glifio/cli/events"
+	"github.com/glifio/go-pools/constants"
 	"github.com/spf13/cobra"
 )
+
+var addPreview bool
 
 // addCmd represents the add command
 var addCmd = &cobra.Command{
@@ -21,6 +24,10 @@ var addCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		if addPreview {
+			previewAction(cmd, args, constants.MethodAddMiner)
+			return
+		}
 		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
 			logFatal(err)
@@ -67,4 +74,5 @@ var addCmd = &cobra.Command{
 
 func init() {
 	minersCmd.AddCommand(addCmd)
+	addCmd.Flags().BoolVar(&addPreview, "preview", false, "preview the financial outcome of an add miner action")
 }

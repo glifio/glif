@@ -66,7 +66,7 @@ var previewBorrowCmd = &cobra.Command{
 		fmt.Printf("Total borrowed before/after: %0.09f => %0.09f\n", util.ToFIL(agentDataBefore.Principal), util.ToFIL(agentDataAfter.Principal))
 		fmt.Printf("GCRED before/after: %s => %s\n", agentDataBefore.Gcred, agentDataAfter.Gcred)
 		fmt.Printf("The weekly/annual fee rate: %.03f%% / %.03f%%\n", wprFloat*100, aprFloat*100)
-		fmt.Printf("Your weekly min payment will be: %.06f FIL", weeklyPmt)
+		fmt.Printf("Your weekly min payment will be: %.06f FIL\n", weeklyPmt)
 	},
 }
 
