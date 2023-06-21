@@ -62,11 +62,19 @@ var previewBorrowCmd = &cobra.Command{
 		weeklyPmt := new(big.Float).Mul(new(big.Float).SetInt(agentDataAfter.Principal), wpr)
 		weeklyPmt.Quo(weeklyPmt, big.NewFloat(1e18))
 
+		approved, reason, err := PoolsSDK.Query().InfPoolIsApprovedWithReason(cmd.Context(), agentAddr, agentDataAfter)
+		if err != nil {
+			logFatal(err)
+		}
+
 		generateHeader("PREVIEW BORROW")
-		fmt.Printf("Total borrowed before/after: %0.09f => %0.09f\n", util.ToFIL(agentDataBefore.Principal), util.ToFIL(agentDataAfter.Principal))
-		fmt.Printf("GCRED before/after: %s => %s\n", agentDataBefore.Gcred, agentDataAfter.Gcred)
-		fmt.Printf("The weekly/annual fee rate: %.03f%% / %.03f%%\n", wprFloat*100, aprFloat*100)
-		fmt.Printf("Your weekly min payment will be: %.06f FIL", weeklyPmt)
+		if !approved {
+			fmt.Printf("This borrow request would be rejected due to: %s\n", reason)
+		} else {
+			fmt.Printf("Total borrowed before/after: %0.09f => %0.09f\n", util.ToFIL(agentDataBefore.Principal), util.ToFIL(agentDataAfter.Principal))
+			fmt.Printf("The weekly/annual fee rate: %.03f%% / %.03f%%\n", wprFloat*100, aprFloat*100)
+			fmt.Printf("Your weekly min payment will be: %.06f FIL\n", weeklyPmt)
+		}
 	},
 }
 
