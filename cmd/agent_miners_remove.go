@@ -10,8 +10,11 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/filecoin-project/go-address"
 	"github.com/glifio/cli/events"
+	"github.com/glifio/go-pools/constants"
 	"github.com/spf13/cobra"
 )
+
+var removePreview bool
 
 // addCmd represents the add command
 var rmCmd = &cobra.Command{
@@ -21,6 +24,11 @@ var rmCmd = &cobra.Command{
 	The new owner address must be a filecoin address, not a delegated address.`,
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
+		if removePreview {
+			previewAction(cmd, args, constants.MethodRemoveMiner)
+			return
+		}
+
 		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
 			logFatal(err)
@@ -77,4 +85,5 @@ var rmCmd = &cobra.Command{
 
 func init() {
 	minersCmd.AddCommand(rmCmd)
+	rmCmd.Flags().BoolVar(&removePreview, "preview", false, "preview the financial outcome of a remove miner action")
 }

@@ -5,71 +5,29 @@ package cmd
 
 import (
 	"fmt"
-	"log"
-	"time"
 
-	"github.com/briandowns/spinner"
-	"github.com/glifio/cli/events"
+	"github.com/glifio/go-pools/constants"
+	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
+
+var payCustomPreview bool
 
 var payCustomCmd = &cobra.Command{
 	Use:   "custom <amount> [flags]",
 	Short: "Pay down a custom amount of FIL",
 	Args:  cobra.ExactArgs(1),
 	Long:  "",
-	// Args:  cobra.RangeArgs(1, 2),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
+		if payCustomPreview {
+			previewAction(cmd, args, constants.MethodPay)
+			return
+		}
+		payAmt, err := pay(cmd, args, Custom, false)
 		if err != nil {
 			logFatal(err)
 		}
-
-		amount, err := parseFILAmount(args[0])
-		if err != nil {
-			logFatal(err)
-		}
-
-		poolName := cmd.Flag("pool-name").Value.String()
-
-		poolID, err := parsePoolType(poolName)
-		if err != nil {
-			logFatal(err)
-		}
-
-		log.Printf("Paying %s FIL to the %s", args[0], poolName)
-
-		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-		s.Start()
-		defer s.Stop()
-
-		payevt := journal.RegisterEventType("agent", "pay")
-		evt := &events.AgentPay{
-			AgentID: agentAddr.String(),
-			PoolID:  poolID.String(),
-			Amount:  amount.String(),
-			PayType: "custom",
-		}
-		defer journal.Close()
-		defer journal.RecordEvent(payevt, func() interface{} { return evt })
-
-		tx, err := PoolsSDK.Act().AgentPay(cmd.Context(), agentAddr, poolID, amount, senderKey, requesterKey)
-		if err != nil {
-			evt.Error = err.Error()
-			logFatal(err)
-		}
-		evt.Tx = tx.Hash().String()
-
-		// transaction landed on chain or errored
-		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
-		if err != nil {
-			evt.Error = err.Error()
-			logFatal(err)
-		}
-
-		s.Stop()
-
-		fmt.Printf("Successfully paid %s FIL", args[0])
+		fmt.Printf("Successfully paid %s FIL", util.ToFIL(payAmt).String())
 	},
 }
 
@@ -77,4 +35,5 @@ func init() {
 	payCmd.AddCommand(payCustomCmd)
 	payCustomCmd.Flags().String("pool-name", "infinity-pool", "name of the pool to make a payment")
 	payCustomCmd.Flags().String("from", "", "address to send the transaction from")
+	payCustomCmd.Flags().BoolVar(&payCustomPreview, "preview", false, "preview financial outcome of pay custom action")
 }
