@@ -70,11 +70,12 @@ var previewBorrowCmd = &cobra.Command{
 		generateHeader("PREVIEW BORROW")
 		if !approved {
 			fmt.Printf("This borrow request would be rejected due to: %s\n", reason)
-		} else {
-			fmt.Printf("Total borrowed before/after: %0.09f => %0.09f\n", util.ToFIL(agentDataBefore.Principal), util.ToFIL(agentDataAfter.Principal))
-			fmt.Printf("The weekly/annual fee rate: %.03f%% / %.03f%%\n", wprFloat*100, aprFloat*100)
-			fmt.Printf("Your weekly min payment will be: %.06f FIL\n", weeklyPmt)
+			return
 		}
+
+		fmt.Printf("Total borrowed before/after: %0.09f => %0.09f\n", util.ToFIL(agentDataBefore.Principal), util.ToFIL(agentDataAfter.Principal))
+		fmt.Printf("The weekly/annual fee rate: %.03f%% / %.03f%%\n", wprFloat*100, aprFloat*100)
+		fmt.Printf("Your weekly min payment will be: %.06f FIL\n", weeklyPmt)
 	},
 }
 
