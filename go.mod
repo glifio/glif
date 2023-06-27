@@ -10,7 +10,7 @@ require (
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-state-types v0.11.1
 	github.com/filecoin-project/lotus v1.23.0
-	github.com/glifio/go-pools v0.0.0-20230613163904-bcdd3dac557e
+	github.com/glifio/go-pools v0.0.0-20230622174008-cc1ff083a8bb
 	github.com/golang/mock v1.6.0
 	github.com/pelletier/go-toml/v2 v2.0.6
 	github.com/raulk/clock v1.1.0
@@ -21,6 +21,7 @@ require (
 )
 
 require (
+	github.com/ALTree/bigfloat v0.0.0-20220102081255-38c8b72a9924 // indirect
 	github.com/DataDog/zstd v1.5.2 // indirect
 	github.com/GeertJohan/go.incremental v1.0.0 // indirect
 	github.com/GeertJohan/go.rice v1.0.3 // indirect
