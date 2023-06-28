@@ -167,6 +167,11 @@ Successfully added miner f0xxx to agent
 You can call `glif agent miners list` and you should see your new miner in the returned list!
 
 # Command Reference
+
+## Preview Flag
+
+Several of the critical commands have a `--preview` flag that allows you to perform a dry-run and get an indication of the impact of that operation on the financial position of your agent. Check whether a command has a `--preview` flag by calling the `--help` flag on that command.
+
 ## Borrow funds
 
 You can borrow funds from the Infinity Pool by calling `glif agent borrow <amount>`. For example, to borrow 1 FIL, you can call:
@@ -213,7 +218,6 @@ You can make a payment to the Infinity Pool by calling `glif agent pay custom <a
 |Transaction: 0x....
 Successfully paid 1 FIL
 ```
-
 
 ## Push funds to a miner
 
