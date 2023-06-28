@@ -27,6 +27,8 @@ var inpoolTotalBorrowedCmd = &cobra.Command{
 			logFatalf("Failed to get total borrowed %s", err)
 		}
 
+		s.Stop()
+
 		fmt.Printf("Infinity Pool outstanding: %.04f FIL\n", assets)
 	},
 }

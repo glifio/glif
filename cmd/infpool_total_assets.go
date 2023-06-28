@@ -27,6 +27,8 @@ var infpoolTotalAssetsCmd = &cobra.Command{
 			logFatalf("Failed to get iFIL balance %s", err)
 		}
 
+		s.Stop()
+
 		fmt.Printf("Infinity Pool total assets: %.04f FIL\n", assets)
 	},
 }
