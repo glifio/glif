@@ -17,11 +17,11 @@ import (
 type KeyType string
 
 const (
-	OwnerKey       KeyType = "owner"
-	OwnerFunded    KeyType = "owner-funded"
-	OperatorKey    KeyType = "operator"
-	OperatorFunded KeyType = "operator-funded"
-	RequestKey     KeyType = "request"
+	OwnerKey          KeyType = "owner"
+	OwnerKeyFunded    KeyType = "owner-key-funded"
+	OperatorKey       KeyType = "operator"
+	OperatorKeyFunded KeyType = "operator-key-funded"
+	RequestKey        KeyType = "request"
 )
 
 type KeyStorage struct {
@@ -36,11 +36,11 @@ func KeyStore() *KeyStorage {
 
 func NewKeyStore(filename string) error {
 	keyDefault := map[string]string{
-		string(OwnerKey):       "",
-		string(OwnerFunded):    "",
-		string(OperatorKey):    "",
-		string(OperatorFunded): "",
-		string(RequestKey):     "",
+		string(OwnerKey):          "",
+		string(OwnerKeyFunded):    "",
+		string(OperatorKey):       "",
+		string(OperatorKeyFunded): "",
+		string(RequestKey):        "",
 	}
 
 	s, err := NewStorage(filename, keyDefault)
@@ -94,7 +94,7 @@ func (s *KeyStorage) SetKey(key KeyType, pk *ecdsa.PrivateKey) error {
 
 func (s *KeyStorage) IsFunded(key KeyType) (bool, error) {
 	switch key {
-	case OwnerFunded, OperatorFunded:
+	case OwnerKeyFunded, OperatorKeyFunded:
 		f, ok := s.data[string(key)]
 		if !ok {
 			return false, fmt.Errorf("key not found: %s", key)
@@ -108,7 +108,7 @@ func (s *KeyStorage) IsFunded(key KeyType) (bool, error) {
 
 func (s *KeyStorage) SetFunded(key KeyType, funded bool) error {
 	switch key {
-	case OwnerFunded, OperatorFunded:
+	case OwnerKeyFunded, OperatorKeyFunded:
 		return s.Set(string(key), strconv.FormatBool(funded))
 	default:
 		return fmt.Errorf("not supported key type for funded operation")
