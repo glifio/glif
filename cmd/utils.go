@@ -156,7 +156,7 @@ func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.Priv
 	from := cmd.Flag("from").Value.String()
 	switch from {
 	case "", opEvm.String(), opFevm.String():
-		funded, err := ks.IsFunded(util.OperatorKeyFunded)
+		funded, err := as.IsFunded(util.OperatorKeyFunded, opEvm.String())
 		if err != nil {
 			// means that the key value has not been set yet
 			// do a state lookup to see if it has been funded
@@ -165,7 +165,7 @@ func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.Priv
 				return common.Address{}, nil, nil, err
 			}
 			if b {
-				err = ks.SetFunded(util.OperatorKeyFunded, b)
+				err = as.SetFunded(util.OperatorKeyFunded, opEvm.String(), b)
 				funded = true
 			}
 		}
@@ -217,9 +217,10 @@ func callerIsFunded(ctx context.Context, caller address.Address) (bool, error) {
 	}
 	defer closer()
 
+	var actorNotFoundErr *lotusapi.ErrActorNotFound
 	_, err = lapi.StateLookupID(ctx, caller, types.EmptyTSK)
 	if err != nil {
-		if errors.As(err, &lotusapi.ErrActorNotFound{}) {
+		if errors.As(err, &actorNotFoundErr) {
 			log.Println("Operator address has no balance. Fund the operator, or pass `--from` flag to override")
 			return false, nil
 		}

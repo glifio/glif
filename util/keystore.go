@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -17,11 +16,9 @@ import (
 type KeyType string
 
 const (
-	OwnerKey          KeyType = "owner"
-	OwnerKeyFunded    KeyType = "owner-key-funded"
-	OperatorKey       KeyType = "operator"
-	OperatorKeyFunded KeyType = "operator-key-funded"
-	RequestKey        KeyType = "request"
+	OwnerKey    KeyType = "owner"
+	OperatorKey KeyType = "operator"
+	RequestKey  KeyType = "request"
 )
 
 type KeyStorage struct {
@@ -36,11 +33,9 @@ func KeyStore() *KeyStorage {
 
 func NewKeyStore(filename string) error {
 	keyDefault := map[string]string{
-		string(OwnerKey):          "",
-		string(OwnerKeyFunded):    "",
-		string(OperatorKey):       "",
-		string(OperatorKeyFunded): "",
-		string(RequestKey):        "",
+		string(OwnerKey):    "",
+		string(OperatorKey): "",
+		string(RequestKey):  "",
 	}
 
 	s, err := NewStorage(filename, keyDefault)
@@ -90,29 +85,6 @@ func (s *KeyStorage) SetKey(key KeyType, pk *ecdsa.PrivateKey) error {
 	err := s.Set(string(key), pkStr)
 
 	return err
-}
-
-func (s *KeyStorage) IsFunded(key KeyType) (bool, error) {
-	switch key {
-	case OwnerKeyFunded, OperatorKeyFunded:
-		f, ok := s.data[string(key)]
-		if !ok {
-			return false, fmt.Errorf("key not found: %s", key)
-		}
-
-		return strconv.ParseBool(f)
-	default:
-		return false, fmt.Errorf("not supported key type for funded operation")
-	}
-}
-
-func (s *KeyStorage) SetFunded(key KeyType, funded bool) error {
-	switch key {
-	case OwnerKeyFunded, OperatorKeyFunded:
-		return s.Set(string(key), strconv.FormatBool(funded))
-	default:
-		return fmt.Errorf("not supported key type for funded operation")
-	}
 }
 
 func DeriveAddrFromPkString(pk string) (common.Address, address.Address, error) {
