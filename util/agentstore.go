@@ -7,6 +7,7 @@ import (
 
 const (
 	OperatorKeyFunded KeyType = "opkeyf"
+	OwnerKeyFunded    KeyType = "ownkeyf"
 )
 
 type AgentStorage struct {
@@ -38,7 +39,7 @@ func NewAgentStore(filename string) error {
 
 func (a *AgentStorage) IsFunded(keytype KeyType, key string) (bool, error) {
 	switch keytype {
-	case OperatorKeyFunded:
+	case OperatorKeyFunded, OwnerKeyFunded:
 		f, ok := a.data[mapkey(keytype, key)]
 		if !ok {
 			return false, fmt.Errorf("key not found: %s", key)
@@ -52,7 +53,7 @@ func (a *AgentStorage) IsFunded(keytype KeyType, key string) (bool, error) {
 
 func (a *AgentStorage) SetFunded(keytype KeyType, key string, funded bool) error {
 	switch keytype {
-	case OperatorKeyFunded:
+	case OperatorKeyFunded, OwnerKeyFunded:
 		return a.Set(mapkey(keytype, key), strconv.FormatBool(funded))
 	default:
 		return fmt.Errorf("not supported key type for funded operation")
