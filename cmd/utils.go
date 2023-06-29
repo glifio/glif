@@ -217,16 +217,14 @@ func callerIsFunded(ctx context.Context, caller address.Address) (bool, error) {
 	}
 	defer closer()
 
-	var actorNotFoundErr *lotusapi.ErrActorNotFound
-	_, err = lapi.StateLookupID(ctx, caller, types.EmptyTSK)
+	bal, err := lapi.WalletBalance(ctx, caller)
 	if err != nil {
-		if errors.As(err, &actorNotFoundErr) {
-			log.Println("Operator address has no balance. Fund the operator, or pass `--from` flag to override")
-			return false, nil
-		}
 		return false, err
 	}
-	return true, nil
+	if bal.Cmp(big.NewInt(0)) > 0 {
+		return true, nil
+	}
+	return false, nil
 }
 
 type PoolType uint64
