@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/glifio/cli/events"
 	"github.com/glifio/go-pools/constants"
+	denoms "github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +19,7 @@ var withdrawPreview bool
 
 // borrowCmd represents the borrow command
 var withdrawCmd = &cobra.Command{
-	Use:   "withdraw <amount>",
+	Use:   "withdraw <amount> [flags]",
 	Short: "Withdraw FIL from your Agent.",
 	Long:  "",
 	Args:  cobra.ExactArgs(1),
@@ -33,7 +34,12 @@ var withdrawCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		receiver, err := PoolsSDK.Query().AgentOwner(cmd.Context(), agentAddr)
+		var receiver common.Address
+		if cmd.Flag("to") != nil && cmd.Flag("to").Changed {
+			receiver, err = MustBeEVMAddr(cmd.Flag("to").Value.String())
+		} else {
+			receiver, err = PoolsSDK.Query().AgentOwner(cmd.Context(), agentAddr)
+		}
 		if err != nil {
 			logFatal(err)
 		}
@@ -60,7 +66,7 @@ var withdrawCmd = &cobra.Command{
 		defer journal.Close()
 		defer journal.RecordEvent(withdrawevt, func() interface{} { return evt })
 
-		fmt.Printf("Withdrawing %s FIL from your Agent", args[0])
+		fmt.Printf("Withdrawing %v FIL from your Agent to: %s", denoms.ToFIL(amount), receiver.String())
 
 		tx, err := PoolsSDK.Act().AgentWithdraw(cmd.Context(), agentAddr, receiver, amount, ownerKey, requesterKey)
 		if err != nil {
@@ -84,4 +90,5 @@ var withdrawCmd = &cobra.Command{
 func init() {
 	agentCmd.AddCommand(withdrawCmd)
 	withdrawCmd.Flags().BoolVar(&withdrawPreview, "preview", false, "preview the financial outcome of a withdraw action")
+	withdrawCmd.Flags().String("to", "", "Where to withdraw the funds to (note only 0x addresses are supported at the moment)")
 }
