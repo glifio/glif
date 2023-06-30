@@ -276,3 +276,18 @@ func AddressesToStrings(addrs []address.Address) []string {
 	}
 	return strs
 }
+
+func MustBeEVMAddr(addr string) (common.Address, error) {
+	// first we validate the address starts with a 0x string
+	if !common.IsHexAddress(addr) {
+		return common.Address{}, errors.New("Invalid 0x EVM address")
+	}
+
+	// double check that this doesn't form a valid native FIL actor address
+	_, err := address.NewFromString(addr)
+	if err == nil {
+		return common.Address{}, errors.New("Invalid 0x EVM address")
+	}
+
+	return common.HexToAddress(addr), nil
+}
