@@ -96,6 +96,11 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 		return common.Big0, address.Undef, 0, 0, err
 	}
 
+	owner, err := query.AgentOwner(ctx, agent)
+	if err != nil {
+		return common.Big0, address.Undef, 0, 0, err
+	}
+
 	goodVersion := agVersion == ntwVersion
 
 	s.Stop()
@@ -103,6 +108,7 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 	fmt.Printf("Agent Address: %s\n", agent.String())
 	fmt.Printf("Agent Address (del): %s\n", agentDel.String())
 	fmt.Printf("Agent FIL ID Address: %s\n", agentFILIDAddr.String())
+	fmt.Printf("Agent Owner: %s\n", owner.String())
 	fmt.Printf("Agent Pools Protocol ID: %s\n", agentID)
 	if goodVersion {
 		fmt.Printf("Agent Version: %v ✅ \n", agVersion)
