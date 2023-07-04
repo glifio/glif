@@ -1,8 +1,13 @@
 package util
 
 import (
+	"context"
 	"fmt"
+	"math/big"
 	"strconv"
+
+	"github.com/filecoin-project/go-address"
+	"github.com/glifio/go-pools/types"
 )
 
 const (
@@ -37,12 +42,26 @@ func NewAgentStore(filename string) error {
 	return nil
 }
 
-func (a *AgentStorage) IsFunded(keytype KeyType, key string) (bool, error) {
+func (a *AgentStorage) IsFunded(ctx context.Context, psdk types.PoolsSDK, caller address.Address, keytype KeyType, key string) (bool, error) {
 	switch keytype {
 	case OperatorKeyFunded, OwnerKeyFunded:
 		f, ok := a.data[mapkey(keytype, key)]
 		if !ok {
-			return false, fmt.Errorf("key not found: %s", key)
+			lapi, closer, err := psdk.Extern().ConnectLotusClient()
+			if err != nil {
+				return false, err
+			}
+			defer closer()
+
+			bal, err := lapi.WalletBalance(ctx, caller)
+			if err != nil {
+				return false, err
+			}
+			if bal.Cmp(big.NewInt(0)) > 0 {
+				a.SetFunded(keytype, key, true)
+				return true, nil
+			}
+			return false, nil
 		}
 
 		return strconv.ParseBool(f)

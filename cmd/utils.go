@@ -156,18 +156,9 @@ func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.Priv
 	from := cmd.Flag("from").Value.String()
 	switch from {
 	case "", opEvm.String(), opFevm.String():
-		funded, err := as.IsFunded(util.OperatorKeyFunded, opEvm.String())
+		funded, err := as.IsFunded(cmd.Context(), PoolsSDK, opFevm, util.OperatorKeyFunded, opEvm.String())
 		if err != nil {
-			// means that the key value has not been set yet
-			// do a state lookup to see if it has been funded
-			b, err := callerIsFunded(cmd.Context(), opFevm)
-			if err != nil {
-				return common.Address{}, nil, nil, err
-			}
-			if b {
-				err = as.SetFunded(util.OperatorKeyFunded, opEvm.String(), b)
-				funded = true
-			}
+			return common.Address{}, nil, nil, err
 		}
 		if funded {
 			pk, err = ks.GetPrivate(util.OperatorKey)
@@ -208,23 +199,6 @@ func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.Priv
 	}
 
 	return agentAddr, pk, requesterKey, nil
-}
-
-func callerIsFunded(ctx context.Context, caller address.Address) (bool, error) {
-	lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
-	if err != nil {
-		logFatalf("failed to instantiate lotus client %s", err)
-	}
-	defer closer()
-
-	bal, err := lapi.WalletBalance(ctx, caller)
-	if err != nil {
-		return false, err
-	}
-	if bal.Cmp(big.NewInt(0)) > 0 {
-		return true, nil
-	}
-	return false, nil
 }
 
 type PoolType uint64
