@@ -40,6 +40,8 @@ var infpoolTotalEarnings = &cobra.Command{
 
 		totalEarnings := new(big.Int).Sub(totalAssets, iFILSupply)
 
+		s.Stop()
+
 		fmt.Printf("Infinity Pool earnings: %.04f FIL\n", denoms.ToFIL(totalEarnings))
 	},
 }
