@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/glifio/go-pools/util"
+	denoms "github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +30,7 @@ var tfeesOwedCmd = &cobra.Command{
 		}
 		s.Stop()
 
-		feesOwed := util.ToFIL(fees)
+		feesOwed := denoms.ToFIL(fees)
 
 		log.Printf("Fees owed: %0.09f", feesOwed)
 	},

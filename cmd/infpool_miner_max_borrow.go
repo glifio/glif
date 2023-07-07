@@ -34,18 +34,18 @@ var infpoolMinerQuote = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		lCli, closer, err := PoolsSDK.Extern().ConnectLotusClient()
+		lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
 		if err != nil {
 			logFatal(err)
 		}
 		defer closer()
 
-		tipset, err := lCli.ChainHead(cmd.Context())
+		tipset, err := lapi.ChainHead(cmd.Context())
 		if err != nil {
 			logFatal(err)
 		}
 
-		minerstat, err := mstat.ComputeMinerStats(cmd.Context(), minerAddr, tipset, lCli)
+		minerstat, err := mstat.ComputeMinerStats(cmd.Context(), minerAddr, tipset, lapi)
 		if err != nil {
 			logFatal(err)
 		}
