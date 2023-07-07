@@ -20,7 +20,7 @@ import (
 
 var infpoolMinerQuote = &cobra.Command{
 	Use:   "miner-quote <miner-addr>",
-	Short: "Returns the amount of FIL the miner can",
+	Short: "Returns the amount of FIL the miner can borrow",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		minerAddr, err := address.NewFromString(args[0])
