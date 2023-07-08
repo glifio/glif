@@ -90,7 +90,7 @@ func (f *fsJournal) RecordEvent(evtType journal.EventType, supplier func() inter
 	select {
 	case f.incoming <- je:
 	case <-f.closing:
-		log.Printf("journal closed but tried to log event", "event", je)
+		log.Printf("journal closed but tried to log event %s, %s\n", "event", je)
 	}
 }
 
