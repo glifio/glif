@@ -24,6 +24,29 @@ func TestNewStorage(t *testing.T) {
 	os.Remove(testFilename)
 }
 
+func TestSetNonExistentKey(t *testing.T) {
+	store, err := util.NewStorage(testFilename, defaultMap)
+	if err != nil {
+		t.Fatalf("NewStorage() error: %v", err)
+	}
+
+	err = store.Set("key3", "value3")
+	if err != nil {
+		t.Errorf("Set() error: %v", err)
+		t.FailNow()
+	}
+
+	v3, err := store.Get("key3")
+	if err != nil {
+		t.Errorf("Get() error: %v", err)
+		t.FailNow()
+	}
+	if v3 != "value3" {
+		t.Errorf("Get returned the wrong value")
+		t.FailNow()
+	}
+}
+
 func TestGetSetDelete(t *testing.T) {
 	store, err := util.NewStorage(testFilename, defaultMap)
 	if err != nil {
