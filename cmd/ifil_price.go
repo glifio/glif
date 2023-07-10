@@ -20,7 +20,7 @@ var iFILPriceCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		price, err := PoolsSDK.Query().IFILPrice(cmd.Context())
+		price, err := PoolsSDK.Query().IFILPrice(cmd.Context(), nil)
 		if err != nil {
 			logFatalf("Failed to get iFIL balance %s", err)
 		}

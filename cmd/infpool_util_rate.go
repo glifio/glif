@@ -20,11 +20,11 @@ var inpoolUtilizationRateCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		borrowed, err := PoolsSDK.Query().InfPoolTotalBorrowed(cmd.Context())
+		borrowed, err := PoolsSDK.Query().InfPoolTotalBorrowed(cmd.Context(), nil)
 		if err != nil {
 			logFatalf("Failed to get total borrowed %s", err)
 		}
-		assets, err := PoolsSDK.Query().InfPoolTotalAssets(cmd.Context())
+		assets, err := PoolsSDK.Query().InfPoolTotalAssets(cmd.Context(), nil)
 		if err != nil {
 			logFatalf("Failed to get iFIL balance %s", err)
 		}

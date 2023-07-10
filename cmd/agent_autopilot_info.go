@@ -25,7 +25,7 @@ var agentAutopilotInfoCmd = &cobra.Command{
 			log.Println(err)
 		}
 
-		account, err := PoolsSDK.Query().InfPoolGetAccount(ctx, agent)
+		account, err := PoolsSDK.Query().InfPoolGetAccount(ctx, agent, nil)
 		if err != nil {
 			log.Println(err)
 		}

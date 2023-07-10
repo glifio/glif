@@ -84,7 +84,7 @@ var agentAutopilotCmd = &cobra.Command{
 					goto SLEEP
 				}
 
-				account, err = PoolsSDK.Query().InfPoolGetAccount(ctx, agent)
+				account, err = PoolsSDK.Query().InfPoolGetAccount(ctx, agent, nil)
 				if err != nil {
 					log.Println(err)
 					goto SLEEP
