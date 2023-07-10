@@ -11,7 +11,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/filecoin-project/go-address"
+	actorstypes "github.com/filecoin-project/go-state-types/actors"
+	"github.com/filecoin-project/go-state-types/manifest"
 	lotusapi "github.com/filecoin-project/lotus/api"
+	"github.com/filecoin-project/lotus/chain/actors"
 	"github.com/filecoin-project/lotus/chain/types"
 	ltypes "github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
@@ -85,6 +88,29 @@ func parseAddress(ctx context.Context, addr string, lapi lotusapi.FullNode) (com
 
 	if err != nil {
 		return common.Address{}, err
+	}
+
+	if filAddr.Protocol() == address.ID {
+		actor, err := lapi.StateGetActor(ctx, filAddr, types.EmptyTSK)
+		if err != nil {
+			return common.Address{}, err
+		}
+
+		actorCodeEvm, success := actors.GetActorCodeID(actorstypes.Version(actors.LatestVersion), manifest.EvmKey)
+		if !success {
+			return common.Address{}, errors.New("actor code not found")
+		}
+		if actor.Code.Equals(actorCodeEvm) {
+			return common.Address{}, errors.New("Cant pass an ID address of an EVM actor")
+		}
+
+		actorCodeEthAccount, success := actors.GetActorCodeID(actorstypes.Version(actors.LatestVersion), manifest.EthAccountKey)
+		if !success {
+			return common.Address{}, errors.New("actor code not found")
+		}
+		if actor.Code.Equals(actorCodeEthAccount) {
+			return common.Address{}, errors.New("Cant pass an ID address of an Eth Account")
+		}
 	}
 
 	if filAddr.Protocol() != address.ID && filAddr.Protocol() != address.Delegated {
