@@ -62,7 +62,7 @@ var previewBorrowMaxCmd = &cobra.Command{
 		}
 		printWithBoldPreface("Now", fmt.Sprintf("Agent can immediately borrow %0.09f FIL", util.ToFIL(borrowNowMax)))
 		printWithBoldPreface("Max", fmt.Sprintf("Agent can borrow up to %0.09f FIL", util.ToFIL(new(big.Int).Sub(agentData.AgentValue, agentData.Principal))))
-		if new(big.Int).Add(account.EpochsPaid, big.NewInt(int64(constants.RepeatBorrowEpochTolerance))).Cmp(chainHeight) == -1 {
+		if account.EpochsPaid.Cmp(big.NewInt(0)) == 1 && new(big.Int).Add(account.EpochsPaid, big.NewInt(int64(constants.RepeatBorrowEpochTolerance))).Cmp(chainHeight) == -1 {
 			printWithBoldPreface("\nWarning", "Agent must make a payment `to-current` before borrowing again.")
 		}
 	},
