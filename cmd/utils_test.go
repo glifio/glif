@@ -10,7 +10,7 @@ import (
 )
 
 func TestParseAddress(t *testing.T) {
-  // Create a mock FullNodeAPI
+	// Create a mock FullNodeAPI
 	mockAPI := &MockFullNodeAPI{}
 
 	testCases := []struct {
@@ -54,6 +54,16 @@ func TestParseAddress(t *testing.T) {
 			input:       "invalid_address",
 			expectError: true,
 		},
+		{
+			name:        "EVM Actor",
+			input:       evmActorID,
+			expectError: true,
+		},
+		{
+			name:        "Eth Account",
+			input:       ethAccountID,
+			expectError: true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -63,7 +73,7 @@ func TestParseAddress(t *testing.T) {
 			if tc.expectError {
 				assert.Error(t, err)
 			} else {
-        fmt.Println(result.String())
+				fmt.Println(result.String())
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expected, result)
 			}

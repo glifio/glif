@@ -11,7 +11,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/filecoin-project/go-address"
+	actorstypes "github.com/filecoin-project/go-state-types/actors"
+	"github.com/filecoin-project/go-state-types/manifest"
 	lotusapi "github.com/filecoin-project/lotus/api"
+	"github.com/filecoin-project/lotus/chain/actors"
 	"github.com/filecoin-project/lotus/chain/types"
 	ltypes "github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
@@ -87,6 +90,29 @@ func parseAddress(ctx context.Context, addr string, lapi lotusapi.FullNode) (com
 		return common.Address{}, err
 	}
 
+	if filAddr.Protocol() == address.ID {
+		actor, err := lapi.StateGetActor(ctx, filAddr, types.EmptyTSK)
+		if err != nil {
+			return common.Address{}, err
+		}
+
+		actorCodeEvm, success := actors.GetActorCodeID(actorstypes.Version(actors.LatestVersion), manifest.EvmKey)
+		if !success {
+			return common.Address{}, errors.New("actor code not found")
+		}
+		if actor.Code.Equals(actorCodeEvm) {
+			return common.Address{}, errors.New("Cant pass an ID address of an EVM actor")
+		}
+
+		actorCodeEthAccount, success := actors.GetActorCodeID(actorstypes.Version(actors.LatestVersion), manifest.EthAccountKey)
+		if !success {
+			return common.Address{}, errors.New("actor code not found")
+		}
+		if actor.Code.Equals(actorCodeEthAccount) {
+			return common.Address{}, errors.New("Cant pass an ID address of an Eth Account")
+		}
+	}
+
 	if filAddr.Protocol() != address.ID && filAddr.Protocol() != address.Delegated {
 		filAddr, err = lapi.StateLookupID(ctx, filAddr, types.EmptyTSK)
 		if err != nil {
@@ -145,6 +171,7 @@ func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.Priv
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
+
 	owEvm, owFevm, err := ks.GetAddrs(util.OwnerKey)
 	if err != nil {
 		return common.Address{}, nil, nil, err
@@ -153,17 +180,26 @@ func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.Priv
 	var pk *ecdsa.PrivateKey
 	// if no flag was passed, we just use the operator address by default
 	from := cmd.Flag("from").Value.String()
-	if from == "" {
-		from = opEvm.String()
-		pk, err = ks.GetPrivate(util.OperatorKey)
-	} else if from == opEvm.String() || from == opFevm.String() {
-		pk, err = ks.GetPrivate(util.OperatorKey)
-	} else if from == owEvm.String() || from == owFevm.String() {
+	switch from {
+	case "", opEvm.String(), opFevm.String():
+		funded, err := as.IsFunded(cmd.Context(), PoolsSDK, opFevm, util.OperatorKeyFunded, opEvm.String())
+		if err != nil {
+			return common.Address{}, nil, nil, err
+		}
+		if funded {
+			pk, err = ks.GetPrivate(util.OperatorKey)
+		} else {
+			log.Println("operator not funded, falling back to owner address")
+			pk, err = ks.GetPrivate(util.OwnerKey)
+		}
+		if err != nil {
+			return common.Address{}, nil, nil, err
+		}
+	case owEvm.String(), owFevm.String():
 		pk, err = ks.GetPrivate(util.OwnerKey)
-	} else {
+	default:
 		return common.Address{}, nil, nil, errors.New("invalid from address")
 	}
-
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}

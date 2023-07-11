@@ -22,10 +22,12 @@ var infpoolTotalAssetsCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		assets, err := PoolsSDK.Query().InfPoolTotalAssets(cmd.Context())
+		assets, err := PoolsSDK.Query().InfPoolTotalAssets(cmd.Context(), nil)
 		if err != nil {
 			logFatalf("Failed to get iFIL balance %s", err)
 		}
+
+		s.Stop()
 
 		fmt.Printf("Infinity Pool total assets: %.04f FIL\n", assets)
 	},

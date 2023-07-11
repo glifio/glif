@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	denoms "github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
@@ -19,12 +20,12 @@ var iFILPriceCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		price, err := PoolsSDK.Query().IFILPrice(cmd.Context())
+		price, err := PoolsSDK.Query().IFILPrice(cmd.Context(), nil)
 		if err != nil {
 			logFatalf("Failed to get iFIL balance %s", err)
 		}
 
-		priceFIL, _ := price.Float64()
+		priceFIL, _ := denoms.ToFIL(price).Float64()
 
 		s.Stop()
 

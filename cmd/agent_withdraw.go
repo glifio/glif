@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/glifio/cli/events"
 	"github.com/glifio/go-pools/constants"
 	"github.com/spf13/cobra"
@@ -18,10 +17,10 @@ var withdrawPreview bool
 
 // borrowCmd represents the borrow command
 var withdrawCmd = &cobra.Command{
-	Use:   "withdraw <amount>",
+	Use:   "withdraw <amount> <receiver>",
 	Short: "Withdraw FIL from your Agent.",
 	Long:  "",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		if withdrawPreview {
 			previewAction(cmd, args, constants.MethodWithdraw)
@@ -33,13 +32,9 @@ var withdrawCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		receiver, err := PoolsSDK.Query().AgentOwner(cmd.Context(), agentAddr)
+		receiver, err := ParseAddress(cmd.Context(), args[1])
 		if err != nil {
 			logFatal(err)
-		}
-
-		if !common.IsHexAddress(receiver.String()) {
-			logFatal("Invalid withdraw address")
 		}
 
 		amount, err := parseFILAmount(args[0])

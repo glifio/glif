@@ -30,7 +30,7 @@ var getAccountCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		account, err := PoolsSDK.Query().InfPoolGetAccount(cmd.Context(), agentAddr)
+		account, err := PoolsSDK.Query().InfPoolGetAccount(cmd.Context(), agentAddr, nil)
 		if err != nil {
 			logFatalf("Failed to get iFIL balance %s", err)
 		}

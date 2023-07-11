@@ -62,7 +62,6 @@ func (s *KeyStorage) GetPrivate(key KeyType) (*ecdsa.PrivateKey, error) {
 	return pkECDSA, nil
 }
 
-// returns
 func (s *KeyStorage) GetAddrs(key KeyType) (common.Address, address.Address, error) {
 	pk, ok := s.data[string(key)]
 	if !ok {
