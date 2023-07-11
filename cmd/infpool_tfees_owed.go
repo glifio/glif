@@ -24,7 +24,7 @@ var tfeesOwedCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		fees, err := PoolsSDK.Query().InfPoolFeesAccrued(cmd.Context())
+		fees, err := PoolsSDK.Query().InfPoolFeesAccrued(cmd.Context(), nil)
 		if err != nil {
 			logFatalf("Failed to get fees accrued %s", err)
 		}

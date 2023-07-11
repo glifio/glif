@@ -22,7 +22,7 @@ var inpoolTotalBorrowedCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		assets, err := PoolsSDK.Query().InfPoolTotalBorrowed(cmd.Context())
+		assets, err := PoolsSDK.Query().InfPoolTotalBorrowed(cmd.Context(), nil)
 		if err != nil {
 			logFatalf("Failed to get total borrowed %s", err)
 		}

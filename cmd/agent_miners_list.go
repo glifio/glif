@@ -19,7 +19,7 @@ var minersListCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		list, err := PoolsSDK.Query().AgentMiners(cmd.Context(), agentAddr)
+		list, err := PoolsSDK.Query().AgentMiners(cmd.Context(), agentAddr, nil)
 		if err != nil {
 			logFatal(err)
 		}

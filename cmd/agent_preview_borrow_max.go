@@ -45,7 +45,7 @@ var previewBorrowMaxCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		account, err := PoolsSDK.Query().InfPoolGetAccount(cmd.Context(), agentAddr)
+		account, err := PoolsSDK.Query().InfPoolGetAccount(cmd.Context(), agentAddr, nil)
 		if err != nil {
 			logFatal(err)
 		}

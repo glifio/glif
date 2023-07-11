@@ -22,7 +22,7 @@ var availLiquidityCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		liquid, err := PoolsSDK.Query().InfPoolBorrowableLiquidity(cmd.Context())
+		liquid, err := PoolsSDK.Query().InfPoolBorrowableLiquidity(cmd.Context(), nil)
 		if err != nil {
 			logFatalf("Failed to get iFIL balance %s", err)
 		}

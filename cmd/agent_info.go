@@ -124,14 +124,14 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi *api.FullNodeStruct, s *spinner.Spinner) error {
 	query := PoolsSDK.Query()
 
-	assets, err := query.AgentLiquidAssets(ctx, agent)
+	assets, err := query.AgentLiquidAssets(ctx, agent, nil)
 	if err != nil {
 		return err
 	}
 
 	assetsFIL, _ := util.ToFIL(assets).Float64()
 
-	agentMiners, err := query.MinerRegistryAgentMinersList(ctx, agentID)
+	agentMiners, err := query.MinerRegistryAgentMinersList(ctx, agentID, nil)
 	if err != nil {
 		return err
 	}
@@ -185,7 +185,7 @@ func infoPoolInfo(ctx context.Context, agent common.Address, agentID *big.Int, s
 		return err
 	}
 
-	account, err := query.InfPoolGetAccount(ctx, agent)
+	account, err := query.InfPoolGetAccount(ctx, agent, nil)
 	if err != nil {
 		return err
 	}
