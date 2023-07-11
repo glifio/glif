@@ -25,12 +25,12 @@ var infpoolTotalEarnings = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		iFILPrice, err := PoolsSDK.Query().IFILPrice(cmd.Context())
+		iFILPrice, err := PoolsSDK.Query().IFILPrice(cmd.Context(), nil)
 		if err != nil {
 			logFatalf("Failed to get iFIL price %s", err)
 		}
 
-		iFILSupply, err := PoolsSDK.Query().IFILSupply(cmd.Context())
+		iFILSupply, err := PoolsSDK.Query().IFILSupply(cmd.Context(), nil)
 		if err != nil {
 			logFatalf("Failed to get iFIL supply %s", err)
 		}
