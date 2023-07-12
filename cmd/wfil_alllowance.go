@@ -18,12 +18,12 @@ var wFILAllowanceCmd = &cobra.Command{
 		spenderStr := args[1]
 		fmt.Printf("Checking wFIL allowance of spender %s on holder %s...\n", spenderStr, holderStr)
 
-		holder, err := ParseAddress(cmd.Context(), holderStr)
+		holder, err := ParseAddressToEVM(cmd.Context(), holderStr)
 		if err != nil {
 			logFatalf("Failed to parse address %s\n", err)
 		}
 
-		spender, err := ParseAddress(cmd.Context(), spenderStr)
+		spender, err := ParseAddressToEVM(cmd.Context(), spenderStr)
 		if err != nil {
 			logFatalf("Failed to parse address %s\n", err)
 		}

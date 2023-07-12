@@ -32,7 +32,7 @@ var withdrawCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		receiver, err := ParseAddress(cmd.Context(), args[1])
+		receiver, err := ParseAddressToEVM(cmd.Context(), args[1])
 		if err != nil {
 			logFatal(err)
 		}
