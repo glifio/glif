@@ -45,7 +45,7 @@ var forwardFIL = &cobra.Command{
 		}
 
 		if value.Cmp(common.Big0) < 1 {
-			logFatal(errors.New("Value must not be 0"))
+			logFatal(errors.New("Value must be greater than 0"))
 		}
 
 		if toStr == to.String() {
