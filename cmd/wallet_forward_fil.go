@@ -20,9 +20,9 @@ import (
 )
 
 var forwardFIL = &cobra.Command{
-	Use:   "forward-fil",
+	Use:   "forward-fil <from> <to> <amount>",
 	Short: "Transfers balances from owner or operator wallet to another address through the FilForwarder smart contract",
-	Args:  cobra.NoArgs,
+	Args:  cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
 		ethClient, err := PoolsSDK.Extern().ConnectEthClient()
 		if err != nil {
@@ -32,14 +32,14 @@ var forwardFIL = &cobra.Command{
 
 		ks := util.KeyStore()
 
-		toStr := cmd.Flag("to").Value.String()
+		toStr := args[1]
 
 		to, err := ParseAddressToNative(cmd.Context(), toStr)
 		if err != nil {
 			logFatal(err)
 		}
 
-		value, err := parseFILAmount(cmd.Flag("value").Value.String())
+		value, err := parseFILAmount(args[2])
 		if err != nil {
 			logFatal(err)
 		}
@@ -60,9 +60,9 @@ var forwardFIL = &cobra.Command{
 		defer s.Stop()
 
 		// from must either be `owner` or `operator` in this limited transfer cmd
-		keyToUse := util.KeyType(cmd.Flag("from").Value.String())
+		keyToUse := util.KeyType(args[0])
 		if keyToUse != util.OwnerKey && keyToUse != util.OperatorKey {
-			logFatal(errors.New("Unsupported `from` flag - must be `owner` or `operator`"))
+			logFatal(errors.New("Unsupported `from` valule - must be `owner` or `operator`"))
 		}
 
 		pk, err := ks.GetPrivate(keyToUse)
@@ -128,12 +128,4 @@ var forwardFIL = &cobra.Command{
 
 func init() {
 	walletCmd.AddCommand(forwardFIL)
-	forwardFIL.Flags().String("from", "", "From address (`owner` or `operator`)")
-	forwardFIL.MarkFlagRequired("from")
-
-	forwardFIL.Flags().String("to", "", "To address")
-	forwardFIL.MarkFlagRequired("to")
-
-	forwardFIL.Flags().String("value", "", "Value to send (in FIL)")
-	forwardFIL.MarkFlagRequired("value")
 }
