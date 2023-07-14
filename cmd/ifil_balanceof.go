@@ -16,7 +16,7 @@ var iFILBalanceOfCmd = &cobra.Command{
 		strAddr := args[0]
 		fmt.Printf("Checking iFIL balance of %s...", strAddr)
 
-		addr, err := ParseAddress(cmd.Context(), strAddr)
+		addr, err := ParseAddressToEVM(cmd.Context(), strAddr)
 		if err != nil {
 			logFatalf("Failed to parse address %s", err)
 		}

@@ -10,8 +10,9 @@ require (
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-state-types v0.11.1
 	github.com/filecoin-project/lotus v1.23.0
-	github.com/glifio/go-pools v0.0.0-20230711044138-22cce2914468
+	github.com/glifio/go-pools v0.0.0-20230712232816-fb7500134fc6
 	github.com/golang/mock v1.6.0
+	github.com/ipfs/go-cid v0.4.0
 	github.com/pelletier/go-toml/v2 v2.0.6
 	github.com/raulk/clock v1.1.0
 	github.com/spf13/cobra v1.7.0
@@ -80,7 +81,6 @@ require (
 	github.com/ipfs/bbloom v0.0.4 // indirect
 	github.com/ipfs/go-block-format v0.1.1 // indirect
 	github.com/ipfs/go-blockservice v0.5.0 // indirect
-	github.com/ipfs/go-cid v0.4.0 // indirect
 	github.com/ipfs/go-datastore v0.6.0 // indirect
 	github.com/ipfs/go-graphsync v0.14.3 // indirect
 	github.com/ipfs/go-ipfs-blockstore v1.2.0 // indirect
