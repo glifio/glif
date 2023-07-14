@@ -51,7 +51,7 @@ var addCmd = &cobra.Command{
 		}
 
 		if mi.Owner.String() != mi.Beneficiary.String() {
-			log.Fatalf("Miner %s has a different owner (%s) and beneficiary (%s). Please reset the miner's beneficiary to match the owner before adding", minerAddr, mi.Owner, mi.Beneficiary)
+			logFatalf("Miner %s has a different owner (%s) and beneficiary (%s). Please reset the miner's beneficiary to match the owner before adding", minerAddr, mi.Owner, mi.Beneficiary)
 		}
 
 		log.Printf("Adding miner %s to agent %s", minerAddr, agentAddr)
