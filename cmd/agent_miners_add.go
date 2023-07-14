@@ -10,6 +10,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/filecoin-project/go-address"
+	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/glifio/cli/events"
 	"github.com/glifio/go-pools/constants"
 	"github.com/spf13/cobra"
@@ -24,6 +25,12 @@ var addCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
+		if err != nil {
+			logFatal(err)
+		}
+		defer closer()
+
 		if addPreview {
 			previewAction(cmd, args, constants.MethodAddMiner)
 			return
@@ -36,6 +43,15 @@ var addCmd = &cobra.Command{
 		minerAddr, err := address.NewFromString(args[0])
 		if err != nil {
 			logFatal(err)
+		}
+
+		mi, err := lapi.StateMinerInfo(cmd.Context(), minerAddr, types.EmptyTSK)
+		if err != nil {
+			logFatal(err)
+		}
+
+		if mi.Owner.String() != mi.Beneficiary.String() {
+			logFatalf("Miner %s has a different owner (%s) and beneficiary (%s). Please reset the miner's beneficiary to match the owner before adding", minerAddr, mi.Owner, mi.Beneficiary)
 		}
 
 		log.Printf("Adding miner %s to agent %s", minerAddr, agentAddr)
