@@ -12,8 +12,8 @@ import (
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/lotus/chain/types"
-	"github.com/filecoin-project/lotus/chain/types/ethtypes"
 	"github.com/glifio/cli/events"
+	"github.com/glifio/cli/journal/fsjournal"
 	"github.com/glifio/go-pools/abigen"
 	"github.com/glifio/go-pools/constants"
 	"github.com/spf13/cobra"
@@ -30,8 +30,6 @@ var agentAutopilotCmd = &cobra.Command{
 				fmt.Println("stacktrace from panic: \n" + string(debug.Stack()))
 			}
 		}()
-
-		defer journal.Close()
 
 		if cmd.Flag("logfile") != nil && cmd.Flag("logfile").Changed {
 			file, err := os.OpenFile(cmd.Flag("logfile").Value.String(), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
@@ -50,6 +48,12 @@ var agentAutopilotCmd = &cobra.Command{
 
 		log.Println("Lotus Daemon: ", viper.GetString("daemon.rpc-url"))
 		for {
+			var err error
+			if journal, err = fsjournal.OpenFSJournal(cfgDir, nil); err != nil {
+				logFatal(err)
+			}
+			defer journal.Close()
+
 			select {
 			case <-sigs:
 				log.Println("Shutting down...")
@@ -79,14 +83,21 @@ var agentAutopilotCmd = &cobra.Command{
 				//TODO: maybe change frequency to max debt or max epoch difference
 				frequency := viper.GetFloat64("autopilot.frequency")
 
-				log.Println("frequency: ", frequency)
+				log.Println("frequency (days): ", frequency)
 
 				// goto can't jump over variable declarations
 				var chainHeadHeight *big.Int
 				var account abigen.Account
+				var pullFundsMiner address.Address
 
 				// GATHER variables
-				agent, err := getAgentAddress(cmd)
+				agent, _, _, err := commonOwnerOrOperatorSetup(cmd)
+				if err != nil {
+					log.Println(err)
+					goto SLEEP
+				}
+
+				pullFundsMiner, err = ToMinerID(cmd.Context(), viper.GetString("autopilot.pullfunds.miner"))
 				if err != nil {
 					log.Println(err)
 					goto SLEEP
@@ -114,7 +125,7 @@ var agentAutopilotCmd = &cobra.Command{
 
 				// check if payment is due
 				// if so, make payment
-				if paymentDue(frequency, chainHeadHeight.Uint64(), account.EpochsPaid) {
+				if paymentDue(frequency, chainHeadHeight, account.EpochsPaid) {
 					if pullFundsEnabled {
 						payAmt, err := payAmount(cmd, payargs, paymentType)
 						if err != nil {
@@ -130,17 +141,8 @@ var agentAutopilotCmd = &cobra.Command{
 
 						if pull {
 							factoredPullAmt := big.NewInt(0).Mul(payAmt, big.NewInt(int64(pullFundsFactor)))
-							miner, ok, err := chooseMiner(cmd, factoredPullAmt)
-							if err != nil {
-								log.Println(err)
-								goto SLEEP
-							}
-							if !ok {
-								log.Println(fmt.Errorf("no miner available to pull full amount of required funds from, please manually transfer FIL from miners to agent"))
-								goto SLEEP
-							}
 
-							err = pullFundsFromMiner(cmd, miner, factoredPullAmt)
+							err = pullFundsFromMiner(cmd, pullFundsMiner, factoredPullAmt)
 							if err != nil {
 								log.Println(err)
 								goto SLEEP
@@ -149,15 +151,19 @@ var agentAutopilotCmd = &cobra.Command{
 
 					}
 
-					_, err = pay(cmd, payargs, paymentType, true)
+					_, err = pay(cmd, payargs, paymentType)
 					if err != nil {
 						log.Println(err)
 					}
 
 				}
 			SLEEP:
+				sleepTime := 30 * time.Minute
+				if debugSetup {
+					sleepTime = 30 * time.Second
+				}
 				select {
-				case <-time.After(30 * time.Minute):
+				case <-time.After(sleepTime):
 					continue
 				case <-sigs:
 					log.Println("Shutting down...")
@@ -168,53 +174,31 @@ var agentAutopilotCmd = &cobra.Command{
 	},
 }
 
-func paymentDue(frequency float64, chainHeadHeight uint64, epochsPaid *big.Int) bool {
+func paymentDue(frequency float64, chainHeadHeight, epochsPaid *big.Int) bool {
 	epochFreq := big.NewFloat(float64(frequency * constants.EpochsInDay))
 
-	dueEpoch := new(big.Int).Sub(new(big.Int).SetUint64(chainHeadHeight), epochsPaid)
+	epochsPassed := new(big.Int).Sub(chainHeadHeight, epochsPaid)
 
 	epochFreqInt64, _ := epochFreq.Int64()
 	epochFreqInt := big.NewInt(epochFreqInt64)
 
-	return dueEpoch.Cmp(epochFreqInt) >= 0
+	return epochsPassed.Cmp(epochFreqInt) >= 0
 }
 
 // needToPullFunds returns whether the payAmt is larger than the current
 // balance of the Operator wallet.
 func needToPullFunds(cmd *cobra.Command, payAmt *big.Int) (bool, error) {
-	lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
-	if err != nil {
-		return false, fmt.Errorf("Failed to instantiate eth client %s", err)
-	}
-	defer closer()
-
 	agentAddr, _, _, err := commonOwnerOrOperatorSetup(cmd)
 	if err != nil {
 		return false, err
 	}
 
-	agentAddrEthType, err := ethtypes.ParseEthAddress(agentAddr.String())
+	assets, err := PoolsSDK.Query().AgentLiquidAssets(cmd.Context(), agentAddr, nil)
 	if err != nil {
 		return false, err
 	}
 
-	agentAddrDel, err := agentAddrEthType.ToFilecoinAddress()
-	if err != nil {
-		return false, err
-	}
-
-	agentFILIDAddr, err := lapi.StateLookupID(cmd.Context(), agentAddrDel, types.EmptyTSK)
-	if err != nil {
-		return false, err
-	}
-
-	actor, err := lapi.StateGetActor(cmd.Context(), agentFILIDAddr, types.EmptyTSK)
-	if err != nil {
-		return false, err
-	}
-	bal := actor.Balance
-
-	return payAmt.Cmp(bal.Int) > 0, nil
+	return payAmt.Cmp(assets) > 0, nil
 }
 
 func pullFundsFromMiner(cmd *cobra.Command, miner address.Address, amount *big.Int) error {
@@ -284,10 +268,13 @@ func chooseMiner(cmd *cobra.Command, requiredFunds *big.Int) (address.Address, b
 	return chosen, bal.Cmp(requiredFunds) > 0, nil
 }
 
+var debugSetup bool
+
 func init() {
 	agentCmd.AddCommand(agentAutopilotCmd)
 	agentAutopilotCmd.Flags().String("agent-addr", "", "Agent address")
 	agentAutopilotCmd.Flags().String("pool-name", "infinity-pool", "name of the pool to make a payment")
 	agentAutopilotCmd.Flags().String("from", "", "address to send the transaction from")
 	agentAutopilotCmd.Flags().String("logfile", "", "Logfile path, if empty autopilot logs to stderr")
+	agentAutopilotCmd.Flags().BoolVar(&debugSetup, "debug", false, "enable debug setup, i.e. 30 second sleep in main loop")
 }
