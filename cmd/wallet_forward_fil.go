@@ -11,6 +11,7 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/glifio/cli/events"
 	"github.com/glifio/cli/util"
 	"github.com/glifio/go-pools/abigen"
 	"github.com/glifio/go-pools/constants"
@@ -59,24 +60,38 @@ var forwardFIL = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
+		forwardFILevt := journal.RegisterEventType("wallet", "forwardFIL")
+		evt := &events.WalletFILForward{
+			From:   args[0],
+			To:     args[1],
+			Amount: args[2],
+		}
+		defer journal.Close()
+		defer journal.RecordEvent(forwardFILevt, func() interface{} { return evt })
+
 		// from must either be `owner` or `operator` in this limited transfer cmd
 		keyToUse := util.KeyType(args[0])
 		if keyToUse != util.OwnerKey && keyToUse != util.OperatorKey {
-			logFatal(errors.New("Unsupported `from` valule - must be `owner` or `operator`"))
+			err = errors.New("Unsupported `from` valule - must be `owner` or `operator`")
+			evt.Error = err.Error()
+			logFatal(err)
 		}
 
 		pk, err := ks.GetPrivate(keyToUse)
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
 
 		fromAddr, _, err := ks.GetAddrs(keyToUse)
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
 
 		nonce, err := PoolsSDK.Query().ChainGetNonce(cmd.Context(), fromAddr)
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
 
@@ -87,17 +102,21 @@ var forwardFIL = &cobra.Command{
 		case constants.CalibnetChainID:
 			filForwardAddr = deploy.TFilForwarder
 		default:
-			logFatal(errors.New("unsupported chain id for forward-fil command"))
+			err = errors.New("unsupported chain id for forward-fil command")
+			evt.Error = err.Error()
+			logFatal(err)
 		}
 
 		// get the FilForwarder contract address
 		filf, err := abigen.NewFilForwarderTransactor(filForwardAddr, ethClient)
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
 
 		auth, err := bind.NewKeyedTransactorWithChainID(pk, PoolsSDK.Query().ChainID())
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
 
@@ -106,8 +125,10 @@ var forwardFIL = &cobra.Command{
 
 		tx, err := filf.Forward(auth, to.Bytes())
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
+		evt.Tx = tx.Hash().String()
 		s.Stop()
 
 		fmt.Printf("Forward FIL transaction sent: %s\n", tx.Hash().Hex())
@@ -117,6 +138,7 @@ var forwardFIL = &cobra.Command{
 
 		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
 		if err != nil {
+			evt.Error = err.Error()
 			logFatal(err)
 		}
 
