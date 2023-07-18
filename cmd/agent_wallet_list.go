@@ -14,18 +14,18 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Lists the addresses associated with your owner, operator, and requester keys",
 	Run: func(cmd *cobra.Command, args []string) {
-		ks := util.KeyStore()
-		ownerEvm, ownerFevm, err := ks.GetAddrs(util.OwnerKey)
+		as := util.AgentStore()
+		ownerEvm, ownerFevm, err := as.GetAddrs(util.OwnerKey)
 		if err != nil {
 			logFatal(err)
 		}
 
-		operatorEvm, operatorFevm, err := ks.GetAddrs(util.OperatorKey)
+		operatorEvm, operatorFevm, err := as.GetAddrs(util.OperatorKey)
 		if err != nil {
 			logFatal(err)
 		}
 
-		requestEvm, requestFevm, err := ks.GetAddrs(util.RequestKey)
+		requestEvm, requestFevm, err := as.GetAddrs(util.RequestKey)
 		if err != nil {
 			logFatal(err)
 		}

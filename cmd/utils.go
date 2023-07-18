@@ -129,7 +129,7 @@ func parseAddress(ctx context.Context, addr string, lapi lotusapi.FullNode) (com
 
 func commonSetupOwnerCall() (common.Address, *ecdsa.PrivateKey, *ecdsa.PrivateKey, error) {
 	as := util.AgentStore()
-	ks := util.KeyStore()
+	ks := util.KeyStoreLegacy()
 	// Check if an agent already exists
 	agentAddrStr, err := as.Get("address")
 	if err != nil {
@@ -165,14 +165,14 @@ func commonSetupOwnerCall() (common.Address, *ecdsa.PrivateKey, *ecdsa.PrivateKe
 
 func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.PrivateKey, *ecdsa.PrivateKey, error) {
 	as := util.AgentStore()
-	ks := util.KeyStore()
+	ks := util.KeyStoreLegacy()
 
-	opEvm, opFevm, err := ks.GetAddrs(util.OperatorKey)
+	opEvm, opFevm, err := as.GetAddrs(util.OperatorKey)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
 
-	owEvm, owFevm, err := ks.GetAddrs(util.OwnerKey)
+	owEvm, owFevm, err := as.GetAddrs(util.OwnerKey)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}

@@ -6,11 +6,18 @@ import (
 	"math/big"
 	"strconv"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/filecoin-project/go-address"
+	"github.com/filecoin-project/lotus/chain/types/ethtypes"
 	"github.com/glifio/go-pools/types"
 )
 
+type KeyType string
+
 const (
+	OwnerKey          KeyType = "owner"
+	OperatorKey       KeyType = "operator"
+	RequestKey        KeyType = "request"
 	OperatorKeyFunded KeyType = "opkeyf"
 	OwnerKeyFunded    KeyType = "ownkeyf"
 )
@@ -27,9 +34,12 @@ func AgentStore() *AgentStorage {
 
 func NewAgentStore(filename string) error {
 	agentDefault := map[string]string{
-		"id":      "",
-		"address": "",
-		"tx":      "",
+		"id":          "",
+		"address":     "",
+		"tx":          "",
+		"owner":       "",
+		"operator":    "",
+		"request-key": "",
 	}
 
 	s, err := NewStorage(filename, agentDefault)
@@ -81,4 +91,29 @@ func (a *AgentStorage) SetFunded(keytype KeyType, key string, funded bool) error
 
 func mapkey(keytype KeyType, key string) string {
 	return fmt.Sprintf("%s-%s", string(keytype), key)
+}
+
+func (a *AgentStorage) GetAddrs(key KeyType) (common.Address, address.Address, error) {
+	agentkey := string(key)
+	if agentkey == "request" {
+		agentkey = "request-key"
+	}
+
+	evmAddress := common.HexToAddress(a.data[agentkey])
+
+	delegated, err := DelegatedFromEthAddr(evmAddress)
+	if err != nil {
+		return evmAddress, address.Address{}, err
+	}
+
+	return evmAddress, delegated, nil
+}
+
+func DelegatedFromEthAddr(addr common.Address) (address.Address, error) {
+	fevmAddr, err := ethtypes.ParseEthAddress(addr.String())
+	if err != nil {
+		return address.Address{}, err
+	}
+
+	return fevmAddr.ToFilecoinAddress()
 }

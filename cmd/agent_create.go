@@ -18,7 +18,7 @@ var createCmd = &cobra.Command{
 	Short: "Create a Glif agent",
 	Long:  `Spins up a new Agent contract through the Agent Factory, passing the owner, operator, and requestor addresses.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		ks := util.KeyStore()
+		ks := util.KeyStoreLegacy()
 		as := util.AgentStore()
 
 		// Check if an agent already exists
@@ -30,17 +30,17 @@ var createCmd = &cobra.Command{
 			logFatalf("Agent already exists: %s", addressStr)
 		}
 
-		ownerAddr, _, err := ks.GetAddrs(util.OwnerKey)
+		ownerAddr, _, err := as.GetAddrs(util.OwnerKey)
 		if err != nil {
 			logFatal(err)
 		}
 
-		operatorAddr, _, err := ks.GetAddrs(util.OperatorKey)
+		operatorAddr, _, err := as.GetAddrs(util.OperatorKey)
 		if err != nil {
 			logFatal(err)
 		}
 
-		requestAddr, _, err := ks.GetAddrs(util.RequestKey)
+		requestAddr, _, err := as.GetAddrs(util.RequestKey)
 		if err != nil {
 			logFatal(err)
 		}

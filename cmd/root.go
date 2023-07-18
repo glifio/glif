@@ -101,7 +101,9 @@ func initConfig() {
 		logFatal(err)
 	}
 
-	if err := util.NewKeyStore(fmt.Sprintf("%s/keys.toml", cfgDir)); err != nil {
+	util.NewKeyStore(fmt.Sprintf("%s/keystore", cfgDir))
+
+	if err := util.NewKeyStoreLegacy(fmt.Sprintf("%s/keys.toml", cfgDir)); err != nil {
 		logFatal(err)
 	}
 
