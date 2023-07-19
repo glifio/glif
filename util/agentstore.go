@@ -17,7 +17,7 @@ type KeyType string
 const (
 	OwnerKey          KeyType = "owner"
 	OperatorKey       KeyType = "operator"
-	RequestKey        KeyType = "request"
+	RequestKey        KeyType = "request-key"
 	OperatorKeyFunded KeyType = "opkeyf"
 	OwnerKeyFunded    KeyType = "ownkeyf"
 )
@@ -94,12 +94,7 @@ func mapkey(keytype KeyType, key string) string {
 }
 
 func (a *AgentStorage) GetAddrs(key KeyType) (common.Address, address.Address, error) {
-	agentkey := string(key)
-	if agentkey == "request" {
-		agentkey = "request-key"
-	}
-
-	evmAddress := common.HexToAddress(a.data[agentkey])
+	evmAddress := common.HexToAddress(a.data[string(key)])
 
 	delegated, err := DelegatedFromEthAddr(evmAddress)
 	if err != nil {
