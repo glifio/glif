@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/glifio/cli/util"
 	"github.com/spf13/cobra"
 )
@@ -18,8 +19,9 @@ var createCmd = &cobra.Command{
 	Short: "Create a Glif agent",
 	Long:  `Spins up a new Agent contract through the Agent Factory, passing the owner, operator, and requestor addresses.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		ks := util.KeyStoreLegacy()
 		as := util.AgentStore()
+		ks := util.KeyStore()
+		wallet := ks.Wallets()[0]
 
 		// Check if an agent already exists
 		addressStr, err := as.Get("address")
@@ -45,13 +47,14 @@ var createCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		if util.IsZeroAddress(ownerAddr) || util.IsZeroAddress(operatorAddr) || util.IsZeroAddress(requestAddr) {
-			logFatal("Keys not found. Please check your `keys.toml` file")
+		account := accounts.Account{
+			Address: ownerAddr,
 		}
 
-		pk, err := ks.GetPrivate(util.OwnerKey)
-		if err != nil {
-			logFatal(err)
+		passphrase := ""
+
+		if util.IsZeroAddress(ownerAddr) || util.IsZeroAddress(operatorAddr) || util.IsZeroAddress(requestAddr) {
+			logFatal("Keys not found. Please check your `keys.toml` file")
 		}
 
 		fmt.Printf("Creating agent, owner %s, operator %s, request %s", ownerAddr, operatorAddr, requestAddr)
@@ -61,7 +64,15 @@ var createCmd = &cobra.Command{
 		defer s.Stop()
 
 		// submit the agent create transaction
-		tx, err := PoolsSDK.Act().AgentCreate(cmd.Context(), ownerAddr, operatorAddr, requestAddr, pk)
+		tx, err := PoolsSDK.Act().AgentCreate(
+			cmd.Context(),
+			ownerAddr,
+			operatorAddr,
+			requestAddr,
+			wallet,
+			account,
+			passphrase,
+		)
 		if err != nil {
 			logFatalf("pools sdk: agent create: %s", err)
 		}
