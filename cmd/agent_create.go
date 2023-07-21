@@ -20,9 +20,11 @@ var createCmd = &cobra.Command{
 	Long:  `Spins up a new Agent contract through the Agent Factory, passing the owner, operator, and requestor addresses.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		as := util.AgentStore()
-		ks := util.KeyStore()
 		ksLegacy := util.KeyStoreLegacy()
-		wallet := ks.Wallets()[0]
+		ks := util.KeyStore()
+		backends := []accounts.Backend{}
+		backends = append(backends, ks)
+		manager := accounts.NewManager(&accounts.Config{InsecureUnlockAllowed: false}, backends...)
 
 		// Check if an agent already exists
 		addressStr, err := as.Get("address")
@@ -50,6 +52,10 @@ var createCmd = &cobra.Command{
 
 		account := accounts.Account{Address: ownerAddr}
 		passphrase := ""
+		wallet, err := manager.Find(account)
+		if err != nil {
+			logFatal(err)
+		}
 
 		if util.IsZeroAddress(ownerAddr) || util.IsZeroAddress(operatorAddr) || util.IsZeroAddress(requestAddr) {
 			logFatal("Keys not found. Please check your `keys.toml` file")

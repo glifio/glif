@@ -9,10 +9,8 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/filecoin-project/go-address"
 	"github.com/glifio/cli/events"
-	"github.com/glifio/cli/util"
 	"github.com/glifio/go-pools/constants"
 	"github.com/spf13/cobra"
 )
@@ -30,7 +28,7 @@ var addCmd = &cobra.Command{
 			previewAction(cmd, args, constants.MethodAddMiner)
 			return
 		}
-		agentAddr, ownerAddr, requesterKey, err := commonSetupOwnerCall()
+		agentAddr, ownerWallet, ownerAccount, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
 			logFatal(err)
 		}
@@ -54,9 +52,6 @@ var addCmd = &cobra.Command{
 		defer journal.Close()
 		defer journal.RecordEvent(addminerevt, func() interface{} { return evt })
 
-		ks := util.KeyStore()
-		ownerWallet := ks.Wallets()[0]
-		ownerAccount := accounts.Account{Address: ownerAddr}
 		ownerPassphrase := ""
 
 		tx, err := PoolsSDK.Act().AgentAddMiner(
