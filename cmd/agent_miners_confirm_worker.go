@@ -21,7 +21,7 @@ var confirmWorker = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, ownerKey, _, err := commonSetupOwnerCall()
+		agentAddr, ownerKey, _, err := commonSetupOwnerCall_old()
 		if err != nil {
 			logFatal(err)
 		}

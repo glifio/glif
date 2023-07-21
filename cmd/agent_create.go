@@ -47,10 +47,7 @@ var createCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		account := accounts.Account{
-			Address: ownerAddr,
-		}
-
+		account := accounts.Account{Address: ownerAddr}
 		passphrase := ""
 
 		if util.IsZeroAddress(ownerAddr) || util.IsZeroAddress(operatorAddr) || util.IsZeroAddress(requestAddr) {

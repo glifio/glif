@@ -27,7 +27,7 @@ var withdrawCmd = &cobra.Command{
 			return
 		}
 
-		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall()
+		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall_old()
 		if err != nil {
 			logFatal(err)
 		}

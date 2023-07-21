@@ -127,40 +127,41 @@ func parseAddress(ctx context.Context, addr string, lapi lotusapi.FullNode) (com
 	return common.HexToAddress(ethAddr.String()), nil
 }
 
-func commonSetupOwnerCall() (common.Address, *ecdsa.PrivateKey, *ecdsa.PrivateKey, error) {
+func commonSetupOwnerCall_old() (common.Address, *ecdsa.PrivateKey, *ecdsa.PrivateKey, error) {
+	return common.Address{}, nil, nil, errors.New("FIXME: Migrate to new method")
+}
+
+func commonSetupOwnerCall() (common.Address, common.Address, *ecdsa.PrivateKey, error) {
 	as := util.AgentStore()
 	ks := util.KeyStoreLegacy()
+
 	// Check if an agent already exists
 	agentAddrStr, err := as.Get("address")
 	if err != nil {
-		return common.Address{}, nil, nil, err
+		return common.Address{}, common.Address{}, nil, err
 	}
 
 	if agentAddrStr == "" {
-		return common.Address{}, nil, nil, errors.New("No agent found. Did you forget to create one?")
+		return common.Address{}, common.Address{}, nil, errors.New("No agent found. Did you forget to create one?")
 	}
 
 	agentAddr := common.HexToAddress(agentAddrStr)
 
-	pk, err := ks.GetPrivate(util.OwnerKey)
+	ownerAddr, _, err := as.GetAddrs(util.OwnerKey)
 	if err != nil {
-		return common.Address{}, nil, nil, err
-	}
-
-	if pk == nil {
-		return common.Address{}, nil, nil, errors.New("Owner key not found. Please check your `keys.toml` file.")
+		return common.Address{}, common.Address{}, nil, err
 	}
 
 	requesterKey, err := ks.GetPrivate(util.RequestKey)
 	if err != nil {
-		return common.Address{}, nil, nil, err
+		return common.Address{}, common.Address{}, nil, err
 	}
 
-	if pk == nil {
-		return common.Address{}, nil, nil, errors.New("Requester key not found. Please check your `keys.toml` file.")
+	if requesterKey == nil {
+		return common.Address{}, common.Address{}, nil, errors.New("Requester key not found. Please check your `keys.toml` file.")
 	}
 
-	return agentAddr, pk, requesterKey, nil
+	return agentAddr, ownerAddr, requesterKey, nil
 }
 
 func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.PrivateKey, *ecdsa.PrivateKey, error) {
