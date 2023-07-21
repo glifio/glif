@@ -28,7 +28,7 @@ var addCmd = &cobra.Command{
 			previewAction(cmd, args, constants.MethodAddMiner)
 			return
 		}
-		agentAddr, ownerWallet, ownerAccount, requesterKey, err := commonSetupOwnerCall()
+		agentAddr, ownerWallet, ownerAccount, ownerPassphrase, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
 			logFatal(err)
 		}
@@ -51,8 +51,6 @@ var addCmd = &cobra.Command{
 		}
 		defer journal.Close()
 		defer journal.RecordEvent(addminerevt, func() interface{} { return evt })
-
-		ownerPassphrase := ""
 
 		tx, err := PoolsSDK.Act().AgentAddMiner(
 			cmd.Context(),

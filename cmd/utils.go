@@ -132,7 +132,7 @@ func commonSetupOwnerCall_old() (common.Address, *ecdsa.PrivateKey, *ecdsa.Priva
 	return common.Address{}, nil, nil, errors.New("FIXME: Migrate to new method")
 }
 
-func commonSetupOwnerCall() (agentAddr common.Address, ownerWallet accounts.Wallet, ownerAccount accounts.Account, requesterKey *ecdsa.PrivateKey, err error) {
+func commonSetupOwnerCall() (agentAddr common.Address, ownerWallet accounts.Wallet, ownerAccount accounts.Account, ownerPassphrase string, requesterKey *ecdsa.PrivateKey, err error) {
 	as := util.AgentStore()
 	ksLegacy := util.KeyStoreLegacy()
 	ks := util.KeyStore()
@@ -143,35 +143,37 @@ func commonSetupOwnerCall() (agentAddr common.Address, ownerWallet accounts.Wall
 	// Check if an agent already exists
 	agentAddrStr, err := as.Get("address")
 	if err != nil {
-		return common.Address{}, nil, accounts.Account{}, nil, err
+		return common.Address{}, nil, accounts.Account{}, "", nil, err
 	}
 
 	if agentAddrStr == "" {
-		return common.Address{}, nil, accounts.Account{}, nil, errors.New("No agent found. Did you forget to create one?")
+		return common.Address{}, nil, accounts.Account{}, "", nil, errors.New("No agent found. Did you forget to create one?")
 	}
 
 	agentAddr = common.HexToAddress(agentAddrStr)
 
 	ownerAddr, _, err := as.GetAddrs(util.OwnerKey)
 	if err != nil {
-		return common.Address{}, nil, accounts.Account{}, nil, err
+		return common.Address{}, nil, accounts.Account{}, "", nil, err
 	}
 	ownerAccount = accounts.Account{Address: ownerAddr}
 	ownerWallet, err = manager.Find(ownerAccount)
 	if err != nil {
-		return common.Address{}, nil, accounts.Account{}, nil, err
+		return common.Address{}, nil, accounts.Account{}, "", nil, err
 	}
 
 	requesterKey, err = ksLegacy.GetPrivate(util.RequestKey)
 	if err != nil {
-		return common.Address{}, nil, accounts.Account{}, nil, err
+		return common.Address{}, nil, accounts.Account{}, "", nil, err
 	}
 
 	if requesterKey == nil {
-		return common.Address{}, nil, accounts.Account{}, nil, errors.New("Requester key not found. Please check your `keys.toml` file.")
+		return common.Address{}, nil, accounts.Account{}, "", nil, errors.New("Requester key not found. Please check your `keys.toml` file.")
 	}
 
-	return agentAddr, ownerWallet, ownerAccount, requesterKey, nil
+	ownerPassphrase = "" // FIXME, prompt or get from environment
+
+	return agentAddr, ownerWallet, ownerAccount, ownerPassphrase, requesterKey, nil
 }
 
 func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.PrivateKey, *ecdsa.PrivateKey, error) {

@@ -29,7 +29,7 @@ var borrowCmd = &cobra.Command{
 			return
 		}
 
-		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall_old()
+		agentAddr, ownerWallet, ownerAccount, ownerPassphrase, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
 			logFatal(err)
 		}
@@ -65,7 +65,7 @@ var borrowCmd = &cobra.Command{
 		defer journal.Close()
 		defer journal.RecordEvent(borrowevt, func() interface{} { return evt })
 
-		tx, err := PoolsSDK.Act().AgentBorrow(cmd.Context(), agentAddr, poolID, amount, ownerKey, requesterKey)
+		tx, err := PoolsSDK.Act().AgentBorrow(cmd.Context(), agentAddr, poolID, amount, ownerWallet, ownerAccount, ownerPassphrase, requesterKey)
 		if err != nil {
 			evt.Error = err.Error()
 			logFatal(err)
