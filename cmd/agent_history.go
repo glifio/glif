@@ -8,7 +8,7 @@ import (
 
 var historyCmd = &cobra.Command{
 	Use:   "history",
-	Short: "View actions that the agent has taken",
+	Short: "View actions that are in the audit log",
 	Run: func(cmd *cobra.Command, args []string) {
 		// read journal json file
 		// parse njson into chronologically ordered slice
