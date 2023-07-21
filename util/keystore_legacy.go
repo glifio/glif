@@ -54,6 +54,24 @@ func (s *KeyStorageLegacy) GetPrivate(key KeyType) (*ecdsa.PrivateKey, error) {
 	return pkECDSA, nil
 }
 
+func (s *KeyStorageLegacy) GetAddrs(key KeyType) (common.Address, address.Address, error) {
+	pk, ok := s.data[string(key)]
+	if !ok {
+		return common.Address{}, address.Address{}, nil
+	}
+
+	if pk == "" {
+		return common.Address{}, address.Address{}, nil
+	}
+
+	pkECDSA, err := crypto.HexToECDSA(pk)
+	if err != nil {
+		return common.Address{}, address.Address{}, err
+	}
+
+	return DeriveAddrFromPk(pkECDSA)
+}
+
 func (s *KeyStorageLegacy) SetKey(key KeyType, pk *ecdsa.PrivateKey) error {
 	pkStr := hexutil.Encode(crypto.FromECDSA(pk))[2:]
 	err := s.Set(string(key), pkStr)

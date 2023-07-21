@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/glifio/cli/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -31,17 +32,10 @@ var newCmd = &cobra.Command{
 
 		as := util.AgentStore()
 		ks := util.KeyStore()
+		ksLegacy := util.KeyStoreLegacy()
 
-		/*
-			ownerAddr, ownerDelAddr, err := ks.GetAddrs(util.OwnerKey)
-			panicIfKeyExists(util.OwnerKey, ownerAddr, err)
-
-			operatorAddr, operatorDelAddr, err := ks.GetAddrs(util.OperatorKey)
-			panicIfKeyExists(util.OperatorKey, operatorAddr, err)
-
-			requestAddr, requestDelAddr, err := ks.GetAddrs(util.RequestKey)
-			panicIfKeyExists(util.RequestKey, requestAddr, err)
-		*/
+		requestAddr, requestDelAddr, err := ksLegacy.GetAddrs(util.RequestKey)
+		panicIfKeyExists(util.RequestKey, requestAddr, err)
 
 		owner, err := ks.NewAccount("")
 		if err != nil {
@@ -53,43 +47,17 @@ var newCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		requester, err := ks.NewAccount("")
+		requestPrivateKey, err := crypto.GenerateKey()
 		if err != nil {
 			logFatal(err)
 		}
-		as.Set("owner", owner.Address.String())
-		as.Set("operator", operator.Address.String())
-		as.Set("request-key", requester.Address.String())
 
-		/*
-			// Create the Ethereum private key
-			ownerPrivateKey, err := crypto.GenerateKey()
-			if err != nil {
-				logFatal(err)
-			}
+		as.Set(string(util.OwnerKey), owner.Address.String())
+		as.Set(string(util.OperatorKey), operator.Address.String())
 
-			operatorPrivateKey, err := crypto.GenerateKey()
-			if err != nil {
-				logFatal(err)
-			}
-
-			requestPrivateKey, err := crypto.GenerateKey()
-			if err != nil {
-				logFatal(err)
-			}
-
-			if err := ks.SetKey(util.OwnerKey, ownerPrivateKey); err != nil {
-				logFatal(err)
-			}
-
-			if err := ks.SetKey(util.OperatorKey, operatorPrivateKey); err != nil {
-				logFatal(err)
-			}
-
-			if err := ks.SetKey(util.RequestKey, requestPrivateKey); err != nil {
-				logFatal(err)
-			}
-		*/
+		if err := ksLegacy.SetKey(util.RequestKey, requestPrivateKey); err != nil {
+			logFatal(err)
+		}
 
 		if err := viper.WriteConfig(); err != nil {
 			logFatal(err)
@@ -103,7 +71,7 @@ var newCmd = &cobra.Command{
 		if err != nil {
 			logFatal(err)
 		}
-		requestAddr, requestDelAddr, err := as.GetAddrs(util.RequestKey)
+		requestAddr, requestDelAddr, err = ksLegacy.GetAddrs(util.RequestKey)
 		if err != nil {
 			logFatal(err)
 		}

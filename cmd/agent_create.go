@@ -21,6 +21,7 @@ var createCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		as := util.AgentStore()
 		ks := util.KeyStore()
+		ksLegacy := util.KeyStoreLegacy()
 		wallet := ks.Wallets()[0]
 
 		// Check if an agent already exists
@@ -42,7 +43,7 @@ var createCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		requestAddr, _, err := as.GetAddrs(util.RequestKey)
+		requestAddr, _, err := ksLegacy.GetAddrs(util.RequestKey)
 		if err != nil {
 			logFatal(err)
 		}

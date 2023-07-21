@@ -17,7 +17,7 @@ type KeyType string
 const (
 	OwnerKey          KeyType = "owner"
 	OperatorKey       KeyType = "operator"
-	RequestKey        KeyType = "request-key"
+	RequestKey        KeyType = "request"
 	OperatorKeyFunded KeyType = "opkeyf"
 	OwnerKeyFunded    KeyType = "ownkeyf"
 )
@@ -34,12 +34,11 @@ func AgentStore() *AgentStorage {
 
 func NewAgentStore(filename string) error {
 	agentDefault := map[string]string{
-		"id":          "",
-		"address":     "",
-		"tx":          "",
-		"owner":       "",
-		"operator":    "",
-		"request-key": "",
+		"id":                "",
+		"address":           "",
+		"tx":                "",
+		string(OwnerKey):    "",
+		string(OperatorKey): "",
 	}
 
 	s, err := NewStorage(filename, agentDefault)
