@@ -88,3 +88,10 @@ type AgentExit struct {
 	PoolID  string `json:"pool_id"`
 	Amount  string `json:"amount"`
 }
+
+type WalletFILForward struct {
+	evtCommon
+	From   string `json:"from,omitempty"`
+	To     string `json:"to,omitempty"`
+	Amount string `json:"amount,omitempty"`
+}
