@@ -18,7 +18,7 @@ var exitCmd = &cobra.Command{
 	Short: "Exits from the Infinity Pool",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
+		agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup_old(cmd)
 		if err != nil {
 			logFatal(err)
 		}

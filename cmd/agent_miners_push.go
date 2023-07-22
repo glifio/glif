@@ -17,7 +17,7 @@ var pushFundsCmd = &cobra.Command{
 	Short: "Push FIL from the Glif Agent to a specific Miner ID",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
+		agentAddr, senderWallet, senderAccount, senderPassphrase, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
 		if err != nil {
 			logFatal(err)
 		}
@@ -45,7 +45,7 @@ var pushFundsCmd = &cobra.Command{
 		defer journal.Close()
 		defer journal.RecordEvent(pushevt, func() interface{} { return evt })
 
-		tx, err := PoolsSDK.Act().AgentPushFunds(cmd.Context(), agentAddr, amount, minerAddr, senderKey, requesterKey)
+		tx, err := PoolsSDK.Act().AgentPushFunds(cmd.Context(), agentAddr, amount, minerAddr, senderWallet, senderAccount, senderPassphrase, requesterKey)
 		if err != nil {
 			evt.Error = err.Error()
 			logFatal(err)

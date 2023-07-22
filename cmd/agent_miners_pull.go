@@ -18,7 +18,7 @@ var pullFundsCmd = &cobra.Command{
 	Short: "Pull FIL from a miner into your Glif Agent",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
+		agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup_old(cmd)
 		if err != nil {
 			logFatal(err)
 		}

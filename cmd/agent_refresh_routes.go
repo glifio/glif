@@ -13,7 +13,7 @@ var refreshRoutesCmd = &cobra.Command{
 	Short: "Update cached routes on your Agent",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, pk, _, err := commonOwnerOrOperatorSetup(cmd)
+		agentAddr, pk, _, err := commonOwnerOrOperatorSetup_old(cmd)
 		if err != nil {
 			logFatal(err)
 		}

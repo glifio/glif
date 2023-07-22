@@ -176,68 +176,83 @@ func commonSetupOwnerCall() (agentAddr common.Address, ownerWallet accounts.Wall
 	return agentAddr, ownerWallet, ownerAccount, ownerPassphrase, requesterKey, nil
 }
 
-func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.PrivateKey, *ecdsa.PrivateKey, error) {
+func commonOwnerOrOperatorSetup_old(cmd *cobra.Command) (common.Address, *ecdsa.PrivateKey, *ecdsa.PrivateKey, error) {
+	return common.Address{}, nil, nil, errors.New("FIXME: Migrate to new method")
+}
+
+func commonOwnerOrOperatorSetup(cmd *cobra.Command) (agentAddr common.Address, wallet accounts.Wallet, account accounts.Account, passphrase string, requesterKey *ecdsa.PrivateKey, err error) {
 	as := util.AgentStore()
-	ks := util.KeyStoreLegacy()
+	ksLegacy := util.KeyStoreLegacy()
+	ks := util.KeyStore()
+	backends := []accounts.Backend{}
+	backends = append(backends, ks)
+	manager := accounts.NewManager(&accounts.Config{InsecureUnlockAllowed: false}, backends...)
 
 	opEvm, opFevm, err := as.GetAddrs(util.OperatorKey)
 	if err != nil {
-		return common.Address{}, nil, nil, err
+		return common.Address{}, nil, accounts.Account{}, "", nil, err
 	}
 
 	owEvm, owFevm, err := as.GetAddrs(util.OwnerKey)
 	if err != nil {
-		return common.Address{}, nil, nil, err
+		return common.Address{}, nil, accounts.Account{}, "", nil, err
 	}
 
-	var pk *ecdsa.PrivateKey
+	var fromAddress common.Address
 	// if no flag was passed, we just use the operator address by default
 	from := cmd.Flag("from").Value.String()
 	switch from {
 	case "", opEvm.String(), opFevm.String():
 		funded, err := as.IsFunded(cmd.Context(), PoolsSDK, opFevm, util.OperatorKeyFunded, opEvm.String())
 		if err != nil {
-			return common.Address{}, nil, nil, err
+			return common.Address{}, nil, accounts.Account{}, "", nil, err
 		}
 		if funded {
-			pk, err = ks.GetPrivate(util.OperatorKey)
+			fromAddress = opEvm
 		} else {
 			log.Println("operator not funded, falling back to owner address")
-			pk, err = ks.GetPrivate(util.OwnerKey)
+			fromAddress = owEvm
 		}
 		if err != nil {
-			return common.Address{}, nil, nil, err
+			return common.Address{}, nil, accounts.Account{}, "", nil, err
 		}
 	case owEvm.String(), owFevm.String():
-		pk, err = ks.GetPrivate(util.OwnerKey)
+		fromAddress = owEvm
 	default:
-		return common.Address{}, nil, nil, errors.New("invalid from address")
+		return common.Address{}, nil, accounts.Account{}, "", nil, errors.New("invalid from address")
 	}
 	if err != nil {
-		return common.Address{}, nil, nil, err
+		return common.Address{}, nil, accounts.Account{}, "", nil, err
 	}
 
 	agentAddrStr, err := as.Get("address")
 	if err != nil {
-		return common.Address{}, nil, nil, err
+		return common.Address{}, nil, accounts.Account{}, "", nil, err
 	}
 
 	if agentAddrStr == "" {
-		return common.Address{}, nil, nil, errors.New("No agent found. Did you forget to create one?")
+		return common.Address{}, nil, accounts.Account{}, "", nil, errors.New("No agent found. Did you forget to create one?")
 	}
 
-	agentAddr := common.HexToAddress(agentAddrStr)
+	agentAddr = common.HexToAddress(agentAddrStr)
 
-	requesterKey, err := ks.GetPrivate(util.RequestKey)
+	account = accounts.Account{Address: fromAddress}
+	wallet, err = manager.Find(account)
 	if err != nil {
-		return common.Address{}, nil, nil, err
+		return common.Address{}, nil, accounts.Account{}, "", nil, err
+	}
+	passphrase = ""
+
+	requesterKey, err = ksLegacy.GetPrivate(util.RequestKey)
+	if err != nil {
+		return common.Address{}, nil, accounts.Account{}, "", nil, err
 	}
 
-	if pk == nil {
-		return common.Address{}, nil, nil, errors.New("Requester key not found. Please check your `keys.toml` file.")
+	if requesterKey == nil {
+		return common.Address{}, nil, accounts.Account{}, "", nil, errors.New("Requester key not found. Please check your `keys.toml` file.")
 	}
 
-	return agentAddr, pk, requesterKey, nil
+	return agentAddr, wallet, account, passphrase, requesterKey, nil
 }
 
 type PoolType uint64

@@ -18,7 +18,7 @@ var depositFILCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		_, pk, _, err := commonOwnerOrOperatorSetup(cmd)
+		_, pk, _, err := commonOwnerOrOperatorSetup_old(cmd)
 		if err != nil {
 			logFatal(err)
 		}
