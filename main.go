@@ -22,6 +22,8 @@ import (
 )
 
 func main() {
-	defer os.Exit(cmd.ExitCode)
+	defer func() {
+		os.Exit(cmd.ExitCode)
+	}()
 	cmd.Execute()
 }
