@@ -29,7 +29,7 @@ var rmCmd = &cobra.Command{
 			return
 		}
 
-		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall_old()
+		agentAddr, ownerWallet, ownerAccount, ownerPassphrase, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
 			logFatal(err)
 		}
@@ -63,7 +63,7 @@ var rmCmd = &cobra.Command{
 
 		fmt.Printf("Removing miner %s from agent %s by changing its owner address to %s\n", minerAddr, agentAddr, newMinerOwnerAddr)
 
-		tx, err := PoolsSDK.Act().AgentRemoveMiner(cmd.Context(), agentAddr, minerAddr, newMinerOwnerAddr, ownerKey, requesterKey)
+		tx, err := PoolsSDK.Act().AgentRemoveMiner(cmd.Context(), agentAddr, minerAddr, newMinerOwnerAddr, ownerWallet, ownerAccount, ownerPassphrase, requesterKey)
 		if err != nil {
 			evt.Error = err.Error()
 			logFatal(err)
