@@ -21,7 +21,7 @@ var confirmWorker = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, ownerKey, _, err := commonSetupOwnerCall_old()
+		agentAddr, ownerWallet, ownerAccount, ownerPassphrase, _, err := commonSetupOwnerCall()
 		if err != nil {
 			logFatal(err)
 		}
@@ -45,7 +45,7 @@ var confirmWorker = &cobra.Command{
 		defer journal.Close()
 		defer journal.RecordEvent(confirmworkerevt, func() interface{} { return evt })
 
-		tx, err := PoolsSDK.Act().AgentConfirmMinerWorkerChange(cmd.Context(), agentAddr, minerAddr, ownerKey)
+		tx, err := PoolsSDK.Act().AgentConfirmMinerWorkerChange(cmd.Context(), agentAddr, minerAddr, ownerWallet, ownerAccount, ownerPassphrase)
 		if err != nil {
 			evt.Error = err.Error()
 			logFatal(err)
