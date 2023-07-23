@@ -21,7 +21,7 @@ var changeWorkerCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.RangeArgs(2, 5),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, ownerKey, _, err := commonSetupOwnerCall_old()
+		agentAddr, ownerWallet, ownerAccount, ownerPassphrase, _, err := commonSetupOwnerCall()
 		if err != nil {
 			logFatal(err)
 		}
@@ -65,7 +65,7 @@ var changeWorkerCmd = &cobra.Command{
 		defer journal.Close()
 		defer journal.RecordEvent(changeworkerevt, func() interface{} { return evt })
 
-		tx, err := PoolsSDK.Act().AgentChangeMinerWorker(cmd.Context(), agentAddr, minerAddr, workerAddr, controlAddrs, ownerKey)
+		tx, err := PoolsSDK.Act().AgentChangeMinerWorker(cmd.Context(), agentAddr, minerAddr, workerAddr, controlAddrs, ownerWallet, ownerAccount, ownerPassphrase)
 		if err != nil {
 			evt.Error = err.Error()
 			logFatalf("tx error: %s", err)
