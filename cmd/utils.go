@@ -128,10 +128,6 @@ func parseAddress(ctx context.Context, addr string, lapi lotusapi.FullNode) (com
 	return common.HexToAddress(ethAddr.String()), nil
 }
 
-func commonSetupOwnerCall_old() (common.Address, *ecdsa.PrivateKey, *ecdsa.PrivateKey, error) {
-	return common.Address{}, nil, nil, errors.New("FIXME: Migrate to new method")
-}
-
 func commonSetupOwnerCall() (agentAddr common.Address, ownerWallet accounts.Wallet, ownerAccount accounts.Account, ownerPassphrase string, requesterKey *ecdsa.PrivateKey, err error) {
 	as := util.AgentStore()
 	ksLegacy := util.KeyStoreLegacy()
