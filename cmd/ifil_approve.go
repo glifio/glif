@@ -14,7 +14,7 @@ var iFILApproveCmd = &cobra.Command{
 	Short: "Approve another address to spend your iFIL",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		_, pk, _, err := commonOwnerOrOperatorSetup_old(cmd)
+		_, senderWallet, senderAccount, senderPassphrase, _, err := commonOwnerOrOperatorSetup(cmd)
 		if err != nil {
 			logFatal(err)
 		}
@@ -38,7 +38,7 @@ var iFILApproveCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().IFILApprove(cmd.Context(), addr, amt, pk)
+		tx, err := PoolsSDK.Act().IFILApprove(cmd.Context(), addr, amt, senderWallet, senderAccount, senderPassphrase)
 		if err != nil {
 			logFatalf("Failed to approve iFIL %s", err)
 		}
@@ -56,4 +56,5 @@ var iFILApproveCmd = &cobra.Command{
 
 func init() {
 	iFILCmd.AddCommand(iFILApproveCmd)
+	iFILApproveCmd.Flags().String("from", "", "address of the owner or operator of the agent")
 }

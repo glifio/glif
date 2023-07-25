@@ -172,10 +172,6 @@ func commonSetupOwnerCall() (agentAddr common.Address, ownerWallet accounts.Wall
 	return agentAddr, ownerWallet, ownerAccount, ownerPassphrase, requesterKey, nil
 }
 
-func commonOwnerOrOperatorSetup_old(cmd *cobra.Command) (common.Address, *ecdsa.PrivateKey, *ecdsa.PrivateKey, error) {
-	return common.Address{}, nil, nil, errors.New("FIXME: Migrate to new method")
-}
-
 func commonOwnerOrOperatorSetup(cmd *cobra.Command) (agentAddr common.Address, wallet accounts.Wallet, account accounts.Account, passphrase string, requesterKey *ecdsa.PrivateKey, err error) {
 	as := util.AgentStore()
 	ksLegacy := util.KeyStoreLegacy()
