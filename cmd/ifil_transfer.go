@@ -14,14 +14,14 @@ var iFILTransferCmd = &cobra.Command{
 	Short: "Transfer iFIL to another address",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		_, pk, _, err := commonOwnerOrOperatorSetup_old(cmd)
+		_, senderWallet, senderAccount, senderPassphrase, _, err := commonOwnerOrOperatorSetup(cmd)
 		if err != nil {
 			logFatal(err)
 		}
 
 		strAddr := args[0]
 		strAmt := args[1]
-		fmt.Printf("Transferring %s iFIL balance to %s...", strAmt, strAddr)
+		fmt.Printf("Transferring %s iFIL balance to %s...\n", strAmt, strAddr)
 
 		addr, err := ParseAddress(cmd.Context(), strAddr)
 		if err != nil {
@@ -38,7 +38,7 @@ var iFILTransferCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().IFILTransfer(cmd.Context(), addr, amt, pk)
+		tx, err := PoolsSDK.Act().IFILTransfer(cmd.Context(), addr, amt, senderWallet, senderAccount, senderPassphrase)
 		if err != nil {
 			logFatalf("Failed to transfer iFIL %s", err)
 		}
@@ -62,4 +62,5 @@ var iFILTransferCmd = &cobra.Command{
 
 func init() {
 	iFILCmd.AddCommand(iFILTransferCmd)
+	iFILTransferCmd.Flags().String("from", "", "address of the owner or operator of the agent")
 }
