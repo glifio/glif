@@ -190,7 +190,7 @@ func infoPoolInfo(ctx context.Context, agent common.Address, agentID *big.Int, s
 		return err
 	}
 
-	amountOwed, gcred, err := query.AgentOwes(ctx, agent)
+	amountOwed, _, err := query.AgentOwes(ctx, agent)
 	if err != nil {
 		return err
 	}
@@ -222,7 +222,6 @@ func infoPoolInfo(ctx context.Context, agent common.Address, agentID *big.Int, s
 			fmt.Println("No account exists with the Infinity Pool")
 		} else {
 			fmt.Printf("You currently owe: %.08f FIL on %.02f FIL borrowed\n", amountOwedFIL, principal)
-			fmt.Printf("Your current GCRED score is: %s\n", gcred)
 			fmt.Printf("Your account with the Infinity Pool opened at: %s\n", util.EpochHeightToTimestamp(account.StartEpoch, query.ChainID()).Format(time.RFC3339))
 
 			// check to see we're still in good standing wrt making our weekly payment
