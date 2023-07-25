@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/glifio/cli/util"
 	"github.com/spf13/cobra"
 )
 
@@ -18,15 +17,12 @@ var depositFILCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		_, pk, _, err := commonOwnerOrOperatorSetup_old(cmd)
+		_, senderWallet, senderAccount, senderPassphrase, _, err := commonOwnerOrOperatorSetup(cmd)
 		if err != nil {
 			logFatal(err)
 		}
 
-		receiver, err := util.DeriveAddressFromPk(pk)
-		if err != nil {
-			logFatal(err)
-		}
+		receiver := senderAccount.Address
 
 		amount, err := parseFILAmount(args[0])
 		if err != nil {
@@ -39,7 +35,7 @@ var depositFILCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().InfPoolDepositFIL(cmd.Context(), receiver, amount, pk)
+		tx, err := PoolsSDK.Act().InfPoolDepositFIL(cmd.Context(), receiver, amount, senderWallet, senderAccount, senderPassphrase)
 		if err != nil {
 			logFatal(err)
 		}
