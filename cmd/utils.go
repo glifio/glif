@@ -6,9 +6,11 @@ import (
 	"errors"
 	"log"
 	"math/big"
+	"os"
 	"runtime"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/filecoin-project/go-address"
@@ -167,7 +169,13 @@ func commonSetupOwnerCall() (agentAddr common.Address, ownerWallet accounts.Wall
 		return common.Address{}, nil, accounts.Account{}, "", nil, errors.New("Requester key not found. Please check your `keys.toml` file.")
 	}
 
-	ownerPassphrase = "" // FIXME, prompt or get from environment
+	ownerPassphrase, envSet := os.LookupEnv("GLIF_OWNER_PASSPHRASE")
+	if !envSet {
+		prompt := &survey.Password{
+			Message: "Owner key passphrase",
+		}
+		survey.AskOne(prompt, &ownerPassphrase)
+	}
 
 	return agentAddr, ownerWallet, ownerAccount, ownerPassphrase, requesterKey, nil
 }
