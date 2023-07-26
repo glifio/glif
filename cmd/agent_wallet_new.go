@@ -5,7 +5,9 @@ package cmd
 
 import (
 	"log"
+	"os"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/glifio/cli/util"
@@ -34,15 +36,23 @@ var newCmd = &cobra.Command{
 		ks := util.KeyStore()
 		ksLegacy := util.KeyStoreLegacy()
 
-		requestAddr, requestDelAddr, err := ksLegacy.GetAddrs(util.RequestKey)
+		requestAddr, _, err := ksLegacy.GetAddrs(util.RequestKey)
 		panicIfKeyExists(util.RequestKey, requestAddr, err)
 
-		owner, err := ks.NewAccount("")
+		ownerPassphrase, envSet := os.LookupEnv("GLIF_OWNER_PASSPHRASE")
+		if !envSet {
+			prompt := &survey.Password{
+				Message: "Please type a passphrase to encrypt your owner private key",
+			}
+			survey.AskOne(prompt, &ownerPassphrase)
+		}
+		owner, err := ks.NewAccount(ownerPassphrase)
 		if err != nil {
 			logFatal(err)
 		}
 
-		operator, err := ks.NewAccount("")
+		operatorPassphrase := os.Getenv("GLIF_OPERATOR_PASSPHRASE")
+		operator, err := ks.NewAccount(operatorPassphrase)
 		if err != nil {
 			logFatal(err)
 		}
@@ -71,7 +81,7 @@ var newCmd = &cobra.Command{
 		if err != nil {
 			logFatal(err)
 		}
-		requestAddr, requestDelAddr, err = ksLegacy.GetAddrs(util.RequestKey)
+		requestAddr, requestDelAddr, err := ksLegacy.GetAddrs(util.RequestKey)
 		if err != nil {
 			logFatal(err)
 		}

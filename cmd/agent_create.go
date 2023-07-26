@@ -5,8 +5,10 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"time"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/briandowns/spinner"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/glifio/cli/util"
@@ -51,7 +53,13 @@ var createCmd = &cobra.Command{
 		}
 
 		account := accounts.Account{Address: ownerAddr}
-		passphrase := ""
+		passphrase, envSet := os.LookupEnv("GLIF_OWNER_PASSPHRASE")
+		if !envSet {
+			prompt := &survey.Password{
+				Message: "Owner key passphrase",
+			}
+			survey.AskOne(prompt, &passphrase)
+		}
 		wallet, err := manager.Find(account)
 		if err != nil {
 			logFatal(err)
