@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"errors"
+	"fmt"
 	"log"
 	"math/big"
 	"os"
@@ -164,10 +165,16 @@ func commonSetupOwnerCall() (agentAddr common.Address, ownerWallet accounts.Wall
 
 	ownerPassphrase, envSet := os.LookupEnv("GLIF_OWNER_PASSPHRASE")
 	if !envSet {
-		prompt := &survey.Password{
-			Message: "Owner key passphrase",
+		err = ks.Unlock(ownerAccount, "")
+		if err != nil {
+			prompt := &survey.Password{
+				Message: "Owner key passphrase",
+			}
+			survey.AskOne(prompt, &ownerPassphrase)
+			if ownerPassphrase == "" {
+				return common.Address{}, nil, accounts.Account{}, "", nil, fmt.Errorf("Aborted")
+			}
 		}
-		survey.AskOne(prompt, &ownerPassphrase)
 	}
 
 	return agentAddr, ownerWallet, ownerAccount, ownerPassphrase, requesterKey, nil
@@ -228,7 +235,26 @@ func commonOwnerOrOperatorSetup(cmd *cobra.Command) (agentAddr common.Address, w
 	if err != nil {
 		return common.Address{}, nil, accounts.Account{}, "", nil, err
 	}
-	passphrase = ""
+
+	var envSet bool
+	var message string
+	if fromAddress == owEvm {
+		passphrase, envSet = os.LookupEnv("GLIF_OWNER_PASSPHRASE")
+		message = "Owner key passphrase"
+	} else if fromAddress == opEvm {
+		passphrase, envSet = os.LookupEnv("GLIF_OPERATOR_PASSPHRASE")
+		message = "Operator key passphrase"
+	}
+	if !envSet {
+		err = ks.Unlock(account, "")
+		if err != nil {
+			prompt := &survey.Password{Message: message}
+			survey.AskOne(prompt, &passphrase)
+			if passphrase == "" {
+				return common.Address{}, nil, accounts.Account{}, "", nil, fmt.Errorf("Aborted")
+			}
+		}
+	}
 
 	requesterKey, err = ksLegacy.GetPrivate(util.RequestKey)
 	if err != nil {
