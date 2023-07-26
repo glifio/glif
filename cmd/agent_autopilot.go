@@ -78,7 +78,7 @@ var agentAutopilotCmd = &cobra.Command{
 				var chainHeadHeight *big.Int
 				var account abigen.Account
 
-				agent, err := getAgentAddress(cmd)
+				agent, err := getAgentAddressWithFlags(cmd)
 				if err != nil {
 					log.Println(err)
 					goto SLEEP

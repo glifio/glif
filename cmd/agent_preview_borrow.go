@@ -21,7 +21,7 @@ var previewBorrowCmd = &cobra.Command{
 	Short: "Preview borrowing from the Infinity Pool",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, err := getAgentAddress(cmd)
+		agentAddr, err := getAgentAddressWithFlags(cmd)
 		if err != nil {
 			logFatal(err)
 		}

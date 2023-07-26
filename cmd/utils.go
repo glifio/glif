@@ -138,17 +138,10 @@ func commonSetupOwnerCall() (agentAddr common.Address, ownerWallet accounts.Wall
 	backends = append(backends, ks)
 	manager := accounts.NewManager(&accounts.Config{InsecureUnlockAllowed: false}, backends...)
 
-	// Check if an agent already exists
-	agentAddrStr, err := as.Get("address")
+	agentAddr, err = getAgentAddress()
 	if err != nil {
 		return common.Address{}, nil, accounts.Account{}, "", nil, err
 	}
-
-	if agentAddrStr == "" {
-		return common.Address{}, nil, accounts.Account{}, "", nil, errors.New("No agent found. Did you forget to create one?")
-	}
-
-	agentAddr = common.HexToAddress(agentAddrStr)
 
 	ownerAddr, _, err := as.GetAddrs(util.OwnerKey)
 	if err != nil {
@@ -225,16 +218,10 @@ func commonOwnerOrOperatorSetup(cmd *cobra.Command) (agentAddr common.Address, w
 		return common.Address{}, nil, accounts.Account{}, "", nil, err
 	}
 
-	agentAddrStr, err := as.Get("address")
+	agentAddr, err = getAgentAddress()
 	if err != nil {
 		return common.Address{}, nil, accounts.Account{}, "", nil, err
 	}
-
-	if agentAddrStr == "" {
-		return common.Address{}, nil, accounts.Account{}, "", nil, errors.New("No agent found. Did you forget to create one?")
-	}
-
-	agentAddr = common.HexToAddress(agentAddrStr)
 
 	account = accounts.Account{Address: fromAddress}
 	wallet, err = manager.Find(account)
@@ -287,27 +274,29 @@ func parseFILAmount(amount string) (*big.Int, error) {
 	return denoms.ToAtto(amt), nil
 }
 
-func getAgentAddress(cmd *cobra.Command) (common.Address, error) {
+func getAgentAddress() (common.Address, error) {
 	as := util.AgentStore()
-	var agentAddrStr string
 
-	if cmd.Flag("agent-addr") != nil && cmd.Flag("agent-addr").Changed {
-		agentAddrStr = cmd.Flag("agent-addr").Value.String()
-	} else {
-		// Check if an agent already exists
-		cachedAddr, err := as.Get("address")
-		if err != nil {
-			return common.Address{}, err
-		}
+	// Check if an agent already exists
+	agentAddrStr, err := as.Get("address")
+	if err != nil {
+		return common.Address{}, err
+	}
 
-		agentAddrStr = cachedAddr
-
-		if agentAddrStr == "" {
-			return common.Address{}, errors.New("Did you forget to create your agent or specify an address? Try `glif agent id --address <address>`")
-		}
+	if agentAddrStr == "" {
+		return common.Address{}, errors.New("Did you forget to create your agent or specify an address? Try `glif agent id --address <address>`")
 	}
 
 	return common.HexToAddress(agentAddrStr), nil
+}
+
+func getAgentAddressWithFlags(cmd *cobra.Command) (common.Address, error) {
+	if cmd.Flag("agent-addr") != nil && cmd.Flag("agent-addr").Changed {
+		agentAddrStr := cmd.Flag("agent-addr").Value.String()
+		return common.HexToAddress(agentAddrStr), nil
+	} else {
+		return getAgentAddress()
+	}
 }
 
 func getAgentID(cmd *cobra.Command) (*big.Int, error) {

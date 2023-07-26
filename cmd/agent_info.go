@@ -35,7 +35,7 @@ var agentInfoCmd = &cobra.Command{
 		}
 		defer closer()
 
-		agentAddr, err := getAgentAddress(cmd)
+		agentAddr, err := getAgentAddressWithFlags(cmd)
 		if err != nil {
 			logFatal(err)
 		}

@@ -19,7 +19,7 @@ var payToCurrentCmd = &cobra.Command{
 	Long:  "Pays off all fees owed",
 	Run: func(cmd *cobra.Command, args []string) {
 		if payToCurrentPreview {
-			agentAddr, err := getAgentAddress(cmd)
+			agentAddr, err := getAgentAddressWithFlags(cmd)
 			if err != nil {
 				logFatal(err)
 			}

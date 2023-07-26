@@ -19,7 +19,7 @@ var getAccountCmd = &cobra.Command{
 	Short: "Gets the details associated with an active account borrowing from the Infinity Pool",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, err := getAgentAddress(cmd)
+		agentAddr, err := getAgentAddressWithFlags(cmd)
 		if err != nil {
 			logFatal(err)
 		}

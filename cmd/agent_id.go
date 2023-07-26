@@ -17,7 +17,7 @@ var idCmd = &cobra.Command{
 	Short: "Fetches the Agent ID (uses the address in agent.toml by default)",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, err := getAgentAddress(cmd)
+		agentAddr, err := getAgentAddressWithFlags(cmd)
 		if err != nil {
 			logFatal(err)
 		}

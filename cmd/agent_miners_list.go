@@ -14,7 +14,7 @@ var minersListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Get the list of miners owned by this Agent",
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, err := getAgentAddress(cmd)
+		agentAddr, err := getAgentAddressWithFlags(cmd)
 		if err != nil {
 			logFatal(err)
 		}
