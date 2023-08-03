@@ -175,49 +175,18 @@ func parseAddress(ctx context.Context, addr string, lapi lotusapi.FullNode) (com
 
 func commonSetupOwnerCall() (agentAddr common.Address, ownerWallet accounts.Wallet, ownerAccount accounts.Account, ownerPassphrase string, requesterKey *ecdsa.PrivateKey, err error) {
 	as := util.AgentStore()
-	ks := util.KeyStore()
-	backends := []accounts.Backend{}
-	backends = append(backends, ks)
-	manager := accounts.NewManager(&accounts.Config{InsecureUnlockAllowed: false}, backends...)
-
-	agentAddr, err = getAgentAddress()
-	if err != nil {
-		return common.Address{}, nil, accounts.Account{}, "", nil, err
-	}
 
 	ownerAddr, _, err := as.GetAddrs(util.OwnerKey)
 	if err != nil {
 		return common.Address{}, nil, accounts.Account{}, "", nil, err
 	}
-	ownerAccount = accounts.Account{Address: ownerAddr}
-	ownerWallet, err = manager.Find(ownerAccount)
-	if err != nil {
-		return common.Address{}, nil, accounts.Account{}, "", nil, err
-	}
 
-	requesterKey, err = getRequesterKey(as, ks)
-	if err != nil {
-		return common.Address{}, nil, accounts.Account{}, "", nil, err
-	}
+	agentAddr, wallet, account, passphrase, requesterKey, err := commonOwnerOrOperatorSetup(context.Background(), ownerAddr.String())
 
-	ownerPassphrase, envSet := os.LookupEnv("GLIF_OWNER_PASSPHRASE")
-	if !envSet {
-		err = ks.Unlock(ownerAccount, "")
-		if err != nil {
-			prompt := &survey.Password{
-				Message: "Owner key passphrase",
-			}
-			survey.AskOne(prompt, &ownerPassphrase)
-			if ownerPassphrase == "" {
-				return common.Address{}, nil, accounts.Account{}, "", nil, fmt.Errorf("Aborted")
-			}
-		}
-	}
-
-	return agentAddr, ownerWallet, ownerAccount, ownerPassphrase, requesterKey, nil
+	return agentAddr, wallet, account, passphrase, requesterKey, nil
 }
 
-func commonOwnerOrOperatorSetup(cmd *cobra.Command) (agentAddr common.Address, wallet accounts.Wallet, account accounts.Account, passphrase string, requesterKey *ecdsa.PrivateKey, err error) {
+func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr common.Address, wallet accounts.Wallet, account accounts.Account, passphrase string, requesterKey *ecdsa.PrivateKey, err error) {
 	as := util.AgentStore()
 	ks := util.KeyStore()
 	backends := []accounts.Backend{}
@@ -236,10 +205,10 @@ func commonOwnerOrOperatorSetup(cmd *cobra.Command) (agentAddr common.Address, w
 
 	var fromAddress common.Address
 	// if no flag was passed, we just use the operator address by default
-	from := cmd.Flag("from").Value.String()
+	// from := cmd.Flag("from").Value.String()
 	switch from {
 	case "", opEvm.String(), opFevm.String():
-		funded, err := as.IsFunded(cmd.Context(), PoolsSDK, opFevm, util.OperatorKeyFunded, opEvm.String())
+		funded, err := as.IsFunded(ctx, PoolsSDK, opFevm, util.OperatorKeyFunded, opEvm.String())
 		if err != nil {
 			return common.Address{}, nil, accounts.Account{}, "", nil, err
 		}

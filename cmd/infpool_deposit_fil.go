@@ -17,7 +17,9 @@ var depositFILCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		_, senderWallet, senderAccount, senderPassphrase, _, err := commonOwnerOrOperatorSetup(cmd)
+		ctx := cmd.Context()
+		from := cmd.Flag("from").Value.String()
+		_, senderWallet, senderAccount, senderPassphrase, _, err := commonOwnerOrOperatorSetup(ctx, from)
 		if err != nil {
 			logFatal(err)
 		}
@@ -35,13 +37,13 @@ var depositFILCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().InfPoolDepositFIL(cmd.Context(), receiver, amount, senderWallet, senderAccount, senderPassphrase)
+		tx, err := PoolsSDK.Act().InfPoolDepositFIL(ctx, receiver, amount, senderWallet, senderAccount, senderPassphrase)
 		if err != nil {
 			logFatal(err)
 		}
 
 		// transaction landed on chain or errored
-		receipt, err := PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
+		receipt, err := PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
 		if err != nil {
 			logFatal(err)
 		}

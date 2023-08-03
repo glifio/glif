@@ -18,7 +18,9 @@ var exitCmd = &cobra.Command{
 	Short: "Exits from the Infinity Pool",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, senderWallet, senderAccount, senderPassphrase, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
+		ctx := cmd.Context()
+		from := cmd.Flag("from").Value.String()
+		agentAddr, senderWallet, senderAccount, senderPassphrase, requesterKey, err := commonOwnerOrOperatorSetup(ctx, from)
 		if err != nil {
 			logFatal(err)
 		}
@@ -34,12 +36,12 @@ var exitCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		account, err := PoolsSDK.Query().InfPoolGetAccount(cmd.Context(), agentAddr, nil)
+		account, err := PoolsSDK.Query().InfPoolGetAccount(ctx, agentAddr, nil)
 		if err != nil {
 			logFatalf("Failed to get iFIL balance %s", err)
 		}
 
-		amountOwed, _, err := PoolsSDK.Query().AgentOwes(cmd.Context(), agentAddr)
+		amountOwed, _, err := PoolsSDK.Query().AgentOwes(ctx, agentAddr)
 		if err != nil {
 			logFatal(err)
 		}
@@ -56,7 +58,7 @@ var exitCmd = &cobra.Command{
 		defer journal.Close()
 		defer journal.RecordEvent(exitevt, func() interface{} { return evt })
 
-		tx, err := PoolsSDK.Act().AgentPay(cmd.Context(), agentAddr, poolID, payAmount, senderWallet, senderAccount, senderPassphrase, requesterKey)
+		tx, err := PoolsSDK.Act().AgentPay(ctx, agentAddr, poolID, payAmount, senderWallet, senderAccount, senderPassphrase, requesterKey)
 		if err != nil {
 			evt.Error = err.Error()
 			logFatal(err)
@@ -64,7 +66,7 @@ var exitCmd = &cobra.Command{
 		evt.Tx = tx.Hash().String()
 
 		// transaction landed on chain or errored
-		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
+		_, err = PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
 		if err != nil {
 			evt.Error = err.Error()
 			logFatal(err)

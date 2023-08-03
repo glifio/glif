@@ -54,7 +54,9 @@ func init() {
 }
 
 func pay(cmd *cobra.Command, args []string, paymentType PaymentType, daemon bool) (*big.Int, error) {
-	agentAddr, senderWallet, senderAccount, senderPassphrase, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
+	ctx := cmd.Context()
+	from := cmd.Flag("from").Value.String()
+	agentAddr, senderWallet, senderAccount, senderPassphrase, requesterKey, err := commonOwnerOrOperatorSetup(ctx, from)
 	if err != nil {
 		return nil, err
 	}
@@ -68,14 +70,14 @@ func pay(cmd *cobra.Command, args []string, paymentType PaymentType, daemon bool
 			return nil, err
 		}
 
-		amountOwed, _, err := PoolsSDK.Query().AgentOwes(cmd.Context(), agentAddr)
+		amountOwed, _, err := PoolsSDK.Query().AgentOwes(ctx, agentAddr)
 		if err != nil {
 			return nil, err
 		}
 
 		payAmt = new(big.Int).Add(amount, amountOwed)
 	case ToCurrent:
-		amountOwed, _, err := PoolsSDK.Query().AgentOwes(cmd.Context(), agentAddr)
+		amountOwed, _, err := PoolsSDK.Query().AgentOwes(ctx, agentAddr)
 		if err != nil {
 			return nil, err
 		}
@@ -115,7 +117,7 @@ func pay(cmd *cobra.Command, args []string, paymentType PaymentType, daemon bool
 	}
 	defer journal.RecordEvent(payevt, func() interface{} { return evt })
 
-	tx, err := PoolsSDK.Act().AgentPay(cmd.Context(), agentAddr, poolID, payAmt, senderWallet, senderAccount, senderPassphrase, requesterKey)
+	tx, err := PoolsSDK.Act().AgentPay(ctx, agentAddr, poolID, payAmt, senderWallet, senderAccount, senderPassphrase, requesterKey)
 	if err != nil {
 		evt.Error = err.Error()
 		return nil, err
@@ -123,7 +125,7 @@ func pay(cmd *cobra.Command, args []string, paymentType PaymentType, daemon bool
 	evt.Tx = tx.Hash().String()
 
 	// transaction landed on chain or errored
-	_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
+	_, err = PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
 	if err != nil {
 		evt.Error = err.Error()
 		return nil, err
