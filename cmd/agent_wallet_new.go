@@ -9,7 +9,6 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/glifio/cli/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -34,9 +33,14 @@ var newCmd = &cobra.Command{
 
 		as := util.AgentStore()
 		ks := util.KeyStore()
-		ksLegacy := util.KeyStoreLegacy()
 
-		requestAddr, _, err := ksLegacy.GetAddrs(util.RequestKey)
+		ownerAddr, _, err := as.GetAddrs(util.OwnerKey)
+		panicIfKeyExists(util.OwnerKey, ownerAddr, err)
+
+		operatorAddr, _, err := as.GetAddrs(util.OperatorKey)
+		panicIfKeyExists(util.OperatorKey, operatorAddr, err)
+
+		requestAddr, _, err := as.GetAddrs(util.RequestKey)
 		panicIfKeyExists(util.RequestKey, requestAddr, err)
 
 		ownerPassphrase, envSet := os.LookupEnv("GLIF_OWNER_PASSPHRASE")
@@ -57,17 +61,14 @@ var newCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		requestPrivateKey, err := crypto.GenerateKey()
+		requester, err := ks.NewAccount("")
 		if err != nil {
 			logFatal(err)
 		}
 
 		as.Set(string(util.OwnerKey), owner.Address.String())
 		as.Set(string(util.OperatorKey), operator.Address.String())
-
-		if err := ksLegacy.SetKey(util.RequestKey, requestPrivateKey); err != nil {
-			logFatal(err)
-		}
+		as.Set(string(util.RequestKey), requester.Address.String())
 
 		if err := viper.WriteConfig(); err != nil {
 			logFatal(err)
@@ -81,7 +82,7 @@ var newCmd = &cobra.Command{
 		if err != nil {
 			logFatal(err)
 		}
-		requestAddr, requestDelAddr, err := ksLegacy.GetAddrs(util.RequestKey)
+		requestAddr, requestDelAddr, err := as.GetAddrs(util.RequestKey)
 		if err != nil {
 			logFatal(err)
 		}

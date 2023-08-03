@@ -13,6 +13,7 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/filecoin-project/go-address"
 	actorstypes "github.com/filecoin-project/go-state-types/actors"
@@ -133,7 +134,6 @@ func parseAddress(ctx context.Context, addr string, lapi lotusapi.FullNode) (com
 
 func commonSetupOwnerCall() (agentAddr common.Address, ownerWallet accounts.Wallet, ownerAccount accounts.Account, ownerPassphrase string, requesterKey *ecdsa.PrivateKey, err error) {
 	as := util.AgentStore()
-	ksLegacy := util.KeyStoreLegacy()
 	ks := util.KeyStore()
 	backends := []accounts.Backend{}
 	backends = append(backends, ks)
@@ -154,13 +154,9 @@ func commonSetupOwnerCall() (agentAddr common.Address, ownerWallet accounts.Wall
 		return common.Address{}, nil, accounts.Account{}, "", nil, err
 	}
 
-	requesterKey, err = ksLegacy.GetPrivate(util.RequestKey)
+	requesterKey, err = getRequesterKey(as, ks)
 	if err != nil {
 		return common.Address{}, nil, accounts.Account{}, "", nil, err
-	}
-
-	if requesterKey == nil {
-		return common.Address{}, nil, accounts.Account{}, "", nil, errors.New("Requester key not found. Please check your `keys.toml` file.")
 	}
 
 	ownerPassphrase, envSet := os.LookupEnv("GLIF_OWNER_PASSPHRASE")
@@ -182,7 +178,6 @@ func commonSetupOwnerCall() (agentAddr common.Address, ownerWallet accounts.Wall
 
 func commonOwnerOrOperatorSetup(cmd *cobra.Command) (agentAddr common.Address, wallet accounts.Wallet, account accounts.Account, passphrase string, requesterKey *ecdsa.PrivateKey, err error) {
 	as := util.AgentStore()
-	ksLegacy := util.KeyStoreLegacy()
 	ks := util.KeyStore()
 	backends := []accounts.Backend{}
 	backends = append(backends, ks)
@@ -256,16 +251,29 @@ func commonOwnerOrOperatorSetup(cmd *cobra.Command) (agentAddr common.Address, w
 		}
 	}
 
-	requesterKey, err = ksLegacy.GetPrivate(util.RequestKey)
+	requesterKey, err = getRequesterKey(as, ks)
 	if err != nil {
 		return common.Address{}, nil, accounts.Account{}, "", nil, err
 	}
 
-	if requesterKey == nil {
-		return common.Address{}, nil, accounts.Account{}, "", nil, errors.New("Requester key not found. Please check your `keys.toml` file.")
-	}
-
 	return agentAddr, wallet, account, passphrase, requesterKey, nil
+}
+
+func getRequesterKey(as *util.AgentStorage, ks *keystore.KeyStore) (*ecdsa.PrivateKey, error) {
+	requesterAddr, _, err := as.GetAddrs(util.RequestKey)
+	if err != nil {
+		return nil, err
+	}
+	requesterAccount := accounts.Account{Address: requesterAddr}
+	requesterKeyJSON, err := ks.Export(requesterAccount, "", "")
+	if err != nil {
+		return nil, err
+	}
+	rk, err := keystore.DecryptKey(requesterKeyJSON, "")
+	if err != nil {
+		return nil, err
+	}
+	return rk.PrivateKey, nil
 }
 
 type PoolType uint64
