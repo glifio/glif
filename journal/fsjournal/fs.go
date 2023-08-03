@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	clk "github.com/raulk/clock"
 	"golang.org/x/xerrors"
@@ -51,12 +52,14 @@ func OpenFSJournal(journalPath string, disabled journal.DisabledEvents) (journal
 	}
 
 	var nfi *os.File
+	var nfSize int64
 	current := filepath.Join(f.dir, "glif-journal.ndjson")
 	if fi, err := os.Stat(current); err == nil && !fi.IsDir() {
-		nfi, err = os.OpenFile(current, os.O_APPEND|os.O_WRONLY, 0644)
+		nfi, err = os.OpenFile(current, os.O_APPEND|os.O_RDWR, 0644)
 		if err != nil {
 			return nil, xerrors.Errorf("failed to open journal file: %w", err)
 		}
+		nfSize = fi.Size()
 	} else {
 		nfi, err = os.Create(current)
 		if err != nil {
@@ -64,7 +67,7 @@ func OpenFSJournal(journalPath string, disabled journal.DisabledEvents) (journal
 		}
 	}
 	f.fi = nfi
-	f.fSize = 0
+	f.fSize = nfSize
 
 	go f.runLoop()
 
@@ -90,8 +93,32 @@ func (f *fsJournal) RecordEvent(evtType journal.EventType, supplier func() inter
 	select {
 	case f.incoming <- je:
 	case <-f.closing:
-		log.Printf("journal closed but tried to log event: %s\n",  je)
+		log.Printf("journal closed but tried to log event: %s\n", je)
 	}
+}
+
+func (f *fsJournal) ReadEvents() ([]journal.Event, error) {
+	evts := []journal.Event{}
+	b := make([]byte, f.fSize)
+
+	_, err := f.fi.Read(b)
+	if err != nil {
+		return nil, err
+	}
+
+	bstrs := strings.Split(string(b), "\n")
+	for _, bs := range bstrs {
+		evt := &journal.Event{}
+		if bs == "" {
+			continue
+		}
+		err := json.Unmarshal([]byte(bs), evt)
+		if err != nil {
+			return nil, err
+		}
+		evts = append(evts, *evt)
+	}
+	return evts, nil
 }
 
 func (f *fsJournal) Close() error {

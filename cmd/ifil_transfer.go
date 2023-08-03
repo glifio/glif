@@ -23,7 +23,7 @@ var iFILTransferCmd = &cobra.Command{
 		strAmt := args[1]
 		fmt.Printf("Transferring %s iFIL balance to %s...\n", strAmt, strAddr)
 
-		addr, err := ParseAddress(cmd.Context(), strAddr)
+		addr, err := ParseAddressToEVM(cmd.Context(), strAddr)
 		if err != nil {
 			logFatalf("Failed to parse address %s", err)
 		}

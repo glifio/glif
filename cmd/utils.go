@@ -18,6 +18,7 @@ import (
 	"github.com/filecoin-project/go-address"
 	actorstypes "github.com/filecoin-project/go-state-types/actors"
 	"github.com/filecoin-project/go-state-types/manifest"
+	"github.com/filecoin-project/lotus/api"
 	lotusapi "github.com/filecoin-project/lotus/api"
 	"github.com/filecoin-project/lotus/chain/actors"
 	"github.com/filecoin-project/lotus/chain/types"
@@ -50,7 +51,38 @@ func logFatalf(format string, args ...interface{}) {
 	Exit(1)
 }
 
-func ParseAddress(ctx context.Context, addr string) (common.Address, error) {
+func ParseAddressToNative(ctx context.Context, addr string) (address.Address, error) {
+	lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
+	if err != nil {
+		return address.Undef, err
+	}
+	defer closer()
+
+	// user passed 0x addr, convert to f4
+	if strings.HasPrefix(addr, "0x") {
+		ethAddr, err := ethtypes.ParseEthAddress(addr)
+		if err != nil {
+			return address.Undef, err
+		}
+
+		return ethAddr.ToFilecoinAddress()
+	}
+
+	// user passed f0, f1, f2, f3, or f4
+	filAddr, err := address.NewFromString(addr)
+	if err != nil {
+		return address.Undef, err
+	}
+
+	// Note that in testing, sending to an ID actor address works ok but we still block it, as this isn't intended good behavior (passing ID addrs as representations of 0x style EVM addrs)
+	if err := checkIDNotEVMActorType(ctx, filAddr, lapi); err != nil {
+		return address.Undef, err
+	}
+
+	return filAddr, nil
+}
+
+func ParseAddressToEVM(ctx context.Context, addr string) (common.Address, error) {
 	lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
 	if err != nil {
 		return common.Address{}, err
@@ -84,6 +116,34 @@ func ToMinerID(ctx context.Context, addr string) (address.Address, error) {
 	return idAddr, nil
 }
 
+// using f0 ID addresses to interact with EVM or EthAccount actor types is forbidden
+func checkIDNotEVMActorType(ctx context.Context, filAddr address.Address, lapi api.FullNode) error {
+	if filAddr.Protocol() == address.ID {
+		actor, err := lapi.StateGetActor(ctx, filAddr, types.EmptyTSK)
+		if err != nil {
+			return err
+		}
+
+		actorCodeEvm, success := actors.GetActorCodeID(actorstypes.Version(actors.LatestVersion), manifest.EvmKey)
+		if !success {
+			return errors.New("actor code not found")
+		}
+		if actor.Code.Equals(actorCodeEvm) {
+			return errors.New("Cant pass an ID address of an EVM actor")
+		}
+
+		actorCodeEthAccount, success := actors.GetActorCodeID(actorstypes.Version(actors.LatestVersion), manifest.EthAccountKey)
+		if !success {
+			return errors.New("actor code not found")
+		}
+		if actor.Code.Equals(actorCodeEthAccount) {
+			return errors.New("Cant pass an ID address of an Eth Account")
+		}
+	}
+
+	return nil
+}
+
 func parseAddress(ctx context.Context, addr string, lapi lotusapi.FullNode) (common.Address, error) {
 	if strings.HasPrefix(addr, "0x") {
 		return common.HexToAddress(addr), nil
@@ -95,27 +155,8 @@ func parseAddress(ctx context.Context, addr string, lapi lotusapi.FullNode) (com
 		return common.Address{}, err
 	}
 
-	if filAddr.Protocol() == address.ID {
-		actor, err := lapi.StateGetActor(ctx, filAddr, types.EmptyTSK)
-		if err != nil {
-			return common.Address{}, err
-		}
-
-		actorCodeEvm, success := actors.GetActorCodeID(actorstypes.Version(actors.LatestVersion), manifest.EvmKey)
-		if !success {
-			return common.Address{}, errors.New("actor code not found")
-		}
-		if actor.Code.Equals(actorCodeEvm) {
-			return common.Address{}, errors.New("Cant pass an ID address of an EVM actor")
-		}
-
-		actorCodeEthAccount, success := actors.GetActorCodeID(actorstypes.Version(actors.LatestVersion), manifest.EthAccountKey)
-		if !success {
-			return common.Address{}, errors.New("actor code not found")
-		}
-		if actor.Code.Equals(actorCodeEthAccount) {
-			return common.Address{}, errors.New("Cant pass an ID address of an Eth Account")
-		}
+	if err := checkIDNotEVMActorType(ctx, filAddr, lapi); err != nil {
+		return common.Address{}, err
 	}
 
 	if filAddr.Protocol() != address.ID && filAddr.Protocol() != address.Delegated {

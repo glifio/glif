@@ -87,6 +87,8 @@ type Journal interface {
 	// Implementations MUST recover from panics raised by the supplier function.
 	RecordEvent(evtType EventType, supplier func() interface{})
 
+	ReadEvents() ([]Event, error)
+
 	// Close closes this journal for further writing.
 	Close() error
 }
@@ -97,6 +99,18 @@ type Journal interface {
 type Event struct {
 	EventType
 
-	Timestamp time.Time
-	Data      interface{}
+	Timestamp time.Time   `json:"timestamp,omitempty"`
+	Data      interface{} `json:"data,omitempty"`
+}
+
+func (e Event) String() string {
+	d, ok := e.Data.(map[string]interface{})
+	if !ok {
+		return fmt.Sprintf("%s: %s", e.Timestamp.String(), e.EventType.String())
+	}
+	data := []string{}
+	for k, v := range d {
+		data = append(data, fmt.Sprintf("%s: %v", k, v))
+	}
+	return fmt.Sprintf("%s:\t%s\t%s", e.Timestamp.String(), e.EventType.String(), strings.Join(data, "\t"))
 }
