@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log"
 	"math/big"
 	"os"
 
@@ -33,6 +34,7 @@ import (
 	types "github.com/glifio/go-pools/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/exp/slices"
 )
 
 var cfgDir string
@@ -128,9 +130,16 @@ func initConfig() {
 
 	viper.WatchConfig()
 
-	err = checkWalletMigrated()
-	if err != nil {
-		logFatal(err)
+	if !slices.Contains(os.Args[1:], "migrate") {
+		err = checkWalletMigrated()
+		if err != nil {
+			logFatal(err)
+		}
+
+		err = checkUnencryptedPrivateKeys()
+		if err != nil {
+			log.Println(err)
+		}
 	}
 
 	daemonURL := viper.GetString("daemon.rpc-url")

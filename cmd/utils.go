@@ -407,3 +407,25 @@ func checkWalletMigrated() error {
 
 	return nil
 }
+
+func checkUnencryptedPrivateKeys() error {
+	ksLegacy := util.KeyStoreLegacy()
+
+	keys := []util.KeyType{
+		util.OwnerKey,
+		util.OperatorKey,
+		util.RequestKey,
+	}
+
+	for _, key := range keys {
+		pk, err := ksLegacy.Get(string(key))
+		if err != nil {
+			return fmt.Errorf("error checking private key %s: %w", string(key), err)
+		}
+		if pk != "" {
+			return fmt.Errorf("unencrypted keys found in legacy keys.toml after migration. Remove to improve security.")
+		}
+	}
+
+	return nil
+}
