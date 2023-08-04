@@ -15,7 +15,13 @@ var migrateCmd = &cobra.Command{
 	Use:   "migrate",
 	Short: "Migrates keys from keys.toml to the new encrypted keystore",
 	Run: func(cmd *cobra.Command, args []string) {
-		err := migrateLegacyKeys()
+		err := checkWalletMigrated()
+		if err == nil {
+			fmt.Println("Wallet already migrated to encrypted keystore.")
+			return
+		}
+
+		err = migrateLegacyKeys()
 		if err != nil {
 			logFatal(err)
 		}
@@ -39,19 +45,15 @@ var migrateCmd = &cobra.Command{
 }
 
 func init() {
-	// This command gets removed later if the wallet has been migrated
 	walletCmd.AddCommand(migrateCmd)
 }
 
 func migrateLegacyKeys() error {
-	if err := migrateLegacyKey(util.OwnerKey); err != nil {
-		return err
-	}
-	if err := migrateLegacyKey(util.OperatorKey); err != nil {
-		return err
-	}
-	if err := migrateLegacyKey(util.RequestKey); err != nil {
-		return err
+	keys := []util.KeyType{util.OwnerKey, util.OperatorKey, util.RequestKey}
+	for _, key := range keys {
+		if err := migrateLegacyKey(key); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -65,17 +67,18 @@ func migrateLegacyKey(key util.KeyType) error {
 	if err != nil {
 		return err
 	}
-	if pkStr != "" {
-		pk, err := ksLegacy.GetPrivate(key)
-		if err != nil {
-			return err
-		}
-		account, err := ks.ImportECDSA(pk, "")
-		if err != nil {
-			return err
-		}
-		as.Set(string(key), account.Address.String())
-		fmt.Printf("Migrated %s key to encrypted key store with empty passphrase.\n", key)
+	if pkStr == "" {
+		return fmt.Errorf("migration failed, missing private key for %s in keys.toml", string(key))
 	}
+	pk, err := ksLegacy.GetPrivate(key)
+	if err != nil {
+		return err
+	}
+	account, err := ks.ImportECDSA(pk, "")
+	if err != nil {
+		return err
+	}
+	as.Set(string(key), account.Address.String())
+	fmt.Printf("Migrated %s key to encrypted key store with empty passphrase.\n", key)
 	return nil
 }

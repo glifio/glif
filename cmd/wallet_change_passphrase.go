@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/ethereum/go-ethereum/accounts"
@@ -44,11 +45,13 @@ func changePassphrase(addr common.Address) error {
 		survey.AskOne(prompt, &oldPassphrase)
 	}
 
-	newPassphrase := ""
-	prompt := &survey.Password{
-		Message: "New passphrase",
+	newPassphrase, envSet := os.LookupEnv("GLIF_OWNER_PASSPHRASE")
+	if !envSet {
+		prompt := &survey.Password{
+			Message: "New passphrase",
+		}
+		survey.AskOne(prompt, &newPassphrase)
 	}
-	survey.AskOne(prompt, &newPassphrase)
 
 	err = ks.Update(account, oldPassphrase, newPassphrase)
 	if err != nil {
