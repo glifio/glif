@@ -373,3 +373,29 @@ func AddressesToStrings(addrs []address.Address) []string {
 	}
 	return strs
 }
+
+func checkWalletMigrated() error {
+	as := util.AgentStore()
+	ksLegacy := util.KeyStoreLegacy()
+
+	notMigratedError := fmt.Errorf("wallet not migrated to encrypted keystore. Please run \"glif wallet migrate\"")
+
+	keys := []util.KeyType{
+		util.OwnerKey,
+		util.OperatorKey,
+		util.RequestKey,
+	}
+
+	for _, key := range keys {
+		_, _, err := as.GetAddrs(key)
+		if err != nil {
+			_, _, err := ksLegacy.GetAddrs(key)
+			if err != nil {
+				return fmt.Errorf("missing %s key in legacy keys.toml", string(key))
+			}
+			return notMigratedError
+		}
+	}
+
+	return nil
+}

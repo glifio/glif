@@ -93,7 +93,11 @@ func mapkey(keytype KeyType, key string) string {
 }
 
 func (a *AgentStorage) GetAddrs(key KeyType) (common.Address, address.Address, error) {
-	evmAddress := common.HexToAddress(a.data[string(key)])
+	hex := a.data[string(key)]
+	if hex == "" {
+		return common.Address{}, address.Address{}, fmt.Errorf("key %s not found", string(key))
+	}
+	evmAddress := common.HexToAddress(hex)
 
 	delegated, err := DelegatedFromEthAddr(evmAddress)
 	if err != nil {

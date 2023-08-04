@@ -111,8 +111,9 @@ func initConfig() {
 		logFatal(err)
 	}
 
-	if err := migrateLegacyKeys(); err != nil {
-		logFatal(err)
+	err = checkWalletMigrated()
+	if err == nil {
+		walletCmd.RemoveCommand(migrateCmd)
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
@@ -171,40 +172,4 @@ func initConfig() {
 		logFatalf("Failed to initialize pools sdk %s", err)
 	}
 	PoolsSDK = sdk
-}
-
-func migrateLegacyKeys() error {
-	if err := migrateLegacyKey(util.OwnerKey); err != nil {
-		return err
-	}
-	if err := migrateLegacyKey(util.OperatorKey); err != nil {
-		return err
-	}
-	return nil
-}
-
-func migrateLegacyKey(key util.KeyType) error {
-	ksLegacy := util.KeyStoreLegacy()
-	ks := util.KeyStore()
-	as := util.AgentStore()
-
-	pkStr, err := ksLegacy.Get(string(key))
-	if err != nil {
-		return err
-	}
-	if pkStr != "" {
-		pk, err := ksLegacy.GetPrivate(key)
-		if err != nil {
-			return err
-		}
-		account, err := ks.ImportECDSA(pk, "")
-		if err != nil {
-			return err
-		}
-		as.Set(string(key), account.Address.String())
-		ksLegacy.Set(string(key), "")
-		fmt.Printf("Migrated %s key to encrypted key store with empty passphrase.\n", key)
-	}
-	return nil
-
 }
