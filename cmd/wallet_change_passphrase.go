@@ -18,34 +18,43 @@ var changePassphraseCmd = &cobra.Command{
 	Short: "Change the passphrase for an encrypted key in the keystore",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		ks := util.KeyStore()
-
 		addr := common.HexToAddress(args[0])
-		account := accounts.Account{Address: addr}
-
-		oldPassphrase := ""
-		err := ks.Unlock(account, "")
-		if err != nil {
-			prompt := &survey.Password{
-				Message: "Old passphrase",
-			}
-			survey.AskOne(prompt, &oldPassphrase)
-		}
-
-		newPassphrase := ""
-		prompt := &survey.Password{
-			Message: "New passphrase",
-		}
-		survey.AskOne(prompt, &newPassphrase)
-
-		err = ks.Update(account, oldPassphrase, newPassphrase)
+		err := changePassphrase(addr)
 		if err != nil {
 			logFatal(err)
 		}
-		fmt.Println("Passphrase successfully changed.")
 	},
 }
 
 func init() {
 	walletCmd.AddCommand(changePassphraseCmd)
+}
+
+func changePassphrase(addr common.Address) error {
+	ks := util.KeyStore()
+
+	account := accounts.Account{Address: addr}
+
+	oldPassphrase := ""
+	err := ks.Unlock(account, "")
+	if err != nil {
+		prompt := &survey.Password{
+			Message: "Old passphrase",
+		}
+		survey.AskOne(prompt, &oldPassphrase)
+	}
+
+	newPassphrase := ""
+	prompt := &survey.Password{
+		Message: "New passphrase",
+	}
+	survey.AskOne(prompt, &newPassphrase)
+
+	err = ks.Update(account, oldPassphrase, newPassphrase)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Passphrase successfully changed.")
+
+	return nil
 }

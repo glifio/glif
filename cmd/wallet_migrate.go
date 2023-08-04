@@ -19,13 +19,27 @@ var migrateCmd = &cobra.Command{
 		if err != nil {
 			logFatal(err)
 		}
-		fmt.Println("Keys successfully migrated to the encrypted keystore.")
-		fmt.Printf("For increased security, please delete the legacy %s/keys.toml file with the cleartext private keys.\n", cfgDir)
+		fmt.Printf("Keys successfully migrated to the encrypted keystore!\n\n")
+
+		fmt.Printf("Please set a new passphrase to encrypt the owner key:\n\n")
+
+		as := util.AgentStore()
+		ownerAddr, _, err := as.GetAddrs(util.OwnerKey)
+		if err != nil {
+			logFatal(err)
+		}
+		err = changePassphrase(ownerAddr)
+		if err != nil {
+			logFatal(err)
+		}
+
+		fmt.Printf("\nFor increased security, please delete the legacy %s/keys.toml file with the cleartext private keys.\n", cfgDir)
 		fmt.Println("The legacy keys.toml file is no longer needed, unless you are just testing and plan to downgrade.")
 	},
 }
 
 func init() {
+	// This command gets removed later if the wallet has been migrated
 	walletCmd.AddCommand(migrateCmd)
 }
 
