@@ -182,11 +182,19 @@ func commonSetupOwnerCall() (agentAddr common.Address, ownerWallet accounts.Wall
 	}
 
 	agentAddr, wallet, account, passphrase, requesterKey, err := commonOwnerOrOperatorSetup(context.Background(), ownerAddr.String())
+	if err != nil {
+		return common.Address{}, nil, accounts.Account{}, "", nil, err
+	}
 
 	return agentAddr, wallet, account, passphrase, requesterKey, nil
 }
 
 func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr common.Address, wallet accounts.Wallet, account accounts.Account, passphrase string, requesterKey *ecdsa.PrivateKey, err error) {
+	err = checkWalletMigrated()
+	if err != nil {
+		return common.Address{}, nil, accounts.Account{}, "", nil, err
+	}
+
 	as := util.AgentStore()
 	ks := util.KeyStore()
 	backends := []accounts.Backend{}

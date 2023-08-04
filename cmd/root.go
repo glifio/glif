@@ -128,6 +128,11 @@ func initConfig() {
 
 	viper.WatchConfig()
 
+	err = checkWalletMigrated()
+	if err != nil {
+		logFatal(err)
+	}
+
 	daemonURL := viper.GetString("daemon.rpc-url")
 	daemonToken := viper.GetString("daemon.token")
 	adoURL := viper.GetString("ado.address")
@@ -139,33 +144,32 @@ func initConfig() {
 		if err != nil {
 			logFatal(err)
 		}
-		return
-	}
+	} else {
+		var extern types.Extern
+		switch chainID {
+		case constants.MainnetChainID:
+			extern = deploy.Extern
+		case constants.CalibnetChainID:
+			extern = deploy.TestExtern
+		default:
+			logFatalf("Unknown chain id %d", chainID)
+		}
 
-	var extern types.Extern
-	switch chainID {
-	case constants.MainnetChainID:
-		extern = deploy.Extern
-	case constants.CalibnetChainID:
-		extern = deploy.TestExtern
-	default:
-		logFatalf("Unknown chain id %d", chainID)
-	}
+		if daemonURL != "" {
+			extern.LotusDialAddr = daemonURL
+		}
+		if daemonToken != "" {
+			extern.LotusToken = daemonToken
+		}
 
-	if daemonURL != "" {
-		extern.LotusDialAddr = daemonURL
-	}
-	if daemonToken != "" {
-		extern.LotusToken = daemonToken
-	}
+		if adoURL != "" {
+			extern.AdoAddr = adoURL
+		}
 
-	if adoURL != "" {
-		extern.AdoAddr = adoURL
+		sdk, err := sdk.New(context.Background(), big.NewInt(chainID), extern)
+		if err != nil {
+			logFatalf("Failed to initialize pools sdk %s", err)
+		}
+		PoolsSDK = sdk
 	}
-
-	sdk, err := sdk.New(context.Background(), big.NewInt(chainID), extern)
-	if err != nil {
-		logFatalf("Failed to initialize pools sdk %s", err)
-	}
-	PoolsSDK = sdk
 }
