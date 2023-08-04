@@ -74,10 +74,11 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	if os.Getenv("GLIF_CONFIG_DIR") != "" {
+		cfgDir = os.Getenv("GLIF_CONFIG_DIR")
+	}
 	if cfgDir != "" {
 		viper.AddConfigPath(cfgDir)
-	} else if os.Getenv("GLIF_CONFIG_DIR") != "" {
-		viper.AddConfigPath(os.Getenv("GLIF_CONFIG_DIR"))
 	} else {
 		// Find home directory.
 		home, err := os.UserHomeDir()
