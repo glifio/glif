@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +33,7 @@ var withdrawFILCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		fmt.Printf("Withdrawing %s WFIL from the Infinity Pool", amount.String())
+		fmt.Printf("Withdrawing %0.09f WFIL from the Infinity Pool\n", util.ToFIL(amount))
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()

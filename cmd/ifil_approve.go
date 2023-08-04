@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -21,16 +20,15 @@ var iFILApproveCmd = &cobra.Command{
 
 		strAddr := args[0]
 		strAmt := args[1]
-		fmt.Printf("Approving %s to spend %s of your iFIL balance...", strAddr, strAmt)
+		fmt.Printf("Approving %s to spend %s of your iFIL balance...\n", strAddr, strAmt)
 
 		addr, err := ParseAddressToEVM(cmd.Context(), strAddr)
 		if err != nil {
 			logFatalf("Failed to parse address %s", err)
 		}
 
-		amt := big.NewInt(0)
-		amt, ok := amt.SetString(strAmt, 10)
-		if !ok {
+		amount, err := parseFILAmount(strAmt)
+		if err != nil {
 			logFatalf("Failed to parse amount %s", err)
 		}
 
@@ -38,7 +36,7 @@ var iFILApproveCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().IFILApprove(cmd.Context(), addr, amt, pk)
+		tx, err := PoolsSDK.Act().IFILApprove(cmd.Context(), addr, amount, pk)
 		if err != nil {
 			logFatalf("Failed to approve iFIL %s", err)
 		}
@@ -56,4 +54,5 @@ var iFILApproveCmd = &cobra.Command{
 
 func init() {
 	iFILCmd.AddCommand(iFILApproveCmd)
+	iFILApproveCmd.Flags().String("from", "", "address of the owner or operator of the agent")
 }
