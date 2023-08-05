@@ -130,7 +130,10 @@ func initConfig() {
 
 	viper.WatchConfig()
 
-	if !slices.Contains(os.Args[1:], "migrate") {
+	if slices.Contains(os.Args[1:], "wallet") &&
+		(slices.Contains(os.Args[1:], "new") || slices.Contains(os.Args[1:], "migrate")) {
+		// Skip migration check
+	} else {
 		err = checkWalletMigrated()
 		if err != nil {
 			logFatal(err)

@@ -395,10 +395,16 @@ func checkWalletMigrated() error {
 	}
 
 	for _, key := range keys {
-		_, _, err := as.GetAddrs(key)
+		newAddr, _, err := as.GetAddrs(key)
 		if err != nil {
-			_, _, err := ksLegacy.GetAddrs(key)
+			return err
+		}
+		if util.IsZeroAddress(newAddr) {
+			oldAddr, _, err := ksLegacy.GetAddrs(key)
 			if err != nil {
+				return err
+			}
+			if util.IsZeroAddress(oldAddr) {
 				return fmt.Errorf("missing %s key in legacy keys.toml", string(key))
 			}
 			return notMigratedError
