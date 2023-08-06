@@ -303,8 +303,8 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 	})
 
 	// check to see we're still in good standing wrt making our weekly payment
-	fmt.Println()
 	if account.Principal.Cmp(big.NewInt(0)) > 0 {
+		fmt.Println()
 		if account.EpochsPaid.Cmp(weekOneDeadline) == 1 {
 			fmt.Printf("Your account owes its weekly payment (`to-current`) within the next: %s (by epoch # %s)\n", formatSinceDuration(weekOneDeadlineTime, epochsPaidTime), weekOneDeadline)
 		} else {
