@@ -229,16 +229,17 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 
 	generateHeader("ECON INFO")
 	if lvl.Cmp(big.NewInt(0)) == 0 && chainID == constants.MainnetChainID {
-		generateHeader("Please open up a request to borrow on GitHub: https://tinyurl.com/glif-entry-request")
 		fmt.Println()
+		fmt.Println(chalk.Bold.TextStyle("Please open up a request for quota on GitHub: https://tinyurl.com/glif-entry-request"))
 	}
 	if agentData.Principal.Cmp(big.NewInt(0)) == 0 {
 		nothingBorrowedKeys := []string{
 			"Total borrowed",
-			"Agent's liquid assets (liquid FIL on your Agent)",
-			"Agent's total assets (includes Miner's balances)",
+			"Agent's liquid FIL",
+			"Agent's total FIL",
 			"Agent's equity",
 			"Agent's expected weekly earnings",
+			"Agent's quota",
 		}
 
 		nothingBorrowedValues := []string{
@@ -247,6 +248,7 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 			fmt.Sprintf("%0.08f FIL", util.ToFIL(agentData.AgentValue)),
 			fmt.Sprintf("%0.08f FIL", util.ToFIL(equity)),
 			fmt.Sprintf("%0.08f FIL", util.ToFIL(weeklyEarnings)),
+			fmt.Sprintf("%.03f FIL", cap),
 		}
 		printTable(nothingBorrowedKeys, nothingBorrowedValues)
 	} else {
@@ -272,8 +274,8 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 		dtiFloat.Quo(dtiFloat, big.NewFloat(1e18))
 
 		coreEconKeys := []string{
-			"Agent's liquid assets",
-			"Agent's total assets",
+			"Agent's liquid FIL",
+			"Agent's total FIL",
 			"Agent's equity",
 			"Agent's expected weekly earnings",
 			"Agent's debt-to-equity (DTE)",
@@ -302,11 +304,13 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 
 	// check to see we're still in good standing wrt making our weekly payment
 	fmt.Println()
-	if account.EpochsPaid.Cmp(weekOneDeadline) == 1 {
-		fmt.Printf("Your account owes its weekly payment (`to-current`) within the next: %s (by epoch # %s)\n", formatSinceDuration(weekOneDeadlineTime, epochsPaidTime), weekOneDeadline)
-	} else {
-		fmt.Printf("🔴 Overdue weekly payment 🔴\n")
-		fmt.Printf("Your account *must* make a payment to-current within the next: %s (by epoch # %s)\n", formatSinceDuration(defaultEpochTime, epochsPaidTime), defaultEpoch)
+	if account.Principal.Cmp(big.NewInt(0)) > 0 {
+		if account.EpochsPaid.Cmp(weekOneDeadline) == 1 {
+			fmt.Printf("Your account owes its weekly payment (`to-current`) within the next: %s (by epoch # %s)\n", formatSinceDuration(weekOneDeadlineTime, epochsPaidTime), weekOneDeadline)
+		} else {
+			fmt.Printf("🔴 Overdue weekly payment 🔴\n")
+			fmt.Printf("Your account *must* make a payment to-current within the next: %s (by epoch # %s)\n", formatSinceDuration(defaultEpochTime, epochsPaidTime), defaultEpoch)
+		}
 	}
 
 	s.Start()
