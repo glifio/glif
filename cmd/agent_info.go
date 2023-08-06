@@ -17,7 +17,10 @@ import (
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
 	"github.com/glifio/go-pools/constants"
+	"github.com/glifio/go-pools/econ"
+	"github.com/glifio/go-pools/rpc"
 	"github.com/glifio/go-pools/util"
+	"github.com/glifio/go-pools/vc"
 	"github.com/spf13/cobra"
 )
 
@@ -60,11 +63,6 @@ var agentInfoCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		err = infoPoolInfo(cmd.Context(), agentAddr, agentID, s)
-		if err != nil {
-			logFatal(err)
-		}
-
 		err = agentHealth(cmd.Context(), agentAddr, s)
 		if err != nil {
 			logFatal(err)
@@ -103,6 +101,11 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 
 	goodVersion := agVersion == ntwVersion
 
+	agentMiners, err := query.MinerRegistryAgentMinersList(ctx, agentID, nil)
+	if err != nil {
+		return common.Big0, address.Undef, 0, 0, err
+	}
+
 	s.Stop()
 	generateHeader("BASIC INFO")
 	fmt.Printf("Agent Address: %s\n", agent.String())
@@ -116,6 +119,7 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 		fmt.Println("Agent requires upgrade, run `glif agent upgrade` to upgrade")
 		fmt.Printf("Agent/Network version mismatch: %v/%v ❌ \n", agVersion, ntwVersion)
 	}
+	fmt.Printf("Agent's pledged miner count: %v\n", len(agentMiners))
 	s.Start()
 
 	return agentID, agentFILIDAddr, agVersion, ntwVersion, nil
@@ -131,49 +135,26 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 
 	assetsFIL, _ := util.ToFIL(assets).Float64()
 
-	agentMiners, err := query.MinerRegistryAgentMinersList(ctx, agentID, nil)
+	adoCloser, err := PoolsSDK.Extern().ConnectAdoClient(ctx)
+	if err != nil {
+		return err
+	}
+	defer adoCloser()
+
+	agentData, err := rpc.ADOClient.AgentData(context.Background(), agent)
 	if err != nil {
 		return err
 	}
 
-	tasks := make([]util.TaskFunc, len(agentMiners))
-
-	for i, minerAddr := range agentMiners {
-		tasks[i] = func() (interface{}, error) {
-			state, err := lapi.StateReadState(ctx, minerAddr, types.EmptyTSK)
-			if err != nil {
-				return nil, err
-			}
-			bal, ok := new(big.Int).SetString(state.Balance.String(), 10)
-			if !ok {
-				return nil, fmt.Errorf("failed to convert balance to big.Int")
-			}
-
-			return bal, nil
-		}
-	}
-
-	bals, err := util.Multiread(tasks)
+	maxBorrow, err := PoolsSDK.Query().InfPoolAgentMaxBorrow(ctx, agent, agentData)
 	if err != nil {
 		return err
 	}
 
-	var totalMinerCollaterals = big.NewInt(0)
-	for _, bal := range bals {
-		totalMinerCollaterals.Add(totalMinerCollaterals, bal.(*big.Int))
+	maxWithdraw, err := PoolsSDK.Query().InfPoolAgentMaxWithdraw(ctx, agent, agentData)
+	if err != nil {
+		return err
 	}
-
-	s.Stop()
-	fmt.Printf("Agent's liquid assets: %0.08f FIL\n", assetsFIL)
-	fmt.Printf("Agent's pledged miner count: %v\n", len(agentMiners))
-	s.Start()
-
-	return nil
-}
-
-func infoPoolInfo(ctx context.Context, agent common.Address, agentID *big.Int, s *spinner.Spinner) error {
-
-	query := PoolsSDK.Query()
 
 	lvl, cap, err := query.InfPoolGetAgentLvl(ctx, agentID)
 	if err != nil {
@@ -195,34 +176,43 @@ func infoPoolInfo(ctx context.Context, agent common.Address, agentID *big.Int, s
 		return err
 	}
 
+	nullCred, err := vc.NullishVerifiableCredential(*agentData)
+	if err != nil {
+		return err
+	}
+
+	rate, err := query.InfPoolGetRate(ctx, *nullCred)
+	if err != nil {
+		return err
+	}
+
+	wpr := new(big.Float).Mul(new(big.Float).SetInt(rate), big.NewFloat(constants.EpochsInWeek))
+
+	apr := new(big.Float).Mul(new(big.Float).SetInt(rate), big.NewFloat(constants.EpochsInYear))
+	apr.Quo(apr, big.NewFloat(1e36))
+
+	weeklyPmt := new(big.Float).Mul(new(big.Float).SetInt(agentData.Principal), wpr)
+	weeklyPmt.Quo(weeklyPmt, big.NewFloat(1e54))
+
 	weekOneDeadline := new(big.Int).Add(defaultEpoch, big.NewInt(constants.EpochsInWeek*2))
-
-	amountOwedFIL, _ := util.ToFIL(amountOwed).Float64()
-
-	filPrincipal := util.ToFIL(account.Principal)
-
-	principal, _ := filPrincipal.Float64()
 
 	weekOneDeadlineTime := util.EpochHeightToTimestamp(weekOneDeadline, query.ChainID())
 	defaultEpochTime := util.EpochHeightToTimestamp(defaultEpoch, query.ChainID())
 	epochsPaidTime := util.EpochHeightToTimestamp(account.EpochsPaid, query.ChainID())
 
 	s.Stop()
-	generateHeader("INFINITY POOL ACCOUNT")
-	if account.Defaulted {
-		fmt.Println("Your account with the Infinity Pool has defaulted. Expect liquidations.")
-		return nil
-	}
 
+	generateHeader("ECON INFO")
 	if lvl.Cmp(big.NewInt(0)) == 0 && chainID == constants.MainnetChainID {
-		fmt.Println("Please follow the instructions here to borrow from the Infinity Pool: https://medium.com/@jonathan_97611/the-storage-providers-guide-to-glif-pools-af6323f4605e")
+		fmt.Println("Please open up a request to borrow on GitHub: https://github.com/glifio/infinity-pool-gov/issues/new?assignees=Schwartz10&labels=Entry+request+opened&projects=&template=infinity-pool-entry-request.md&title=%5BENTRY+REQUEST%5D")
 	} else {
-		fmt.Printf("Agent's lvl is %s and can borrow %.03f FIL\n", lvl.String(), cap)
-		if principal == 0 {
-			fmt.Println("No account exists with the Infinity Pool")
+		if agentData.Principal.Cmp(big.NewInt(0)) == 0 {
+			fmt.Println("Total borrowed: 0 FIL")
 		} else {
-			fmt.Printf("You currently owe: %.08f FIL on %.02f FIL borrowed\n", amountOwedFIL, principal)
-			fmt.Printf("Your account with the Infinity Pool opened at: %s\n", util.EpochHeightToTimestamp(account.StartEpoch, query.ChainID()).Format(time.RFC3339))
+			fmt.Printf("Total borrowed: %0.09f FIL\n", util.ToFIL(account.Principal))
+			fmt.Printf("You currently owe: %.09f FIL\n", util.ToFIL(amountOwed))
+			fmt.Printf("Current borrow APR: %.03f%%\n", apr.Mul(apr, big.NewFloat(100)))
+			fmt.Printf("Your weekly payment: %0.09f FIL\n", weeklyPmt)
 
 			// check to see we're still in good standing wrt making our weekly payment
 			if account.EpochsPaid.Cmp(weekOneDeadline) == 1 {
@@ -231,8 +221,37 @@ func infoPoolInfo(ctx context.Context, agent common.Address, agentID *big.Int, s
 				fmt.Printf("🔴 Overdue weekly payment 🔴\n")
 				fmt.Printf("Your account *must* make a payment to-current within the next: %s (by epoch # %s)\n", formatSinceDuration(defaultEpochTime, epochsPaidTime), defaultEpoch)
 			}
+			fmt.Printf("Agent's quota is %.03f FIL\n", cap)
+
+			fmt.Println()
+
+			fmt.Printf("Agent's liquid assets (liquid FIL on your Agent): %0.08f FIL\n", assetsFIL)
+			fmt.Printf("Agent's total assets (includes Miner's balances): %0.08f FIL\n", util.ToFIL(agentData.AgentValue))
+
+			equity := new(big.Int).Sub(agentData.AgentValue, agentData.Principal)
+			dte := econ.DebtToEquityRatio(agentData.Principal, equity)
+			fmt.Printf("Agent's equity: %0.08f FIL - debt-to-equity: %0.03f%% (must stay below 100%%)\n", util.ToFIL(equity), dte.Mul(dte, big.NewFloat(100)))
+
+			liquidationVal := new(big.Int).Div(agentData.AgentValue, big.NewInt(2))
+			ltlv := econ.LoanToCollateralRatio(agentData.Principal, liquidationVal)
+			fmt.Printf("Agent's liquidation value: %0.08f FIL - loan-to-liquidation %0.03f%% (must stay below 100%%)\n", util.ToFIL(liquidationVal), ltlv.Mul(ltlv, big.NewFloat(100)))
+
+			dailyFees := rate.Mul(rate, big.NewInt(constants.EpochsInDay))
+			dailyFees.Mul(dailyFees, agentData.Principal)
+			dailyFees.Div(dailyFees, constants.WAD)
+
+			dti := new(big.Int).Div(dailyFees, agentData.ExpectedDailyRewards)
+			dtiFloat := new(big.Float).Mul(new(big.Float).SetInt(dti), big.NewFloat(100))
+			dtiFloat.Quo(dtiFloat, big.NewFloat(1e18))
+
+			weeklyEarnings := new(big.Int).Mul(agentData.ExpectedDailyRewards, big.NewInt(constants.EpochsInWeek))
+
+			fmt.Printf("Agent's expected weekly earnings: %0.08f FIL - debt-to-income %0.03f%% (must stay below 25%%)\n", util.ToFIL(weeklyEarnings), dtiFloat)
 			fmt.Println()
 		}
+
+		printWithBoldPreface("Agent's max borrow:", fmt.Sprintf("%0.09f FIL", util.ToFIL(maxBorrow)))
+		printWithBoldPreface("Agent's max withdraw:", fmt.Sprintf("%0.09f FIL", util.ToFIL(maxWithdraw)))
 	}
 
 	s.Start()
