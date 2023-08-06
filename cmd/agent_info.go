@@ -133,8 +133,6 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 		return err
 	}
 
-	assetsFIL, _ := util.ToFIL(assets).Float64()
-
 	adoCloser, err := PoolsSDK.Extern().ConnectAdoClient(ctx)
 	if err != nil {
 		return err
@@ -191,6 +189,7 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 	apr := new(big.Float).Mul(new(big.Float).SetInt(rate), big.NewFloat(constants.EpochsInYear))
 	apr.Quo(apr, big.NewFloat(1e36))
 
+	weeklyEarnings := new(big.Int).Mul(agentData.ExpectedDailyRewards, big.NewInt(constants.EpochsInWeek))
 	weeklyPmt := new(big.Float).Mul(new(big.Float).SetInt(agentData.Principal), wpr)
 	weeklyPmt.Quo(weeklyPmt, big.NewFloat(1e54))
 
@@ -200,59 +199,61 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 	defaultEpochTime := util.EpochHeightToTimestamp(defaultEpoch, query.ChainID())
 	epochsPaidTime := util.EpochHeightToTimestamp(account.EpochsPaid, query.ChainID())
 
+	equity := new(big.Int).Sub(agentData.AgentValue, agentData.Principal)
+	dte := econ.DebtToEquityRatio(agentData.Principal, equity)
+
+	liquidationVal := new(big.Int).Div(agentData.AgentValue, big.NewInt(2))
+	ltlv := econ.LoanToCollateralRatio(agentData.Principal, liquidationVal)
+
+	dailyFees := rate.Mul(rate, big.NewInt(constants.EpochsInDay))
+	dailyFees.Mul(dailyFees, agentData.Principal)
+	dailyFees.Div(dailyFees, constants.WAD)
+
 	s.Stop()
 
 	generateHeader("ECON INFO")
 	if lvl.Cmp(big.NewInt(0)) == 0 && chainID == constants.MainnetChainID {
-		fmt.Println("Please open up a request to borrow on GitHub: https://github.com/glifio/infinity-pool-gov/issues/new?assignees=Schwartz10&labels=Entry+request+opened&projects=&template=infinity-pool-entry-request.md&title=%5BENTRY+REQUEST%5D")
-	} else {
-		if agentData.Principal.Cmp(big.NewInt(0)) == 0 {
-			fmt.Println("Total borrowed: 0 FIL")
-		} else {
-			fmt.Printf("Total borrowed: %0.09f FIL\n", util.ToFIL(account.Principal))
-			fmt.Printf("You currently owe: %.09f FIL\n", util.ToFIL(amountOwed))
-			fmt.Printf("Current borrow APR: %.03f%%\n", apr.Mul(apr, big.NewFloat(100)))
-			fmt.Printf("Your weekly payment: %0.09f FIL\n", weeklyPmt)
-
-			// check to see we're still in good standing wrt making our weekly payment
-			if account.EpochsPaid.Cmp(weekOneDeadline) == 1 {
-				fmt.Printf("Your account owes its weekly payment (`to-current`) within the next: %s (by epoch # %s)\n", formatSinceDuration(weekOneDeadlineTime, epochsPaidTime), weekOneDeadline)
-			} else {
-				fmt.Printf("🔴 Overdue weekly payment 🔴\n")
-				fmt.Printf("Your account *must* make a payment to-current within the next: %s (by epoch # %s)\n", formatSinceDuration(defaultEpochTime, epochsPaidTime), defaultEpoch)
-			}
-			fmt.Printf("Agent's quota is %.03f FIL\n", cap)
-
-			fmt.Println()
-
-			fmt.Printf("Agent's liquid assets (liquid FIL on your Agent): %0.08f FIL\n", assetsFIL)
-			fmt.Printf("Agent's total assets (includes Miner's balances): %0.08f FIL\n", util.ToFIL(agentData.AgentValue))
-
-			equity := new(big.Int).Sub(agentData.AgentValue, agentData.Principal)
-			dte := econ.DebtToEquityRatio(agentData.Principal, equity)
-			fmt.Printf("Agent's equity: %0.08f FIL - debt-to-equity: %0.03f%% (must stay below 100%%)\n", util.ToFIL(equity), dte.Mul(dte, big.NewFloat(100)))
-
-			liquidationVal := new(big.Int).Div(agentData.AgentValue, big.NewInt(2))
-			ltlv := econ.LoanToCollateralRatio(agentData.Principal, liquidationVal)
-			fmt.Printf("Agent's liquidation value: %0.08f FIL - loan-to-liquidation %0.03f%% (must stay below 100%%)\n", util.ToFIL(liquidationVal), ltlv.Mul(ltlv, big.NewFloat(100)))
-
-			dailyFees := rate.Mul(rate, big.NewInt(constants.EpochsInDay))
-			dailyFees.Mul(dailyFees, agentData.Principal)
-			dailyFees.Div(dailyFees, constants.WAD)
-
-			dti := new(big.Int).Div(dailyFees, agentData.ExpectedDailyRewards)
-			dtiFloat := new(big.Float).Mul(new(big.Float).SetInt(dti), big.NewFloat(100))
-			dtiFloat.Quo(dtiFloat, big.NewFloat(1e18))
-
-			weeklyEarnings := new(big.Int).Mul(agentData.ExpectedDailyRewards, big.NewInt(constants.EpochsInWeek))
-
-			fmt.Printf("Agent's expected weekly earnings: %0.08f FIL - debt-to-income %0.03f%% (must stay below 25%%)\n", util.ToFIL(weeklyEarnings), dtiFloat)
-			fmt.Println()
-		}
-
-		printWithBoldPreface("Agent's max borrow:", fmt.Sprintf("%0.09f FIL", util.ToFIL(maxBorrow)))
-		printWithBoldPreface("Agent's max withdraw:", fmt.Sprintf("%0.09f FIL", util.ToFIL(maxWithdraw)))
+		generateHeader("Please open up a request to borrow on GitHub: https://tinyurl.com/glif-entry-request")
+		fmt.Println()
 	}
+	if agentData.Principal.Cmp(big.NewInt(0)) == 0 {
+		fmt.Printf("Total borrowed: 0 FIL\n")
+		fmt.Printf("Agent's liquid assets (liquid FIL on your Agent): %0.08f FIL\n", util.ToFIL(assets))
+		fmt.Printf("Agent's total assets (includes Miner's balances): %0.08f FIL\n", util.ToFIL(agentData.AgentValue))
+		fmt.Printf("Agent's equity: %0.08f FIL\n", util.ToFIL(equity))
+		fmt.Printf("Agent's expected weekly earnings: %0.08f FIL\n", util.ToFIL(weeklyEarnings))
+		fmt.Println()
+	} else {
+		fmt.Printf("Total borrowed: %0.09f FIL\n", util.ToFIL(account.Principal))
+		fmt.Printf("You currently owe: %.09f FIL\n", util.ToFIL(amountOwed))
+		fmt.Printf("Current borrow APR: %.03f%%\n", apr.Mul(apr, big.NewFloat(100)))
+		fmt.Printf("Your weekly payment: %0.09f FIL\n", weeklyPmt)
+
+		// check to see we're still in good standing wrt making our weekly payment
+		if account.EpochsPaid.Cmp(weekOneDeadline) == 1 {
+			fmt.Printf("Your account owes its weekly payment (`to-current`) within the next: %s (by epoch # %s)\n", formatSinceDuration(weekOneDeadlineTime, epochsPaidTime), weekOneDeadline)
+		} else {
+			fmt.Printf("🔴 Overdue weekly payment 🔴\n")
+			fmt.Printf("Your account *must* make a payment to-current within the next: %s (by epoch # %s)\n", formatSinceDuration(defaultEpochTime, epochsPaidTime), defaultEpoch)
+		}
+		fmt.Printf("Agent's quota is %.03f FIL\n", cap)
+		fmt.Println()
+
+		fmt.Printf("Agent's liquid assets (liquid FIL on your Agent): %0.08f FIL\n", util.ToFIL(assets))
+		fmt.Printf("Agent's total assets (includes Miner's balances): %0.08f FIL\n", util.ToFIL(agentData.AgentValue))
+		fmt.Printf("Agent's equity: %0.08f FIL - debt-to-equity: %0.03f%% (must stay below 100%%)\n", util.ToFIL(equity), dte.Mul(dte, big.NewFloat(100)))
+		fmt.Printf("Agent's liquidation value: %0.08f FIL - loan-to-liquidation %0.03f%% (must stay below 100%%)\n", util.ToFIL(liquidationVal), ltlv.Mul(ltlv, big.NewFloat(100)))
+
+		dti := new(big.Int).Div(dailyFees, agentData.ExpectedDailyRewards)
+		dtiFloat := new(big.Float).Mul(new(big.Float).SetInt(dti), big.NewFloat(100))
+		dtiFloat.Quo(dtiFloat, big.NewFloat(1e18))
+
+		fmt.Printf("Agent's expected weekly earnings: %0.08f FIL - debt-to-income %0.03f%% (must stay below 25%%)\n", util.ToFIL(weeklyEarnings), dtiFloat)
+		fmt.Println()
+	}
+
+	printWithBoldPreface("Agent's max borrow", fmt.Sprintf("%0.09f FIL", util.ToFIL(maxBorrow)))
+	printWithBoldPreface("Agent's max withdraw", fmt.Sprintf("%0.09f FIL", util.ToFIL(maxWithdraw)))
 
 	s.Start()
 
