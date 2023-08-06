@@ -23,6 +23,7 @@ import (
 	"github.com/glifio/go-pools/vc"
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
+	"github.com/ttacon/chalk"
 )
 
 var agentInfoCmd = &cobra.Command{
@@ -274,8 +275,8 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 			"Agent's liquid assets",
 			"Agent's total assets",
 			"Agent's equity",
-			"Agent's debt-to-equity (DTE)",
 			"Agent's expected weekly earnings",
+			"Agent's debt-to-equity (DTE)",
 			"Agent's debt-to-income (DTI)",
 		}
 
@@ -283,8 +284,8 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 			fmt.Sprintf("%0.08f FIL", util.ToFIL(assets)),
 			fmt.Sprintf("%0.08f FIL", util.ToFIL(agentData.AgentValue)),
 			fmt.Sprintf("%0.08f FIL", util.ToFIL(equity)),
-			fmt.Sprintf("%0.03f%% (must stay below 100%%)", dte.Mul(dte, big.NewFloat(100))),
 			fmt.Sprintf("%0.08f FIL", util.ToFIL(weeklyEarnings)),
+			fmt.Sprintf("%0.03f%% (must stay below 100%%)", dte.Mul(dte, big.NewFloat(100))),
 			fmt.Sprintf("%0.03f%% (must stay below 25%%)", dtiFloat),
 		}
 
@@ -417,11 +418,9 @@ func formatSinceDuration(t1 time.Time, t2 time.Time) string {
 	return strings.Join(parts, " ")
 }
 
-const headerWidth = 60
-
 func generateHeader(title string) {
 	fmt.Println()
-	fmt.Printf("\033[1m%s\033[0m\n", title)
+	fmt.Printf("\033[1m%s\033[0m\n", chalk.Underline.TextStyle(title))
 }
 
 func init() {
