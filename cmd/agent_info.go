@@ -21,6 +21,7 @@ import (
 	"github.com/glifio/go-pools/rpc"
 	"github.com/glifio/go-pools/util"
 	"github.com/glifio/go-pools/vc"
+	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
 )
 
@@ -107,19 +108,35 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 	}
 
 	s.Stop()
-	generateHeader("BASIC INFO")
-	fmt.Printf("Agent Address: %s\n", agent.String())
-	fmt.Printf("Agent Address (del): %s\n", agentDel.String())
-	fmt.Printf("Agent FIL ID Address: %s\n", agentFILIDAddr.String())
-	fmt.Printf("Agent Owner: %s\n", owner.String())
-	fmt.Printf("Agent Pools Protocol ID: %s\n", agentID)
-	if goodVersion {
-		fmt.Printf("Agent Version: %v ✅ \n", agVersion)
-	} else {
-		fmt.Println("Agent requires upgrade, run `glif agent upgrade` to upgrade")
-		fmt.Printf("Agent/Network version mismatch: %v/%v ❌ \n", agVersion, ntwVersion)
+
+	versionCopy := fmt.Sprintf("%v ✅", agVersion)
+	if !goodVersion {
+		versionCopy = fmt.Sprintf("Please upgrade Agent ❌. Your version: %v, latest: %v", agVersion, ntwVersion)
 	}
-	fmt.Printf("Agent's pledged miner count: %v\n", len(agentMiners))
+
+	basicInfoKeys := []string{
+		"Agent 0x Addr",
+		"Agent f4 Addr",
+		"Agent f0 Addr",
+		"Agent GLIF ID",
+		"Agent Owner",
+		"Agent Miners",
+		"Version",
+	}
+
+	basicInfoValues := []string{
+		agent.String(),
+		agentDel.String(),
+		agentFILIDAddr.String(),
+		agentID.String(),
+		owner.String(),
+		fmt.Sprintf("%v", len(agentMiners)),
+		versionCopy,
+	}
+
+	generateHeader("BASIC INFO")
+	printTable(basicInfoKeys, basicInfoValues)
+
 	s.Start()
 
 	return agentID, agentFILIDAddr, agVersion, ntwVersion, nil
@@ -189,7 +206,8 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 	apr := new(big.Float).Mul(new(big.Float).SetInt(rate), big.NewFloat(constants.EpochsInYear))
 	apr.Quo(apr, big.NewFloat(1e34))
 
-	weeklyEarnings := new(big.Int).Mul(agentData.ExpectedDailyRewards, big.NewInt(constants.EpochsInWeek))
+	weeklyEarnings := new(big.Int).Mul(agentData.ExpectedDailyRewards, big.NewInt(7))
+
 	weeklyPmt := new(big.Float).Mul(new(big.Float).SetInt(agentData.Principal), wpr)
 	weeklyPmt.Quo(weeklyPmt, big.NewFloat(1e54))
 
@@ -201,9 +219,6 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 
 	equity := new(big.Int).Sub(agentData.AgentValue, agentData.Principal)
 	dte := econ.DebtToEquityRatio(agentData.Principal, equity)
-
-	liquidationVal := new(big.Int).Div(agentData.AgentValue, big.NewInt(2))
-	ltlv := econ.LoanToCollateralRatio(agentData.Principal, liquidationVal)
 
 	dailyFees := rate.Mul(rate, big.NewInt(constants.EpochsInDay))
 	dailyFees.Mul(dailyFees, agentData.Principal)
@@ -217,47 +232,96 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 		fmt.Println()
 	}
 	if agentData.Principal.Cmp(big.NewInt(0)) == 0 {
-		fmt.Printf("Total borrowed: 0 FIL\n")
-		fmt.Printf("Agent's liquid assets (liquid FIL on your Agent): %0.08f FIL\n", util.ToFIL(assets))
-		fmt.Printf("Agent's total assets (includes Miner's balances): %0.08f FIL\n", util.ToFIL(agentData.AgentValue))
-		fmt.Printf("Agent's equity: %0.08f FIL\n", util.ToFIL(equity))
-		fmt.Printf("Agent's expected weekly earnings: %0.08f FIL\n", util.ToFIL(weeklyEarnings))
-		fmt.Println()
-	} else {
-		fmt.Printf("Total borrowed: %0.09f FIL\n", util.ToFIL(account.Principal))
-		fmt.Printf("You currently owe: %.09f FIL\n", util.ToFIL(amountOwed))
-		fmt.Printf("Current borrow APR: %.03f%%\n", apr)
-		fmt.Printf("Your weekly payment: %0.09f FIL\n", weeklyPmt)
-
-		// check to see we're still in good standing wrt making our weekly payment
-		if account.EpochsPaid.Cmp(weekOneDeadline) == 1 {
-			fmt.Printf("Your account owes its weekly payment (`to-current`) within the next: %s (by epoch # %s)\n", formatSinceDuration(weekOneDeadlineTime, epochsPaidTime), weekOneDeadline)
-		} else {
-			fmt.Printf("🔴 Overdue weekly payment 🔴\n")
-			fmt.Printf("Your account *must* make a payment to-current within the next: %s (by epoch # %s)\n", formatSinceDuration(defaultEpochTime, epochsPaidTime), defaultEpoch)
+		nothingBorrowedKeys := []string{
+			"Total borrowed",
+			"Agent's liquid assets (liquid FIL on your Agent)",
+			"Agent's total assets (includes Miner's balances)",
+			"Agent's equity",
+			"Agent's expected weekly earnings",
 		}
-		fmt.Printf("Agent's quota is %.03f FIL\n", cap)
-		fmt.Println()
 
-		fmt.Printf("Agent's liquid assets (liquid FIL on your Agent): %0.08f FIL\n", util.ToFIL(assets))
-		fmt.Printf("Agent's total assets (includes Miner's balances): %0.08f FIL\n", util.ToFIL(agentData.AgentValue))
-		fmt.Printf("Agent's equity: %0.08f FIL - debt-to-equity: %0.03f%% (must stay below 100%%)\n", util.ToFIL(equity), dte.Mul(dte, big.NewFloat(100)))
-		fmt.Printf("Agent's liquidation value: %0.08f FIL - loan-to-liquidation %0.03f%% (must stay below 100%%)\n", util.ToFIL(liquidationVal), ltlv.Mul(ltlv, big.NewFloat(100)))
+		nothingBorrowedValues := []string{
+			"0 FIL",
+			fmt.Sprintf("%0.08f FIL", util.ToFIL(assets)),
+			fmt.Sprintf("%0.08f FIL", util.ToFIL(agentData.AgentValue)),
+			fmt.Sprintf("%0.08f FIL", util.ToFIL(equity)),
+			fmt.Sprintf("%0.08f FIL", util.ToFIL(weeklyEarnings)),
+		}
+		printTable(nothingBorrowedKeys, nothingBorrowedValues)
+	} else {
+		somethingBorrowedKeys := []string{
+			"Total borrowed",
+			"You current owe",
+			"Current borrow APR",
+			"Your weekly payment",
+			"Quota",
+		}
+
+		somethingBorrowedValues := []string{
+			fmt.Sprintf("%0.09f FIL", util.ToFIL(account.Principal)),
+			fmt.Sprintf("%0.09f FIL", util.ToFIL(amountOwed)),
+			fmt.Sprintf("%.03f%%", apr),
+			fmt.Sprintf("%0.09f FIL", weeklyPmt),
+			fmt.Sprintf("%.03f FIL", cap),
+		}
+		printTable(somethingBorrowedKeys, somethingBorrowedValues)
 
 		dti := new(big.Int).Div(dailyFees, agentData.ExpectedDailyRewards)
 		dtiFloat := new(big.Float).Mul(new(big.Float).SetInt(dti), big.NewFloat(100))
 		dtiFloat.Quo(dtiFloat, big.NewFloat(1e18))
 
-		fmt.Printf("Agent's expected weekly earnings: %0.08f FIL - debt-to-income %0.03f%% (must stay below 25%%)\n", util.ToFIL(weeklyEarnings), dtiFloat)
-		fmt.Println()
+		coreEconKeys := []string{
+			"Agent's liquid assets",
+			"Agent's total assets",
+			"Agent's equity",
+			"Agent's debt-to-equity (DTE)",
+			"Agent's expected weekly earnings",
+			"Agent's debt-to-income (DTI)",
+		}
+
+		coreEconValues := []string{
+			fmt.Sprintf("%0.08f FIL", util.ToFIL(assets)),
+			fmt.Sprintf("%0.08f FIL", util.ToFIL(agentData.AgentValue)),
+			fmt.Sprintf("%0.08f FIL", util.ToFIL(equity)),
+			fmt.Sprintf("%0.03f%% (must stay below 100%%)", dte.Mul(dte, big.NewFloat(100))),
+			fmt.Sprintf("%0.08f FIL", util.ToFIL(weeklyEarnings)),
+			fmt.Sprintf("%0.03f%% (must stay below 25%%)", dtiFloat),
+		}
+
+		printTable(coreEconKeys, coreEconValues)
 	}
 
-	printWithBoldPreface("Agent's max borrow", fmt.Sprintf("%0.09f FIL", util.ToFIL(maxBorrow)))
-	printWithBoldPreface("Agent's max withdraw", fmt.Sprintf("%0.09f FIL", util.ToFIL(maxWithdraw)))
+	printTable([]string{
+		"Agent's max borrow",
+		"Agent's max withdraw",
+	}, []string{
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(maxBorrow)),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(maxWithdraw)),
+	})
+
+	// check to see we're still in good standing wrt making our weekly payment
+	fmt.Println()
+	if account.EpochsPaid.Cmp(weekOneDeadline) == 1 {
+		fmt.Printf("Your account owes its weekly payment (`to-current`) within the next: %s (by epoch # %s)\n", formatSinceDuration(weekOneDeadlineTime, epochsPaidTime), weekOneDeadline)
+	} else {
+		fmt.Printf("🔴 Overdue weekly payment 🔴\n")
+		fmt.Printf("Your account *must* make a payment to-current within the next: %s (by epoch # %s)\n", formatSinceDuration(defaultEpochTime, epochsPaidTime), defaultEpoch)
+	}
 
 	s.Start()
 
 	return nil
+}
+
+func printTable(keys []string, values []string) {
+	// here we hacky get the same width for all separate tables in the info command by making the first row have a long width
+	tbl := table.New("                                    ", "")
+
+	for i, k := range keys {
+		tbl.AddRow(k, values[i])
+	}
+
+	tbl.Print()
 }
 
 func agentHealth(ctx context.Context, agent common.Address, s *spinner.Spinner) error {
@@ -281,8 +345,16 @@ func agentHealth(ctx context.Context, agent common.Address, s *spinner.Spinner) 
 	s.Stop()
 
 	generateHeader("HEALTH")
-	fmt.Printf("Agent's administrator: %s\n", agentAdmin)
-	fmt.Printf("Agent in default: %t\n\n", defaulted)
+	printTable([]string{
+		"Agent's administrator",
+		"Agent in default",
+	}, []string{
+		agentAdmin.String(),
+		fmt.Sprintf("%t", defaulted),
+	})
+
+	fmt.Println()
+
 	if faultySectorStart.Cmp(big.NewInt(0)) == 0 {
 		fmt.Printf("Status healthy 🟢\n")
 	} else {
