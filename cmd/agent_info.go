@@ -187,7 +187,7 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 	wpr := new(big.Float).Mul(new(big.Float).SetInt(rate), big.NewFloat(constants.EpochsInWeek))
 
 	apr := new(big.Float).Mul(new(big.Float).SetInt(rate), big.NewFloat(constants.EpochsInYear))
-	apr.Quo(apr, big.NewFloat(1e36))
+	apr.Quo(apr, big.NewFloat(1e34))
 
 	weeklyEarnings := new(big.Int).Mul(agentData.ExpectedDailyRewards, big.NewInt(constants.EpochsInWeek))
 	weeklyPmt := new(big.Float).Mul(new(big.Float).SetInt(agentData.Principal), wpr)
@@ -226,7 +226,7 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 	} else {
 		fmt.Printf("Total borrowed: %0.09f FIL\n", util.ToFIL(account.Principal))
 		fmt.Printf("You currently owe: %.09f FIL\n", util.ToFIL(amountOwed))
-		fmt.Printf("Current borrow APR: %.03f%%\n", apr.Mul(apr, big.NewFloat(100)))
+		fmt.Printf("Current borrow APR: %.03f%%\n", apr)
 		fmt.Printf("Your weekly payment: %0.09f FIL\n", weeklyPmt)
 
 		// check to see we're still in good standing wrt making our weekly payment
