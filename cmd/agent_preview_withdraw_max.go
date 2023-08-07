@@ -25,6 +25,11 @@ var previewWithdrawCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
+		agentLiquidAssets, err := PoolsSDK.Query().AgentLiquidAssets(cmd.Context(), agentAddr, nil)
+		if err != nil {
+			logFatal(err)
+		}
+
 		closer, err := PoolsSDK.Extern().ConnectAdoClient(cmd.Context())
 		if err != nil {
 			logFatal(err)
@@ -44,6 +49,7 @@ var previewWithdrawCmd = &cobra.Command{
 		s.Stop()
 
 		log.Printf("Agent can withdraw up to %0.09f FIL\n", util.ToFIL(maxWithdraw))
+		log.Printf("Agent has %0.09f FIL in liquid assets\n", util.ToFIL(agentLiquidAssets))
 		log.Println("Borrowing funds may change this value.")
 	},
 }
