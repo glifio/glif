@@ -177,16 +177,6 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 		return err
 	}
 
-	defaultEpoch, err := query.DefaultEpoch(ctx)
-	if err != nil {
-		return err
-	}
-
-	account, err := query.InfPoolGetAccount(ctx, agent, nil)
-	if err != nil {
-		return err
-	}
-
 	amountOwed, _, err := query.AgentOwes(ctx, agent)
 	if err != nil {
 		return err
@@ -211,12 +201,6 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 
 	weeklyPmt := new(big.Float).Mul(new(big.Float).SetInt(agentData.Principal), wpr)
 	weeklyPmt.Quo(weeklyPmt, big.NewFloat(1e54))
-
-	weekOneDeadline := new(big.Int).Add(defaultEpoch, big.NewInt(constants.EpochsInWeek*2))
-
-	weekOneDeadlineTime := util.EpochHeightToTimestamp(weekOneDeadline, query.ChainID())
-	defaultEpochTime := util.EpochHeightToTimestamp(defaultEpoch, query.ChainID())
-	epochsPaidTime := util.EpochHeightToTimestamp(account.EpochsPaid, query.ChainID())
 
 	equity := new(big.Int).Sub(agentData.AgentValue, agentData.Principal)
 	dte := econ.DebtToEquityRatio(agentData.Principal, equity)
@@ -261,7 +245,7 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 		}
 
 		somethingBorrowedValues := []string{
-			fmt.Sprintf("%0.09f FIL", util.ToFIL(account.Principal)),
+			fmt.Sprintf("%0.09f FIL", util.ToFIL(agentData.Principal)),
 			fmt.Sprintf("%0.09f FIL", util.ToFIL(amountOwed)),
 			fmt.Sprintf("%.03f%%", apr),
 			fmt.Sprintf("%0.09f FIL", weeklyPmt),
@@ -302,17 +286,6 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(maxWithdraw)),
 	})
 
-	// check to see we're still in good standing wrt making our weekly payment
-	if account.Principal.Cmp(big.NewInt(0)) > 0 {
-		fmt.Println()
-		if account.EpochsPaid.Cmp(weekOneDeadline) == 1 {
-			fmt.Printf("Your account owes its weekly payment (`to-current`) within the next: %s (by epoch # %s)\n", formatSinceDuration(weekOneDeadlineTime, epochsPaidTime), weekOneDeadline)
-		} else {
-			fmt.Printf("🔴 Overdue weekly payment 🔴\n")
-			fmt.Printf("Your account *must* make a payment to-current within the next: %s (by epoch # %s)\n", formatSinceDuration(defaultEpochTime, epochsPaidTime), defaultEpoch)
-		}
-	}
-
 	s.Start()
 
 	return nil
@@ -347,22 +320,41 @@ func agentHealth(ctx context.Context, agent common.Address, s *spinner.Spinner) 
 		return err
 	}
 
+	defaultEpoch, err := query.DefaultEpoch(ctx)
+	if err != nil {
+		return err
+	}
+
+	account, err := query.InfPoolGetAccount(ctx, agent, nil)
+	if err != nil {
+		return err
+	}
+
+	weekOneDeadline := new(big.Int).Add(defaultEpoch, big.NewInt(constants.EpochsInWeek*2))
+
+	weekOneDeadlineTime := util.EpochHeightToTimestamp(weekOneDeadline, query.ChainID())
+	defaultEpochTime := util.EpochHeightToTimestamp(defaultEpoch, query.ChainID())
+	epochsPaidTime := util.EpochHeightToTimestamp(account.EpochsPaid, query.ChainID())
+
 	s.Stop()
 
 	generateHeader("HEALTH")
-	printTable([]string{
-		"Agent's administrator",
-		"Agent in default",
-	}, []string{
-		agentAdmin.String(),
-		fmt.Sprintf("%t", defaulted),
-	})
-
-	fmt.Println()
-
-	if faultySectorStart.Cmp(big.NewInt(0)) == 0 {
+	// check to see we're still in good standing wrt making our weekly payment
+	badPmtStatus := account.Principal.Cmp(big.NewInt(0)) > 0 && account.EpochsPaid.Cmp(weekOneDeadline) < 1
+	badFaultStatus := faultySectorStart.Cmp(big.NewInt(0)) > 0
+	if !badPmtStatus && !badFaultStatus {
 		fmt.Printf("Status healthy 🟢\n")
+		fmt.Printf("Your account owes its weekly payment (`to-current`) within the next: %s (by epoch # %s)\n", formatSinceDuration(weekOneDeadlineTime, epochsPaidTime), weekOneDeadline)
 	} else {
+		fmt.Println(chalk.Bold.TextStyle("Status unhealthy 🔴 - Contact someone from the GLIF team immediately"))
+	}
+
+	if badPmtStatus {
+		fmt.Println("You are late on your weekly payment")
+		fmt.Printf("Your account *must* make a payment to-current within the next: %s (by epoch # %s)\n", formatSinceDuration(defaultEpochTime, epochsPaidTime), defaultEpoch)
+	}
+
+	if badFaultStatus {
 		chainHeight, err := query.ChainHeight(ctx)
 		if err != nil {
 			return err
@@ -378,14 +370,22 @@ func agentHealth(ctx context.Context, agent common.Address, s *spinner.Spinner) 
 		liableForFaultySectorDefault := consecutiveFaultEpochs.Cmp(consecutiveFaultEpochTolerance) >= 0
 
 		if liableForFaultySectorDefault {
-			fmt.Printf("🔴 Status unhealthy - you are at risk of liquidation due to consecutive faulty sectors 🔴\n")
+			fmt.Printf("You are at risk of liquidation due to consecutive faulty sectors\n")
 			fmt.Printf("Faulty sector start epoch: %v\n", faultySectorStart)
 		} else {
 			epochsBeforeZeroTolerance := new(big.Int).Sub(consecutiveFaultEpochTolerance, consecutiveFaultEpochs)
-			fmt.Printf("🟡 Status unhealthy - you are approaching risk of liquidation due to consecutive faulty sectors 🟡\n")
-			fmt.Printf("- With %v more consecutive faulty sectors, you will be at risk of liquidation\n", epochsBeforeZeroTolerance)
+			fmt.Printf("WARNING: You are approaching risk of liquidation due to consecutive faulty sectors\n")
+			fmt.Printf("With %v more consecutive days of faulty sectors, you will be at risk of liquidation\n", epochsBeforeZeroTolerance)
 		}
 	}
+
+	printTable([]string{
+		"Agent's administrator",
+		"Agent in default",
+	}, []string{
+		agentAdmin.String(),
+		fmt.Sprintf("%t", defaulted),
+	})
 	fmt.Println()
 
 	return nil
