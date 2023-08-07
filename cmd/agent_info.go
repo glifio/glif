@@ -212,6 +212,15 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 	s.Stop()
 
 	generateHeader("ECON INFO")
+
+	printTable([]string{
+		"Max borrow",
+		// "Agent's max withdraw",
+	}, []string{
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(maxBorrow)),
+		// fmt.Sprintf("%0.09f FIL", util.ToFIL(maxWithdraw)),
+	})
+
 	if lvl.Cmp(big.NewInt(0)) == 0 && chainID == constants.MainnetChainID {
 		fmt.Println()
 		fmt.Println(chalk.Bold.TextStyle("Please open up a request for quota on GitHub: https://tinyurl.com/glif-entry-request"))
@@ -277,14 +286,6 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 
 		printTable(coreEconKeys, coreEconValues)
 	}
-
-	printTable([]string{
-		"Agent's max borrow",
-		// "Agent's max withdraw",
-	}, []string{
-		fmt.Sprintf("%0.09f FIL", util.ToFIL(maxBorrow)),
-		// fmt.Sprintf("%0.09f FIL", util.ToFIL(maxWithdraw)),
-	})
 
 	s.Start()
 

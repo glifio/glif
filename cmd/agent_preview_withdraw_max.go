@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var previewWithdrawCmd = &cobra.Command{
+var previewWithdrawMaxCmd = &cobra.Command{
 	Use:   "withdraw-max",
 	Short: "Get a quote for the maximum you can withdraw right now.",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -55,6 +55,6 @@ var previewWithdrawCmd = &cobra.Command{
 }
 
 func init() {
-	previewCmd.AddCommand(previewWithdrawCmd)
-	previewWithdrawCmd.Flags().String("agent-addr", "", "Agent address")
+	previewCmd.AddCommand(previewWithdrawMaxCmd)
+	previewWithdrawMaxCmd.Flags().String("agent-addr", "", "Agent address")
 }
