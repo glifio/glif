@@ -339,12 +339,16 @@ func agentHealth(ctx context.Context, agent common.Address, s *spinner.Spinner) 
 	s.Stop()
 
 	generateHeader("HEALTH")
+	fmt.Println()
 	// check to see we're still in good standing wrt making our weekly payment
-	badPmtStatus := account.Principal.Cmp(big.NewInt(0)) > 0 && account.EpochsPaid.Cmp(weekOneDeadline) < 1
+	owesPmt := account.Principal.Cmp(big.NewInt(0)) > 0
+	badPmtStatus := owesPmt && account.EpochsPaid.Cmp(weekOneDeadline) < 1
 	badFaultStatus := faultySectorStart.Cmp(big.NewInt(0)) > 0
 	if !badPmtStatus && !badFaultStatus {
 		fmt.Printf("Status healthy 🟢\n")
-		fmt.Printf("Your account owes its weekly payment (`to-current`) within the next: %s (by epoch # %s)\n", formatSinceDuration(weekOneDeadlineTime, epochsPaidTime), weekOneDeadline)
+		if owesPmt {
+			fmt.Printf("Your account owes its weekly payment (`to-current`) within the next: %s (by epoch # %s)\n", formatSinceDuration(weekOneDeadlineTime, epochsPaidTime), weekOneDeadline)
+		}
 	} else {
 		fmt.Println(chalk.Bold.TextStyle("Status unhealthy 🔴 - Contact someone from the GLIF team immediately"))
 	}
