@@ -11,9 +11,10 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/filecoin-project/go-address"
+	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/mstat"
 	psdk "github.com/glifio/go-pools/sdk"
-	denoms "github.com/glifio/go-pools/util"
+	"github.com/glifio/go-pools/util"
 	"github.com/glifio/go-pools/vc"
 	"github.com/spf13/cobra"
 )
@@ -85,7 +86,16 @@ var infpoolMinerQuote = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Answer: %.04f FIL\n", denoms.ToFIL(borrowNowMax))
+		printWithBoldPreface("Miner can immediately borrow", fmt.Sprintf("%0.09f FIL", util.ToFIL(borrowNowMax)))
+		printWithBoldPreface("Miner can borrow up to", fmt.Sprintf("%0.09f FIL", util.ToFIL(agentData.AgentValue)))
+		fmt.Println("These numbers increase as the Miner earns block rewards.")
+		fmt.Println()
+
+		apr := new(big.Float).Mul(new(big.Float).SetInt(rate), big.NewFloat(constants.EpochsInYear))
+		// div down less an 2 extra decimals for percentage
+		apr.Quo(apr, big.NewFloat(1e34))
+
+		fmt.Printf("Current borrow rate: %0.03f%%\n", apr)
 	},
 }
 

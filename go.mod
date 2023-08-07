@@ -10,14 +10,16 @@ require (
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-state-types v0.11.1
 	github.com/filecoin-project/lotus v1.23.0
-	github.com/glifio/go-pools v0.0.0-20230712232816-fb7500134fc6
+	github.com/glifio/go-pools v0.0.0-20230807010831-c538a0d4811d
 	github.com/golang/mock v1.6.0
 	github.com/ipfs/go-cid v0.4.0
 	github.com/pelletier/go-toml/v2 v2.0.6
 	github.com/raulk/clock v1.1.0
+	github.com/rodaine/table v1.1.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.3
+	github.com/ttacon/chalk v0.0.0-20160626202418-22c06c80ed31
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
 )
 

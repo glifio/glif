@@ -320,7 +320,7 @@ func getAgentAddress(cmd *cobra.Command) (common.Address, error) {
 		}
 	}
 
-	return common.HexToAddress(agentAddrStr), nil
+	return ParseAddressToEVM(cmd.Context(), agentAddrStr)
 }
 
 func getAgentID(cmd *cobra.Command) (*big.Int, error) {
