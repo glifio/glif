@@ -15,9 +15,11 @@ require (
 	github.com/ipfs/go-cid v0.4.0
 	github.com/pelletier/go-toml/v2 v2.0.6
 	github.com/raulk/clock v1.1.0
+	github.com/rodaine/table v1.1.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.3
+	github.com/ttacon/chalk v0.0.0-20160626202418-22c06c80ed31
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
 )
 
