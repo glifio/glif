@@ -44,6 +44,7 @@ var previewWithdrawCmd = &cobra.Command{
 		s.Stop()
 
 		log.Printf("Agent can withdraw up to %0.09f FIL\n", util.ToFIL(maxWithdraw))
+		log.Println("Borrowing funds may change this value.")
 	},
 }
 
