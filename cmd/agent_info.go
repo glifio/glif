@@ -167,10 +167,10 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 		return err
 	}
 
-	maxWithdraw, err := PoolsSDK.Query().InfPoolAgentMaxWithdraw(ctx, agent, agentData)
-	if err != nil {
-		return err
-	}
+	// maxWithdraw, err := PoolsSDK.Query().InfPoolAgentMaxWithdraw(ctx, agent, agentData)
+	// if err != nil {
+	// 	return err
+	// }
 
 	lvl, cap, err := query.InfPoolGetAgentLvl(ctx, agentID)
 	if err != nil {
@@ -280,10 +280,10 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 
 	printTable([]string{
 		"Agent's max borrow",
-		"Agent's max withdraw",
+		// "Agent's max withdraw",
 	}, []string{
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(maxBorrow)),
-		fmt.Sprintf("%0.09f FIL", util.ToFIL(maxWithdraw)),
+		// fmt.Sprintf("%0.09f FIL", util.ToFIL(maxWithdraw)),
 	})
 
 	s.Start()
