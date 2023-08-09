@@ -141,7 +141,7 @@ var agentAutopilotCmd = &cobra.Command{
 						}
 
 						if pull {
-							factoredPullAmt := big.NewInt(0).Mul(payAmt, big.NewInt(int64(pullFundsFactor)))
+							factoredPullAmt := new(big.Int).Mul(payAmt, big.NewInt(int64(pullFundsFactor)))
 
 							factoredPullAmtFIL, _ := util.ToFIL(factoredPullAmt).Float64()
 							log.Printf("Pulling %0.08f (or max available) from miner %s", factoredPullAmtFIL, pullFundsMiner)
