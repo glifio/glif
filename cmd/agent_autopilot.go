@@ -16,6 +16,7 @@ import (
 	"github.com/glifio/cli/journal/fsjournal"
 	"github.com/glifio/go-pools/abigen"
 	"github.com/glifio/go-pools/constants"
+	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -97,12 +98,6 @@ var agentAutopilotCmd = &cobra.Command{
 					goto SLEEP
 				}
 
-				pullFundsMiner, err = ToMinerID(cmd.Context(), viper.GetString("autopilot.pullfunds.miner"))
-				if err != nil {
-					log.Println(err)
-					goto SLEEP
-				}
-
 				account, err = PoolsSDK.Query().InfPoolGetAccount(ctx, agent, nil)
 				if err != nil {
 					log.Println(err)
@@ -127,6 +122,12 @@ var agentAutopilotCmd = &cobra.Command{
 				// if so, make payment
 				if paymentDue(frequency, chainHeadHeight, account.EpochsPaid) {
 					if pullFundsEnabled {
+						pullFundsMiner, err = ToMinerID(cmd.Context(), viper.GetString("autopilot.pullfunds.miner"))
+						if err != nil {
+							log.Println(err)
+							goto SLEEP
+						}
+
 						payAmt, err := payAmount(cmd, payargs, paymentType)
 						if err != nil {
 							log.Println(err)
@@ -142,6 +143,8 @@ var agentAutopilotCmd = &cobra.Command{
 						if pull {
 							factoredPullAmt := big.NewInt(0).Mul(payAmt, big.NewInt(int64(pullFundsFactor)))
 
+							factoredPullAmtFIL, _ := util.ToFIL(factoredPullAmt).Float64()
+							log.Printf("Pulling %0.08f (or max available) from miner %s", factoredPullAmtFIL, pullFundsMiner)
 							err = pullFundsFromMiner(cmd, pullFundsMiner, factoredPullAmt)
 							if err != nil {
 								log.Println(err)
@@ -151,6 +154,7 @@ var agentAutopilotCmd = &cobra.Command{
 
 					}
 
+					log.Printf("Making payment: %v", payargs)
 					_, err = pay(cmd, payargs, paymentType)
 					if err != nil {
 						log.Println(err)
