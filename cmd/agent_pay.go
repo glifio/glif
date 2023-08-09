@@ -4,6 +4,7 @@ Copyright © 2023 Glif LTD
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"time"
@@ -53,10 +54,63 @@ func init() {
 	agentCmd.AddCommand(payCmd)
 }
 
-func pay(cmd *cobra.Command, args []string, paymentType PaymentType, daemon bool) (*big.Int, error) {
+func pay(cmd *cobra.Command, args []string, paymentType PaymentType) (*big.Int, error) {
 	ctx := cmd.Context()
 	from := cmd.Flag("from").Value.String()
 	agentAddr, senderWallet, senderAccount, senderPassphrase, requesterKey, err := commonOwnerOrOperatorSetup(ctx, from)
+	if err != nil {
+		return nil, err
+	}
+
+	payAmt, err := payAmount(ctx, cmd, args, paymentType)
+	if err != nil {
+		return nil, err
+	}
+
+	poolName := cmd.Flag("pool-name").Value.String()
+
+	poolID, err := parsePoolType(poolName)
+	if err != nil {
+		return nil, err
+	}
+
+	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+	s.Start()
+	defer s.Stop()
+
+	payevt := journal.RegisterEventType("agent", "pay")
+	evt := &events.AgentPay{
+		AgentID: agentAddr.String(),
+		PoolID:  poolID.String(),
+		Amount:  payAmt.String(),
+		PayType: paymentType.String(),
+	}
+	defer journal.Close()
+	defer journal.RecordEvent(payevt, func() interface{} { return evt })
+
+	tx, err := PoolsSDK.Act().AgentPay(ctx, agentAddr, poolID, payAmt, senderWallet, senderAccount, senderPassphrase, requesterKey)
+	if err != nil {
+		evt.Error = err.Error()
+		return nil, err
+	}
+	evt.Tx = tx.Hash().String()
+
+	// transaction landed on chain or errored
+	_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
+	if err != nil {
+		evt.Error = err.Error()
+		return nil, err
+	}
+
+	s.Stop()
+
+	return payAmt, nil
+}
+
+// payAmount takes a string amount of FIL as the first value in args and
+// returns a *big.Int in attoFIL based on the paymentType specified
+func payAmount(ctx context.Context, cmd *cobra.Command, args []string, paymentType PaymentType) (*big.Int, error) {
+	agentAddr, err := getAgentAddressWithFlags(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -93,45 +147,6 @@ func pay(cmd *cobra.Command, args []string, paymentType PaymentType, daemon bool
 	default:
 		return nil, fmt.Errorf("invalid payment type: %s", paymentType)
 	}
-
-	poolName := cmd.Flag("pool-name").Value.String()
-
-	poolID, err := parsePoolType(poolName)
-	if err != nil {
-		return nil, err
-	}
-
-	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-	s.Start()
-	defer s.Stop()
-
-	payevt := journal.RegisterEventType("agent", "pay")
-	evt := &events.AgentPay{
-		AgentID: agentAddr.String(),
-		PoolID:  poolID.String(),
-		Amount:  payAmt.String(),
-		PayType: paymentType.String(),
-	}
-	if !daemon {
-		defer journal.Close()
-	}
-	defer journal.RecordEvent(payevt, func() interface{} { return evt })
-
-	tx, err := PoolsSDK.Act().AgentPay(ctx, agentAddr, poolID, payAmt, senderWallet, senderAccount, senderPassphrase, requesterKey)
-	if err != nil {
-		evt.Error = err.Error()
-		return nil, err
-	}
-	evt.Tx = tx.Hash().String()
-
-	// transaction landed on chain or errored
-	_, err = PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
-	if err != nil {
-		evt.Error = err.Error()
-		return nil, err
-	}
-
-	s.Stop()
 
 	return payAmt, nil
 }

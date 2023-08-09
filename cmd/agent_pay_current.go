@@ -34,7 +34,7 @@ var payToCurrentCmd = &cobra.Command{
 			return
 		}
 
-		payAmt, err := pay(cmd, args, ToCurrent, false)
+		payAmt, err := pay(cmd, args, ToCurrent)
 		if err != nil {
 			logFatal(err)
 		}

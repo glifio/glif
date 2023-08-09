@@ -40,7 +40,7 @@ var payPrincipalCmd = &cobra.Command{
 			previewAction(cmd, args, constants.MethodPay)
 			return
 		}
-		payAmt, err := pay(cmd, args, Principal, false)
+		payAmt, err := pay(cmd, args, Principal)
 		if err != nil {
 			logFatal(err)
 		}
