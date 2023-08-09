@@ -189,8 +189,8 @@ func paymentDue(frequency float64, chainHeadHeight, epochsPaid *big.Int) bool {
 	return epochsPassed.Cmp(epochFreqInt) >= 0
 }
 
-// needToPullFunds returns whether the payAmt is larger than the current
-// balance of the Operator wallet.
+// needToPullFunds returns whether the payAmt is larger than the agent
+// liquid assets.
 func needToPullFunds(cmd *cobra.Command, payAmt *big.Int) (bool, error) {
 	agentAddr, _, _, err := commonOwnerOrOperatorSetup(cmd)
 	if err != nil {
