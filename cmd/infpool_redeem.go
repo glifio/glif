@@ -33,7 +33,7 @@ var redeemFILCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		fmt.Printf("Withdrawing %0.09f WFIL from the Infinity Pool\n", util.ToFIL(amount))
+		fmt.Printf("Burning %0.09f iFIL to receive wFIL\n", util.ToFIL(amount))
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
@@ -60,7 +60,7 @@ var redeemFILCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Successfully withdrew WFIL from the Infinity Pool\n")
+		fmt.Printf("Successfully redeemed WFIL for iFIL from the Infinity Pool\n")
 	},
 }
 

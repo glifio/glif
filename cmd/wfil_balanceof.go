@@ -14,7 +14,7 @@ var wFILBalanceOfCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		strAddr := args[0]
-		fmt.Printf("Checking wFIL balance of %s...", strAddr)
+		fmt.Printf("Checking wFIL balance of %s...\n", strAddr)
 
 		addr, err := ParseAddressToEVM(cmd.Context(), strAddr)
 		if err != nil {
