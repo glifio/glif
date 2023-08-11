@@ -380,7 +380,7 @@ func agentHealth(ctx context.Context, agent common.Address, s *spinner.Spinner) 
 		} else {
 			epochsBeforeZeroTolerance := new(big.Int).Sub(consecutiveFaultEpochTolerance, consecutiveFaultEpochs)
 			fmt.Printf("WARNING: You are approaching risk of liquidation due to consecutive faulty sectors\n")
-			fmt.Printf("With %v more consecutive days of faulty sectors, you will be at risk of liquidation\n", epochsBeforeZeroTolerance)
+			fmt.Printf("With %v more consecutive epochs of faulty sectors, you will be at risk of liquidation\n", epochsBeforeZeroTolerance)
 		}
 	}
 
