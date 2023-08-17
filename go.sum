@@ -230,6 +230,8 @@ github.com/gbrlsnchs/jwt/v3 v3.0.1/go.mod h1:AncDcjXz18xetI3A6STfXq2w+LuTx8pQ8bG
 github.com/getsentry/sentry-go v0.18.0 h1:MtBW5H9QgdcJabtZcuJG80BMOwaBpkRDZkxRkNC1sN0=
 github.com/glifio/go-pools v0.0.0-20230811201821-eb1e0e95114d h1:UnLFuby+AyDxiOyMOqD0waLhsyuP6uMR91cSQ4BmpRU=
 github.com/glifio/go-pools v0.0.0-20230811201821-eb1e0e95114d/go.mod h1:GDFTShuXRphwMYhF8Ztd/0l1/MpLjwcq87Ux+29ZfDs=
+github.com/glifio/go-pools v0.0.0-20230817001621-23bd39abfec6 h1:CLM+pfWWX23IaAoJHKKmqvrzJxQs6WIHNEyFdmiT5cg=
+github.com/glifio/go-pools v0.0.0-20230817001621-23bd39abfec6/go.mod h1:GDFTShuXRphwMYhF8Ztd/0l1/MpLjwcq87Ux+29ZfDs=
 github.com/glifio/go-secp256k1 v0.0.1 h1:BzsnpEtMl8RQtuJSfYDYK43MbTdVPtAQePZHn7TgSJk=
 github.com/glifio/go-secp256k1 v0.0.1/go.mod h1:AuM499x3qhpTvNyjqfLBkeYlEYQxD0ZB7YsYliALcPs=
 github.com/go-check/check v0.0.0-20180628173108-788fd7840127/go.mod h1:9ES+weclKsC9YodN5RgxqK/VD9HM9JsCSh7rNhMZE98=
