@@ -341,7 +341,7 @@ func getAgentAddress() (common.Address, error) {
 		return common.Address{}, errors.New("Did you forget to create your agent or specify an address? Try `glif agent id --address <address>`")
 	}
 
-	return common.HexToAddress(agentAddrStr), nil
+	return ParseAddressToEVM(cmd.Context(), agentAddrStr)
 }
 
 func getAgentAddressWithFlags(cmd *cobra.Command) (common.Address, error) {
