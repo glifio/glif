@@ -16,7 +16,7 @@ var previewWithdrawMaxCmd = &cobra.Command{
 	Use:   "withdraw-max",
 	Short: "Get a quote for the maximum you can withdraw right now.",
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, err := getAgentAddress(cmd)
+		agentAddr, err := getAgentAddressWithFlags(cmd)
 		if err != nil {
 			logFatal(err)
 		}

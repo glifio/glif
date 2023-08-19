@@ -341,16 +341,30 @@ func getAgentAddress() (common.Address, error) {
 		return common.Address{}, errors.New("Did you forget to create your agent or specify an address? Try `glif agent id --address <address>`")
 	}
 
-	return ParseAddressToEVM(cmd.Context(), agentAddrStr)
+	return common.HexToAddress(agentAddrStr), nil
 }
 
 func getAgentAddressWithFlags(cmd *cobra.Command) (common.Address, error) {
+	as := util.AgentStore()
+	var agentAddrStr string
+
 	if cmd.Flag("agent-addr") != nil && cmd.Flag("agent-addr").Changed {
-		agentAddrStr := cmd.Flag("agent-addr").Value.String()
-		return common.HexToAddress(agentAddrStr), nil
+		agentAddrStr = cmd.Flag("agent-addr").Value.String()
 	} else {
-		return getAgentAddress()
+		// Check if an agent already exists
+		cachedAddr, err := as.Get("address")
+		if err != nil {
+			return common.Address{}, err
+		}
+
+		agentAddrStr = cachedAddr
+
+		if agentAddrStr == "" {
+			return common.Address{}, errors.New("Did you forget to create your agent or specify an address? Try `glif agent id --address <address>`")
+		}
 	}
+
+	return ParseAddressToEVM(cmd.Context(), agentAddrStr)
 }
 
 func getAgentID(cmd *cobra.Command) (*big.Int, error) {
