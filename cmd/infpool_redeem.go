@@ -18,7 +18,9 @@ var redeemFILCmd = &cobra.Command{
 	Long:  "Redeem iFIL for WFIL from the Infinity Pool. The address of the SimpleRamp must be approved for the appropriate amount of iFIL in order for this call to go execute.",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		_, pk, _, err := commonOwnerOrOperatorSetup(cmd)
+		ctx := cmd.Context()
+		from := cmd.Flag("from").Value.String()
+		_, senderWallet, senderAccount, senderPassphrase, _, err := commonOwnerOrOperatorSetup(ctx, from)
 		if err != nil {
 			logFatal(err)
 		}
@@ -39,7 +41,7 @@ var redeemFILCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().RampRedeem(cmd.Context(), amount, receiver, pk)
+		tx, err := PoolsSDK.Act().RampRedeem(cmd.Context(), amount, receiver, senderWallet, senderAccount, senderPassphrase)
 		if err != nil {
 			logFatal(err)
 		}

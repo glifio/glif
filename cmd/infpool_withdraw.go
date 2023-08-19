@@ -18,7 +18,9 @@ var withdrawFILCmd = &cobra.Command{
 	Long:  "Withdraw WFIL from the Infinity Pool by burning the appropriate amount of iFIL tokens. The address of the SimpleRamp must be approved for the appropriate amount of iFIL in order for this call to go execute.",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		_, pk, _, err := commonOwnerOrOperatorSetup(cmd)
+		ctx := cmd.Context()
+		from := cmd.Flag("from").Value.String()
+		_, senderWallet, senderAccount, senderPassphrase, _, err := commonOwnerOrOperatorSetup(ctx, from)
 		if err != nil {
 			logFatal(err)
 		}
@@ -39,7 +41,7 @@ var withdrawFILCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().RampWithdraw(cmd.Context(), amount, receiver, pk)
+		tx, err := PoolsSDK.Act().RampWithdraw(cmd.Context(), amount, receiver, senderWallet, senderAccount, senderPassphrase)
 		if err != nil {
 			logFatal(err)
 		}

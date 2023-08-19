@@ -38,7 +38,7 @@ var iFILApproveCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().IFILApprove(ctx, addr, amt, senderWallet, senderAccount, senderPassphrase)
+		tx, err := PoolsSDK.Act().IFILApprove(ctx, addr, amount, senderWallet, senderAccount, senderPassphrase)
 		if err != nil {
 			logFatalf("Failed to approve iFIL %s", err)
 		}
