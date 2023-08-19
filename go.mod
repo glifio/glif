@@ -2,6 +2,8 @@ module github.com/glifio/cli
 
 go 1.19
 
+replace github.com/glifio/go-pools v0.0.0-20230811201821-eb1e0e95114d => ../go-pools
+
 replace github.com/ipsn/go-secp256k1 v0.0.0-20180726113642-9d62b9f0bc52 => github.com/glifio/go-secp256k1 v0.0.1
 
 require (
@@ -11,7 +13,7 @@ require (
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-state-types v0.11.1
 	github.com/filecoin-project/lotus v1.23.0
-	github.com/glifio/go-pools v0.0.0-20230807010831-c538a0d4811d
+	github.com/glifio/go-pools v0.0.0-20230817001621-23bd39abfec6
 	github.com/golang/mock v1.6.0
 	github.com/ipfs/go-cid v0.4.0
 	github.com/pelletier/go-toml/v2 v2.0.6

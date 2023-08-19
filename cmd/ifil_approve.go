@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -23,16 +22,15 @@ var iFILApproveCmd = &cobra.Command{
 
 		strAddr := args[0]
 		strAmt := args[1]
-		fmt.Printf("Approving %s to spend %s of your iFIL balance...", strAddr, strAmt)
+		fmt.Printf("Approving %s to spend %s of your iFIL balance...\n", strAddr, strAmt)
 
 		addr, err := ParseAddressToEVM(ctx, strAddr)
 		if err != nil {
 			logFatalf("Failed to parse address %s", err)
 		}
 
-		amt := big.NewInt(0)
-		amt, ok := amt.SetString(strAmt, 10)
-		if !ok {
+		amount, err := parseFILAmount(strAmt)
+		if err != nil {
 			logFatalf("Failed to parse amount %s", err)
 		}
 
