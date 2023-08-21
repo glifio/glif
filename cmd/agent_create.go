@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"math/big"
 	"os"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/glifio/cli/util"
+	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )
 
@@ -74,15 +76,18 @@ var createCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
+		auth, err := walletutils.NewEthWalletTransactor(wallet, &account, passphrase, big.NewInt(chainID))
+		if err != nil {
+			logFatal(err)
+		}
+
 		// submit the agent create transaction
 		tx, err := PoolsSDK.Act().AgentCreate(
 			cmd.Context(),
+			auth,
 			ownerAddr,
 			operatorAddr,
 			requestAddr,
-			wallet,
-			account,
-			passphrase,
 		)
 		if err != nil {
 			logFatalf("pools sdk: agent create: %s", err)
