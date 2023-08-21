@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -13,6 +14,7 @@ import (
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/glifio/cli/events"
 	"github.com/glifio/go-pools/constants"
+	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )
 
@@ -68,13 +70,16 @@ var addCmd = &cobra.Command{
 		defer journal.Close()
 		defer journal.RecordEvent(addminerevt, func() interface{} { return evt })
 
+		auth, err := walletutils.NewEthWalletTransactor(ownerWallet, &ownerAccount, ownerPassphrase, big.NewInt(chainID))
+		if err != nil {
+			logFatal(err)
+		}
+
 		tx, err := PoolsSDK.Act().AgentAddMiner(
 			cmd.Context(),
+			auth,
 			agentAddr,
 			minerAddr,
-			ownerWallet,
-			ownerAccount,
-			ownerPassphrase,
 			requesterKey,
 		)
 		if err != nil {
