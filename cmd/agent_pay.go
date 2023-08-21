@@ -11,6 +11,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/glifio/cli/events"
+	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )
 
@@ -88,7 +89,12 @@ func pay(cmd *cobra.Command, args []string, paymentType PaymentType) (*big.Int, 
 	defer journal.Close()
 	defer journal.RecordEvent(payevt, func() interface{} { return evt })
 
-	tx, err := PoolsSDK.Act().AgentPay(ctx, agentAddr, poolID, payAmt, senderWallet, senderAccount, senderPassphrase, requesterKey)
+	auth, err := walletutils.NewEthWalletTransactor(senderWallet, &senderAccount, senderPassphrase, big.NewInt(chainID))
+	if err != nil {
+		logFatal(err)
+	}
+
+	tx, err := PoolsSDK.Act().AgentPay(ctx, auth, agentAddr, poolID, payAmt, requesterKey)
 	if err != nil {
 		evt.Error = err.Error()
 		return nil, err

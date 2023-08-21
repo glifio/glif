@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )
 
@@ -40,7 +41,12 @@ var iFILTransferCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().IFILTransfer(ctx, addr, amt, senderWallet, senderAccount, senderPassphrase)
+		auth, err := walletutils.NewEthWalletTransactor(senderWallet, &senderAccount, senderPassphrase, big.NewInt(chainID))
+		if err != nil {
+			logFatal(err)
+		}
+
+		tx, err := PoolsSDK.Act().IFILTransfer(ctx, auth, addr, amt)
 		if err != nil {
 			logFatalf("Failed to transfer iFIL %s", err)
 		}

@@ -5,12 +5,14 @@ package cmd
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/filecoin-project/go-address"
 	"github.com/glifio/cli/events"
 	"github.com/glifio/go-pools/constants"
+	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )
 
@@ -63,7 +65,12 @@ var rmCmd = &cobra.Command{
 
 		fmt.Printf("Removing miner %s from agent %s by changing its owner address to %s\n", minerAddr, agentAddr, newMinerOwnerAddr)
 
-		tx, err := PoolsSDK.Act().AgentRemoveMiner(cmd.Context(), agentAddr, minerAddr, newMinerOwnerAddr, ownerWallet, ownerAccount, ownerPassphrase, requesterKey)
+		auth, err := walletutils.NewEthWalletTransactor(ownerWallet, &ownerAccount, ownerPassphrase, big.NewInt(chainID))
+		if err != nil {
+			logFatal(err)
+		}
+
+		tx, err := PoolsSDK.Act().AgentRemoveMiner(cmd.Context(), auth, agentAddr, minerAddr, newMinerOwnerAddr, requesterKey)
 		if err != nil {
 			evt.Error = err.Error()
 			logFatal(err)

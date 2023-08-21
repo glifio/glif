@@ -5,10 +5,12 @@ package cmd
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/glifio/go-pools/util"
+	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )
 
@@ -41,7 +43,12 @@ var withdrawFILCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().RampWithdraw(cmd.Context(), amount, receiver, senderWallet, senderAccount, senderPassphrase)
+		auth, err := walletutils.NewEthWalletTransactor(senderWallet, &senderAccount, senderPassphrase, big.NewInt(chainID))
+		if err != nil {
+			logFatal(err)
+		}
+
+		tx, err := PoolsSDK.Act().RampWithdraw(cmd.Context(), auth, amount, senderAccount.Address, receiver)
 		if err != nil {
 			logFatal(err)
 		}

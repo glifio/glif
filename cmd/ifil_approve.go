@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
+	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )
 
@@ -38,7 +40,12 @@ var iFILApproveCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().IFILApprove(ctx, addr, amount, senderWallet, senderAccount, senderPassphrase)
+		auth, err := walletutils.NewEthWalletTransactor(senderWallet, &senderAccount, senderPassphrase, big.NewInt(chainID))
+		if err != nil {
+			logFatal(err)
+		}
+
+		tx, err := PoolsSDK.Act().IFILApprove(ctx, auth, addr, amount)
 		if err != nil {
 			logFatalf("Failed to approve iFIL %s", err)
 		}

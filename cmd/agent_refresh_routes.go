@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
+	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +26,12 @@ var refreshRoutesCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().AgentRefreshRoutes(ctx, agentAddr, senderWallet, senderAccount, senderPassphrase)
+		auth, err := walletutils.NewEthWalletTransactor(senderWallet, &senderAccount, senderPassphrase, big.NewInt(chainID))
+		if err != nil {
+			logFatal(err)
+		}
+
+		tx, err := PoolsSDK.Act().AgentRefreshRoutes(ctx, auth, agentAddr)
 		if err != nil {
 			logFatalf("Failed to refresh routes %s", err)
 		}

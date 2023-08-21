@@ -5,12 +5,14 @@ package cmd
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/glifio/cli/events"
 	"github.com/glifio/go-pools/util"
 	denoms "github.com/glifio/go-pools/util"
+	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )
 
@@ -57,7 +59,12 @@ var borrowCmd = &cobra.Command{
 		defer journal.Close()
 		defer journal.RecordEvent(borrowevt, func() interface{} { return evt })
 
-		tx, err := PoolsSDK.Act().AgentBorrow(cmd.Context(), agentAddr, poolID, amount, ownerWallet, ownerAccount, ownerPassphrase, requesterKey)
+		auth, err := walletutils.NewEthWalletTransactor(ownerWallet, &ownerAccount, ownerPassphrase, big.NewInt(chainID))
+		if err != nil {
+			logFatal(err)
+		}
+
+		tx, err := PoolsSDK.Act().AgentBorrow(cmd.Context(), auth, agentAddr, poolID, amount, requesterKey)
 		if err != nil {
 			evt.Error = err.Error()
 			logFatal(err)

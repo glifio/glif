@@ -5,9 +5,11 @@ package cmd
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
+	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )
 
@@ -37,7 +39,12 @@ var depositFILCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().InfPoolDepositFIL(ctx, receiver, amount, senderWallet, senderAccount, senderPassphrase)
+		auth, err := walletutils.NewEthWalletTransactor(senderWallet, &senderAccount, senderPassphrase, big.NewInt(chainID))
+		if err != nil {
+			logFatal(err)
+		}
+
+		tx, err := PoolsSDK.Act().InfPoolDepositFIL(ctx, auth, receiver, amount)
 		if err != nil {
 			logFatal(err)
 		}

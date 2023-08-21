@@ -6,11 +6,13 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/filecoin-project/go-address"
 	"github.com/glifio/cli/events"
+	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )
 
@@ -45,7 +47,12 @@ var confirmWorker = &cobra.Command{
 		defer journal.Close()
 		defer journal.RecordEvent(confirmworkerevt, func() interface{} { return evt })
 
-		tx, err := PoolsSDK.Act().AgentConfirmMinerWorkerChange(cmd.Context(), agentAddr, minerAddr, ownerWallet, ownerAccount, ownerPassphrase)
+		auth, err := walletutils.NewEthWalletTransactor(ownerWallet, &ownerAccount, ownerPassphrase, big.NewInt(chainID))
+		if err != nil {
+			logFatal(err)
+		}
+
+		tx, err := PoolsSDK.Act().AgentConfirmMinerWorkerChange(cmd.Context(), auth, agentAddr, minerAddr)
 		if err != nil {
 			evt.Error = err.Error()
 			logFatal(err)

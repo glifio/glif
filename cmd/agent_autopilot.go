@@ -17,6 +17,7 @@ import (
 	"github.com/glifio/go-pools/abigen"
 	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/util"
+	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -219,7 +220,12 @@ func pullFundsFromMiner(cmd *cobra.Command, miner address.Address, amount *big.I
 	}
 	defer journal.RecordEvent(pullevt, func() interface{} { return evt })
 
-	tx, err := PoolsSDK.Act().AgentPullFunds(cmd.Context(), agentAddr, amount, miner, senderWallet, senderAccount, senderPassphrase, requesterKey)
+	auth, err := walletutils.NewEthWalletTransactor(senderWallet, &senderAccount, senderPassphrase, big.NewInt(chainID))
+	if err != nil {
+		return err
+	}
+
+	tx, err := PoolsSDK.Act().AgentPullFunds(cmd.Context(), auth, agentAddr, amount, miner, requesterKey)
 	if err != nil {
 		evt.Error = err.Error()
 		return err
