@@ -70,7 +70,7 @@ var createCmd = &cobra.Command{
 			logFatal("Keys not found. Please check your `keys.toml` file")
 		}
 
-		fmt.Printf("Creating agent, owner %s, operator %s, request %s", ownerAddr, operatorAddr, requestAddr)
+		fmt.Printf("Creating agent, owner %s, operator %s, request %s\n", ownerAddr, operatorAddr, requestAddr)
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
