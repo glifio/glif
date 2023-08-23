@@ -210,7 +210,6 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 
 	var fromAddress common.Address
 	// if no flag was passed, we just use the operator address by default
-	// from := cmd.Flag("from").Value.String()
 	switch from {
 	case "", opEvm.String(), opFevm.String():
 		funded, err := as.IsFunded(ctx, PoolsSDK, opFevm, util.OperatorKeyFunded, opEvm.String())
