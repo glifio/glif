@@ -2,11 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
-	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +15,7 @@ var refreshRoutesCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 		from := cmd.Flag("from").Value.String()
-		agentAddr, senderWallet, senderAccount, senderPassphrase, _, err := commonOwnerOrOperatorSetup(ctx, from)
+		agentAddr, auth, _, _, err := commonOwnerOrOperatorSetup(ctx, from)
 		if err != nil {
 			logFatal(err)
 		}
@@ -25,11 +23,6 @@ var refreshRoutesCmd = &cobra.Command{
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 		defer s.Stop()
-
-		auth, err := walletutils.NewEthWalletTransactor(senderWallet, &senderAccount, senderPassphrase, big.NewInt(chainID))
-		if err != nil {
-			logFatal(err)
-		}
 
 		tx, err := PoolsSDK.Act().AgentRefreshRoutes(ctx, auth, agentAddr)
 		if err != nil {

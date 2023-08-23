@@ -15,7 +15,6 @@ import (
 	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/deploy"
 	denoms "github.com/glifio/go-pools/util"
-	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +25,7 @@ var forwardFIL = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 		from := args[0]
-		_, senderWallet, senderAccount, senderPassphrase, _, err := commonOwnerOrOperatorSetup(ctx, from)
+		_, auth, senderAccount, _, err := commonOwnerOrOperatorSetup(ctx, from)
 		if err != nil {
 			logFatal(err)
 		}
@@ -95,12 +94,6 @@ var forwardFIL = &cobra.Command{
 
 		// get the FilForwarder contract address
 		filf, err := abigen.NewFilForwarderTransactor(filForwardAddr, ethClient)
-		if err != nil {
-			evt.Error = err.Error()
-			logFatal(err)
-		}
-
-		auth, err := walletutils.NewEthWalletTransactor(senderWallet, &senderAccount, senderPassphrase, chainID)
 		if err != nil {
 			evt.Error = err.Error()
 			logFatal(err)

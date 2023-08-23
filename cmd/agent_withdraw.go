@@ -5,12 +5,10 @@ package cmd
 
 import (
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/glifio/cli/events"
-	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +18,7 @@ var withdrawCmd = &cobra.Command{
 	Long:  "",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, ownerWallet, ownerAccount, ownerPassphrase, requesterKey, err := commonSetupOwnerCall()
+		agentAddr, auth, _, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
 			logFatal(err)
 		}
@@ -49,11 +47,6 @@ var withdrawCmd = &cobra.Command{
 		defer journal.RecordEvent(withdrawevt, func() interface{} { return evt })
 
 		fmt.Printf("Withdrawing %s FIL from your Agent", args[0])
-
-		auth, err := walletutils.NewEthWalletTransactor(ownerWallet, &ownerAccount, ownerPassphrase, big.NewInt(chainID))
-		if err != nil {
-			logFatal(err)
-		}
 
 		tx, err := PoolsSDK.Act().AgentWithdraw(cmd.Context(), auth, agentAddr, receiver, amount, requesterKey)
 		if err != nil {

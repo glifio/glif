@@ -5,14 +5,12 @@ package cmd
 
 import (
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/glifio/cli/events"
 	"github.com/glifio/go-pools/util"
 	denoms "github.com/glifio/go-pools/util"
-	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +21,7 @@ var borrowCmd = &cobra.Command{
 	Long:  "Borrow FIL from a Pool. If you do not pass a `pool-name` flag, the default pool is the Infinity Pool.",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, ownerWallet, ownerAccount, ownerPassphrase, requesterKey, err := commonSetupOwnerCall()
+		agentAddr, auth, _, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
 			logFatal(err)
 		}
@@ -58,11 +56,6 @@ var borrowCmd = &cobra.Command{
 		}
 		defer journal.Close()
 		defer journal.RecordEvent(borrowevt, func() interface{} { return evt })
-
-		auth, err := walletutils.NewEthWalletTransactor(ownerWallet, &ownerAccount, ownerPassphrase, big.NewInt(chainID))
-		if err != nil {
-			logFatal(err)
-		}
 
 		tx, err := PoolsSDK.Act().AgentBorrow(cmd.Context(), auth, agentAddr, poolID, amount, requesterKey)
 		if err != nil {

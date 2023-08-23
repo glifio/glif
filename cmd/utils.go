@@ -13,6 +13,7 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/filecoin-project/go-address"
@@ -26,6 +27,7 @@ import (
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
 	"github.com/glifio/cli/util"
 	denoms "github.com/glifio/go-pools/util"
+	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )
 
@@ -173,26 +175,21 @@ func parseAddress(ctx context.Context, addr string, lapi lotusapi.FullNode) (com
 	return common.HexToAddress(ethAddr.String()), nil
 }
 
-func commonSetupOwnerCall() (agentAddr common.Address, ownerWallet accounts.Wallet, ownerAccount accounts.Account, ownerPassphrase string, requesterKey *ecdsa.PrivateKey, err error) {
+func commonSetupOwnerCall() (agentAddr common.Address, auth *bind.TransactOpts, ownerAccount accounts.Account, requesterKey *ecdsa.PrivateKey, err error) {
 	as := util.AgentStore()
 
 	ownerAddr, _, err := as.GetAddrs(util.OwnerKey)
 	if err != nil {
-		return common.Address{}, nil, accounts.Account{}, "", nil, err
+		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
-	agentAddr, wallet, account, passphrase, requesterKey, err := commonOwnerOrOperatorSetup(context.Background(), ownerAddr.String())
-	if err != nil {
-		return common.Address{}, nil, accounts.Account{}, "", nil, err
-	}
-
-	return agentAddr, wallet, account, passphrase, requesterKey, nil
+	return commonOwnerOrOperatorSetup(context.Background(), ownerAddr.String())
 }
 
-func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr common.Address, wallet accounts.Wallet, account accounts.Account, passphrase string, requesterKey *ecdsa.PrivateKey, err error) {
+func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr common.Address, auth *bind.TransactOpts, account accounts.Account, requesterKey *ecdsa.PrivateKey, err error) {
 	err = checkWalletMigrated()
 	if err != nil {
-		return common.Address{}, nil, accounts.Account{}, "", nil, err
+		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
 	as := util.AgentStore()
@@ -203,12 +200,12 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 
 	opEvm, opFevm, err := as.GetAddrs(util.OperatorKey)
 	if err != nil {
-		return common.Address{}, nil, accounts.Account{}, "", nil, err
+		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
 	owEvm, owFevm, err := as.GetAddrs(util.OwnerKey)
 	if err != nil {
-		return common.Address{}, nil, accounts.Account{}, "", nil, err
+		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
 	var fromAddress common.Address
@@ -218,7 +215,7 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 	case "", opEvm.String(), opFevm.String():
 		funded, err := as.IsFunded(ctx, PoolsSDK, opFevm, util.OperatorKeyFunded, opEvm.String())
 		if err != nil {
-			return common.Address{}, nil, accounts.Account{}, "", nil, err
+			return common.Address{}, nil, accounts.Account{}, nil, err
 		}
 		if funded {
 			fromAddress = opEvm
@@ -227,28 +224,29 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 			fromAddress = owEvm
 		}
 		if err != nil {
-			return common.Address{}, nil, accounts.Account{}, "", nil, err
+			return common.Address{}, nil, accounts.Account{}, nil, err
 		}
 	case owEvm.String(), owFevm.String():
 		fromAddress = owEvm
 	default:
-		return common.Address{}, nil, accounts.Account{}, "", nil, errors.New("invalid from address")
+		return common.Address{}, nil, accounts.Account{}, nil, errors.New("invalid from address")
 	}
 	if err != nil {
-		return common.Address{}, nil, accounts.Account{}, "", nil, err
+		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
 	agentAddr, err = getAgentAddress()
 	if err != nil {
-		return common.Address{}, nil, accounts.Account{}, "", nil, err
+		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
 	account = accounts.Account{Address: fromAddress}
-	wallet, err = manager.Find(account)
+	wallet, err := manager.Find(account)
 	if err != nil {
-		return common.Address{}, nil, accounts.Account{}, "", nil, err
+		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
+	var passphrase string
 	var envSet bool
 	var message string
 	if fromAddress == owEvm {
@@ -264,17 +262,22 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 			prompt := &survey.Password{Message: message}
 			survey.AskOne(prompt, &passphrase)
 			if passphrase == "" {
-				return common.Address{}, nil, accounts.Account{}, "", nil, fmt.Errorf("Aborted")
+				return common.Address{}, nil, accounts.Account{}, nil, fmt.Errorf("Aborted")
 			}
 		}
 	}
 
 	requesterKey, err = getRequesterKey(as, ks)
 	if err != nil {
-		return common.Address{}, nil, accounts.Account{}, "", nil, err
+		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
-	return agentAddr, wallet, account, passphrase, requesterKey, nil
+	auth, err = walletutils.NewEthWalletTransactor(wallet, &account, passphrase, big.NewInt(chainID))
+	if err != nil {
+		logFatal(err)
+	}
+
+	return agentAddr, auth, account, requesterKey, nil
 }
 
 func getRequesterKey(as *util.AgentStorage, ks *keystore.KeyStore) (*ecdsa.PrivateKey, error) {

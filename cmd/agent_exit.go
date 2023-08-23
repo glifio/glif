@@ -10,7 +10,6 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/glifio/cli/events"
-	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +20,7 @@ var exitCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 		from := cmd.Flag("from").Value.String()
-		agentAddr, senderWallet, senderAccount, senderPassphrase, requesterKey, err := commonOwnerOrOperatorSetup(ctx, from)
+		agentAddr, auth, _, requesterKey, err := commonOwnerOrOperatorSetup(ctx, from)
 		if err != nil {
 			logFatal(err)
 		}
@@ -58,11 +57,6 @@ var exitCmd = &cobra.Command{
 		}
 		defer journal.Close()
 		defer journal.RecordEvent(exitevt, func() interface{} { return evt })
-
-		auth, err := walletutils.NewEthWalletTransactor(senderWallet, &senderAccount, senderPassphrase, big.NewInt(chainID))
-		if err != nil {
-			logFatal(err)
-		}
 
 		tx, err := PoolsSDK.Act().AgentPay(ctx, auth, agentAddr, poolID, payAmount, requesterKey)
 		if err != nil {

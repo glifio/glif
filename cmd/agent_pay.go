@@ -11,7 +11,6 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/glifio/cli/events"
-	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )
 
@@ -58,7 +57,7 @@ func init() {
 func pay(cmd *cobra.Command, args []string, paymentType PaymentType) (*big.Int, error) {
 	ctx := cmd.Context()
 	from := cmd.Flag("from").Value.String()
-	agentAddr, senderWallet, senderAccount, senderPassphrase, requesterKey, err := commonOwnerOrOperatorSetup(ctx, from)
+	agentAddr, auth, _, requesterKey, err := commonOwnerOrOperatorSetup(ctx, from)
 	if err != nil {
 		return nil, err
 	}
@@ -88,11 +87,6 @@ func pay(cmd *cobra.Command, args []string, paymentType PaymentType) (*big.Int, 
 	}
 	defer journal.Close()
 	defer journal.RecordEvent(payevt, func() interface{} { return evt })
-
-	auth, err := walletutils.NewEthWalletTransactor(senderWallet, &senderAccount, senderPassphrase, big.NewInt(chainID))
-	if err != nil {
-		logFatal(err)
-	}
 
 	tx, err := PoolsSDK.Act().AgentPay(ctx, auth, agentAddr, poolID, payAmt, requesterKey)
 	if err != nil {
