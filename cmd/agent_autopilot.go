@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/filecoin-project/go-address"
-	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/glifio/cli/events"
 	"github.com/glifio/cli/journal/fsjournal"
 	"github.com/glifio/go-pools/abigen"
@@ -239,44 +238,6 @@ func pullFundsFromMiner(cmd *cobra.Command, miner address.Address, amount *big.I
 		return err
 	}
 	return nil
-}
-
-// chooseMiner returns the 'richest' miner associated with the agent and whether that miner
-// has more funds than the requiredFunds parameter.
-func chooseMiner(cmd *cobra.Command, requiredFunds *big.Int) (address.Address, bool, error) {
-	lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
-	if err != nil {
-		return address.Address{}, false, fmt.Errorf("Failed to instantiate eth client %s", err)
-	}
-	defer closer()
-	agentAddr, err := getAgentAddressWithFlags(cmd)
-	if err != nil {
-		return address.Address{}, false, err
-	}
-
-	miners, err := PoolsSDK.Query().AgentMiners(cmd.Context(), agentAddr, nil)
-	if err != nil {
-		return address.Address{}, false, err
-	}
-
-	var chosen address.Address
-	var bal *big.Int
-	for i, m := range miners {
-		mbal, err := lapi.StateMinerAvailableBalance(cmd.Context(), m, types.EmptyTSK)
-		if err != nil {
-			return address.Address{}, false, err
-		}
-		if i == 0 {
-			chosen = m
-			bal = mbal.Int
-			continue
-		}
-		if mbal.Int.Cmp(bal) > 0 {
-			chosen = m
-			bal = mbal.Int
-		}
-	}
-	return chosen, bal.Cmp(requiredFunds) > 0, nil
 }
 
 var debugSetup bool
