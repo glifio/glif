@@ -14,16 +14,18 @@ var iFILTransferCmd = &cobra.Command{
 	Short: "Transfer iFIL to another address",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		_, pk, _, err := commonOwnerOrOperatorSetup(cmd)
+		ctx := cmd.Context()
+		from := cmd.Flag("from").Value.String()
+		_, auth, _, _, err := commonOwnerOrOperatorSetup(ctx, from)
 		if err != nil {
 			logFatal(err)
 		}
 
 		strAddr := args[0]
 		strAmt := args[1]
-		fmt.Printf("Transferring %s iFIL balance to %s...", strAmt, strAddr)
+		fmt.Printf("Transferring %s iFIL balance to %s...\n", strAmt, strAddr)
 
-		addr, err := ParseAddressToEVM(cmd.Context(), strAddr)
+		addr, err := ParseAddressToEVM(ctx, strAddr)
 		if err != nil {
 			logFatalf("Failed to parse address %s", err)
 		}
@@ -38,7 +40,7 @@ var iFILTransferCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().IFILTransfer(cmd.Context(), addr, amt, pk)
+		tx, err := PoolsSDK.Act().IFILTransfer(ctx, auth, addr, amt)
 		if err != nil {
 			logFatalf("Failed to transfer iFIL %s", err)
 		}
@@ -49,7 +51,7 @@ var iFILTransferCmd = &cobra.Command{
 		}
 		defer eapi.Close()
 
-		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
+		_, err = PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
 		if err != nil {
 			logFatalf("Failed to transfer iFIL %s", err)
 		}
@@ -62,4 +64,5 @@ var iFILTransferCmd = &cobra.Command{
 
 func init() {
 	iFILCmd.AddCommand(iFILTransferCmd)
+	iFILTransferCmd.Flags().String("from", "", "address of the owner or operator of the agent")
 }

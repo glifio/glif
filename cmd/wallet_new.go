@@ -5,9 +5,10 @@ package cmd
 
 import (
 	"log"
+	"os"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/glifio/cli/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -29,58 +30,59 @@ var newCmd = &cobra.Command{
 	Short: "Create a set of keys",
 	Long:  `Creates an owner, an operator, and a requester key and stores the values in $HOME/.config/glif/keys.toml. Note that the owner and requester keys are only applicable to Agents, the operator key is the primary key for interacting with smart contracts.`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		as := util.AgentStore()
 		ks := util.KeyStore()
 
-		ownerAddr, ownerDelAddr, err := ks.GetAddrs(util.OwnerKey)
+		ownerAddr, _, err := as.GetAddrs(util.OwnerKey)
 		panicIfKeyExists(util.OwnerKey, ownerAddr, err)
 
-		operatorAddr, operatorDelAddr, err := ks.GetAddrs(util.OperatorKey)
+		operatorAddr, _, err := as.GetAddrs(util.OperatorKey)
 		panicIfKeyExists(util.OperatorKey, operatorAddr, err)
 
-		requestAddr, requestDelAddr, err := ks.GetAddrs(util.RequestKey)
+		requestAddr, _, err := as.GetAddrs(util.RequestKey)
 		panicIfKeyExists(util.RequestKey, requestAddr, err)
 
-		// Create the Ethereum private key
-		ownerPrivateKey, err := crypto.GenerateKey()
+		ownerPassphrase, envSet := os.LookupEnv("GLIF_OWNER_PASSPHRASE")
+		if !envSet {
+			prompt := &survey.Password{
+				Message: "Please type a passphrase to encrypt your owner private key",
+			}
+			survey.AskOne(prompt, &ownerPassphrase)
+		}
+		owner, err := ks.NewAccount(ownerPassphrase)
 		if err != nil {
 			logFatal(err)
 		}
 
-		operatorPrivateKey, err := crypto.GenerateKey()
+		operatorPassphrase := os.Getenv("GLIF_OPERATOR_PASSPHRASE")
+		operator, err := ks.NewAccount(operatorPassphrase)
 		if err != nil {
 			logFatal(err)
 		}
 
-		requestPrivateKey, err := crypto.GenerateKey()
+		requester, err := ks.NewAccount("")
 		if err != nil {
 			logFatal(err)
 		}
 
-		if err := ks.SetKey(util.OwnerKey, ownerPrivateKey); err != nil {
-			logFatal(err)
-		}
-
-		if err := ks.SetKey(util.OperatorKey, operatorPrivateKey); err != nil {
-			logFatal(err)
-		}
-
-		if err := ks.SetKey(util.RequestKey, requestPrivateKey); err != nil {
-			logFatal(err)
-		}
+		as.Set(string(util.OwnerKey), owner.Address.String())
+		as.Set(string(util.OperatorKey), operator.Address.String())
+		as.Set(string(util.RequestKey), requester.Address.String())
 
 		if err := viper.WriteConfig(); err != nil {
 			logFatal(err)
 		}
 
-		ownerAddr, ownerDelAddr, err = ks.GetAddrs(util.OwnerKey)
+		ownerAddr, ownerDelAddr, err := as.GetAddrs(util.OwnerKey)
 		if err != nil {
 			logFatal(err)
 		}
-		operatorAddr, operatorDelAddr, err = ks.GetAddrs(util.OperatorKey)
+		operatorAddr, operatorDelAddr, err := as.GetAddrs(util.OperatorKey)
 		if err != nil {
 			logFatal(err)
 		}
-		requestAddr, requestDelAddr, err = ks.GetAddrs(util.RequestKey)
+		requestAddr, requestDelAddr, err := as.GetAddrs(util.RequestKey)
 		if err != nil {
 			logFatal(err)
 		}

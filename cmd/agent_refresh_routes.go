@@ -13,7 +13,9 @@ var refreshRoutesCmd = &cobra.Command{
 	Short: "Update cached routes on your Agent",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, pk, _, err := commonOwnerOrOperatorSetup(cmd)
+		ctx := cmd.Context()
+		from := cmd.Flag("from").Value.String()
+		agentAddr, auth, _, _, err := commonOwnerOrOperatorSetup(ctx, from)
 		if err != nil {
 			logFatal(err)
 		}
@@ -22,12 +24,12 @@ var refreshRoutesCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().AgentRefreshRoutes(cmd.Context(), agentAddr, pk)
+		tx, err := PoolsSDK.Act().AgentRefreshRoutes(ctx, auth, agentAddr)
 		if err != nil {
 			logFatalf("Failed to refresh routes %s", err)
 		}
 
-		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
+		_, err = PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
 		if err != nil {
 			logFatalf("Failed to refresh routes %s", err)
 		}

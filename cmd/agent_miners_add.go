@@ -35,7 +35,7 @@ var addCmd = &cobra.Command{
 			previewAction(cmd, args, constants.MethodAddMiner)
 			return
 		}
-		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall()
+		agentAddr, auth, _, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
 			logFatal(err)
 		}
@@ -68,7 +68,13 @@ var addCmd = &cobra.Command{
 		defer journal.Close()
 		defer journal.RecordEvent(addminerevt, func() interface{} { return evt })
 
-		tx, err := PoolsSDK.Act().AgentAddMiner(cmd.Context(), agentAddr, minerAddr, ownerKey, requesterKey)
+		tx, err := PoolsSDK.Act().AgentAddMiner(
+			cmd.Context(),
+			auth,
+			agentAddr,
+			minerAddr,
+			requesterKey,
+		)
 		if err != nil {
 			evt.Error = err.Error()
 			logFatal(err)

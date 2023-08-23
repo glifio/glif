@@ -17,12 +17,14 @@ var pushFundsCmd = &cobra.Command{
 	Short: "Push FIL from the Glif Agent to a specific Miner ID",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
+		ctx := cmd.Context()
+		from := cmd.Flag("from").Value.String()
+		agentAddr, auth, _, requesterKey, err := commonOwnerOrOperatorSetup(ctx, from)
 		if err != nil {
 			logFatal(err)
 		}
 
-		minerAddr, err := ToMinerID(cmd.Context(), args[0])
+		minerAddr, err := ToMinerID(ctx, args[0])
 		if err != nil {
 			logFatal(err)
 		}
@@ -45,7 +47,7 @@ var pushFundsCmd = &cobra.Command{
 		defer journal.Close()
 		defer journal.RecordEvent(pushevt, func() interface{} { return evt })
 
-		tx, err := PoolsSDK.Act().AgentPushFunds(cmd.Context(), agentAddr, amount, minerAddr, senderKey, requesterKey)
+		tx, err := PoolsSDK.Act().AgentPushFunds(ctx, auth, agentAddr, amount, minerAddr, requesterKey)
 		if err != nil {
 			evt.Error = err.Error()
 			logFatal(err)
@@ -53,7 +55,7 @@ var pushFundsCmd = &cobra.Command{
 		evt.Tx = tx.Hash().String()
 
 		// transaction landed on chain or errored
-		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
+		_, err = PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
 		if err != nil {
 			evt.Error = err.Error()
 			logFatal(err)

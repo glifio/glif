@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/glifio/cli/util"
 	"github.com/spf13/cobra"
 )
 
@@ -18,15 +17,14 @@ var depositFILCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		_, pk, _, err := commonOwnerOrOperatorSetup(cmd)
+		ctx := cmd.Context()
+		from := cmd.Flag("from").Value.String()
+		_, auth, senderAccount, _, err := commonOwnerOrOperatorSetup(ctx, from)
 		if err != nil {
 			logFatal(err)
 		}
 
-		receiver, err := util.DeriveAddressFromPk(pk)
-		if err != nil {
-			logFatal(err)
-		}
+		receiver := senderAccount.Address
 
 		amount, err := parseFILAmount(args[0])
 		if err != nil {
@@ -39,13 +37,13 @@ var depositFILCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().InfPoolDepositFIL(cmd.Context(), receiver, amount, pk)
+		tx, err := PoolsSDK.Act().InfPoolDepositFIL(ctx, auth, receiver, amount)
 		if err != nil {
 			logFatal(err)
 		}
 
 		// transaction landed on chain or errored
-		receipt, err := PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
+		receipt, err := PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
 		if err != nil {
 			logFatal(err)
 		}

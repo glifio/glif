@@ -18,7 +18,7 @@ var withdrawCmd = &cobra.Command{
 	Long:  "",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall()
+		agentAddr, auth, _, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
 			logFatal(err)
 		}
@@ -48,7 +48,7 @@ var withdrawCmd = &cobra.Command{
 
 		fmt.Printf("Withdrawing %s FIL from your Agent", args[0])
 
-		tx, err := PoolsSDK.Act().AgentWithdraw(cmd.Context(), agentAddr, receiver, amount, ownerKey, requesterKey)
+		tx, err := PoolsSDK.Act().AgentWithdraw(cmd.Context(), auth, agentAddr, receiver, amount, requesterKey)
 		if err != nil {
 			evt.Error = err.Error()
 			logFatal(err)

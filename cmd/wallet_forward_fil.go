@@ -9,10 +9,8 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/glifio/cli/events"
-	"github.com/glifio/cli/util"
 	"github.com/glifio/go-pools/abigen"
 	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/deploy"
@@ -25,13 +23,18 @@ var forwardFIL = &cobra.Command{
 	Short: "Transfers balances from owner or operator wallet to another address through the FilForwarder smart contract",
 	Args:  cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := cmd.Context()
+		from := args[0]
+		_, auth, senderAccount, _, err := commonOwnerOrOperatorSetup(ctx, from)
+		if err != nil {
+			logFatal(err)
+		}
+
 		ethClient, err := PoolsSDK.Extern().ConnectEthClient()
 		if err != nil {
 			logFatal(err)
 		}
 		defer ethClient.Close()
-
-		ks := util.KeyStore()
 
 		toStr := args[1]
 
@@ -69,34 +72,16 @@ var forwardFIL = &cobra.Command{
 		defer journal.Close()
 		defer journal.RecordEvent(forwardFILevt, func() interface{} { return evt })
 
-		// from must either be `owner` or `operator` in this limited transfer cmd
-		keyToUse := util.KeyType(args[0])
-		if keyToUse != util.OwnerKey && keyToUse != util.OperatorKey {
-			err = errors.New("Unsupported `from` valule - must be `owner` or `operator`")
-			evt.Error = err.Error()
-			logFatal(err)
-		}
-
-		pk, err := ks.GetPrivate(keyToUse)
+		nonce, err := PoolsSDK.Query().ChainGetNonce(cmd.Context(), senderAccount.Address)
 		if err != nil {
 			evt.Error = err.Error()
 			logFatal(err)
 		}
 
-		fromAddr, _, err := ks.GetAddrs(keyToUse)
-		if err != nil {
-			evt.Error = err.Error()
-			logFatal(err)
-		}
-
-		nonce, err := PoolsSDK.Query().ChainGetNonce(cmd.Context(), fromAddr)
-		if err != nil {
-			evt.Error = err.Error()
-			logFatal(err)
-		}
+		chainID := PoolsSDK.Query().ChainID()
 
 		var filForwardAddr common.Address
-		switch PoolsSDK.Query().ChainID().Int64() {
+		switch chainID.Int64() {
 		case constants.MainnetChainID:
 			filForwardAddr = deploy.FilForwarder
 		case constants.CalibnetChainID:
@@ -109,12 +94,6 @@ var forwardFIL = &cobra.Command{
 
 		// get the FilForwarder contract address
 		filf, err := abigen.NewFilForwarderTransactor(filForwardAddr, ethClient)
-		if err != nil {
-			evt.Error = err.Error()
-			logFatal(err)
-		}
-
-		auth, err := bind.NewKeyedTransactorWithChainID(pk, PoolsSDK.Query().ChainID())
 		if err != nil {
 			evt.Error = err.Error()
 			logFatal(err)

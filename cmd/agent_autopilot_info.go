@@ -20,7 +20,7 @@ var agentAutopilotInfoCmd = &cobra.Command{
 		// recalculate the due payment logic that exists in autopilot but then calculate
 		// the difference between current point and when the payment will be due.
 
-		agent, err := getAgentAddress(cmd)
+		agent, err := getAgentAddressWithFlags(cmd)
 		if err != nil {
 			log.Println(err)
 		}

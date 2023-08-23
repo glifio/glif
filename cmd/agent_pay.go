@@ -4,6 +4,7 @@ Copyright © 2023 Glif LTD
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"time"
@@ -53,43 +54,17 @@ func init() {
 	agentCmd.AddCommand(payCmd)
 }
 
-func pay(cmd *cobra.Command, args []string, paymentType PaymentType, daemon bool) (*big.Int, error) {
-	agentAddr, senderKey, requesterKey, err := commonOwnerOrOperatorSetup(cmd)
+func pay(cmd *cobra.Command, args []string, paymentType PaymentType) (*big.Int, error) {
+	ctx := cmd.Context()
+	from := cmd.Flag("from").Value.String()
+	agentAddr, auth, _, requesterKey, err := commonOwnerOrOperatorSetup(ctx, from)
 	if err != nil {
 		return nil, err
 	}
 
-	var payAmt *big.Int
-
-	switch paymentType {
-	case Principal:
-		amount, err := parseFILAmount(args[0])
-		if err != nil {
-			return nil, err
-		}
-
-		amountOwed, _, err := PoolsSDK.Query().AgentOwes(cmd.Context(), agentAddr)
-		if err != nil {
-			return nil, err
-		}
-
-		payAmt = new(big.Int).Add(amount, amountOwed)
-	case ToCurrent:
-		amountOwed, _, err := PoolsSDK.Query().AgentOwes(cmd.Context(), agentAddr)
-		if err != nil {
-			return nil, err
-		}
-
-		payAmt = amountOwed
-	case Custom:
-		amount, err := parseFILAmount(args[0])
-		if err != nil {
-			return nil, err
-		}
-
-		payAmt = amount
-	default:
-		return nil, fmt.Errorf("invalid payment type: %s", paymentType)
+	payAmt, err := payAmount(ctx, cmd, args, paymentType)
+	if err != nil {
+		return nil, err
 	}
 
 	poolName := cmd.Flag("pool-name").Value.String()
@@ -110,12 +85,10 @@ func pay(cmd *cobra.Command, args []string, paymentType PaymentType, daemon bool
 		Amount:  payAmt.String(),
 		PayType: paymentType.String(),
 	}
-	if !daemon {
-		defer journal.Close()
-	}
+	defer journal.Close()
 	defer journal.RecordEvent(payevt, func() interface{} { return evt })
 
-	tx, err := PoolsSDK.Act().AgentPay(cmd.Context(), agentAddr, poolID, payAmt, senderKey, requesterKey)
+	tx, err := PoolsSDK.Act().AgentPay(ctx, auth, agentAddr, poolID, payAmt, requesterKey)
 	if err != nil {
 		evt.Error = err.Error()
 		return nil, err
@@ -130,6 +103,50 @@ func pay(cmd *cobra.Command, args []string, paymentType PaymentType, daemon bool
 	}
 
 	s.Stop()
+
+	return payAmt, nil
+}
+
+// payAmount takes a string amount of FIL as the first value in args and
+// returns a *big.Int in attoFIL based on the paymentType specified
+func payAmount(ctx context.Context, cmd *cobra.Command, args []string, paymentType PaymentType) (*big.Int, error) {
+	agentAddr, err := getAgentAddressWithFlags(cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	var payAmt *big.Int
+
+	switch paymentType {
+	case Principal:
+		amount, err := parseFILAmount(args[0])
+		if err != nil {
+			return nil, err
+		}
+
+		amountOwed, _, err := PoolsSDK.Query().AgentOwes(ctx, agentAddr)
+		if err != nil {
+			return nil, err
+		}
+
+		payAmt = new(big.Int).Add(amount, amountOwed)
+	case ToCurrent:
+		amountOwed, _, err := PoolsSDK.Query().AgentOwes(ctx, agentAddr)
+		if err != nil {
+			return nil, err
+		}
+
+		payAmt = amountOwed
+	case Custom:
+		amount, err := parseFILAmount(args[0])
+		if err != nil {
+			return nil, err
+		}
+
+		payAmt = amount
+	default:
+		return nil, fmt.Errorf("invalid payment type: %s", paymentType)
+	}
 
 	return payAmt, nil
 }

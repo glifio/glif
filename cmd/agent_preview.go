@@ -26,7 +26,7 @@ func init() {
 }
 
 func previewAction(cmd *cobra.Command, args []string, action constants.Method) {
-	agentAddr, err := getAgentAddress(cmd)
+	agentAddr, err := getAgentAddressWithFlags(cmd)
 	if err != nil {
 		logFatal(err)
 	}

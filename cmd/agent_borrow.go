@@ -21,7 +21,7 @@ var borrowCmd = &cobra.Command{
 	Long:  "Borrow FIL from a Pool. If you do not pass a `pool-name` flag, the default pool is the Infinity Pool.",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, ownerKey, requesterKey, err := commonSetupOwnerCall()
+		agentAddr, auth, _, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
 			logFatal(err)
 		}
@@ -57,7 +57,7 @@ var borrowCmd = &cobra.Command{
 		defer journal.Close()
 		defer journal.RecordEvent(borrowevt, func() interface{} { return evt })
 
-		tx, err := PoolsSDK.Act().AgentBorrow(cmd.Context(), agentAddr, poolID, amount, ownerKey, requesterKey)
+		tx, err := PoolsSDK.Act().AgentBorrow(cmd.Context(), auth, agentAddr, poolID, amount, requesterKey)
 		if err != nil {
 			evt.Error = err.Error()
 			logFatal(err)

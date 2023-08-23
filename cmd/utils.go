@@ -4,11 +4,17 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"errors"
+	"fmt"
 	"log"
 	"math/big"
+	"os"
 	"runtime"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
+	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/filecoin-project/go-address"
 	actorstypes "github.com/filecoin-project/go-state-types/actors"
@@ -21,6 +27,7 @@ import (
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
 	"github.com/glifio/cli/util"
 	denoms "github.com/glifio/go-pools/util"
+	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )
 
@@ -168,104 +175,125 @@ func parseAddress(ctx context.Context, addr string, lapi lotusapi.FullNode) (com
 	return common.HexToAddress(ethAddr.String()), nil
 }
 
-func commonSetupOwnerCall() (common.Address, *ecdsa.PrivateKey, *ecdsa.PrivateKey, error) {
+func commonSetupOwnerCall() (agentAddr common.Address, auth *bind.TransactOpts, ownerAccount accounts.Account, requesterKey *ecdsa.PrivateKey, err error) {
 	as := util.AgentStore()
-	ks := util.KeyStore()
-	// Check if an agent already exists
-	agentAddrStr, err := as.Get("address")
+
+	ownerAddr, _, err := as.GetAddrs(util.OwnerKey)
 	if err != nil {
-		return common.Address{}, nil, nil, err
+		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
-	if agentAddrStr == "" {
-		return common.Address{}, nil, nil, errors.New("No agent found. Did you forget to create one?")
-	}
-
-	agentAddr := common.HexToAddress(agentAddrStr)
-
-	pk, err := ks.GetPrivate(util.OwnerKey)
-	if err != nil {
-		return common.Address{}, nil, nil, err
-	}
-
-	if pk == nil {
-		return common.Address{}, nil, nil, errors.New("Owner key not found. Please check your `keys.toml` file.")
-	}
-
-	requesterKey, err := ks.GetPrivate(util.RequestKey)
-	if err != nil {
-		return common.Address{}, nil, nil, err
-	}
-
-	if pk == nil {
-		return common.Address{}, nil, nil, errors.New("Requester key not found. Please check your `keys.toml` file.")
-	}
-
-	return agentAddr, pk, requesterKey, nil
+	return commonOwnerOrOperatorSetup(context.Background(), ownerAddr.String())
 }
 
-func commonOwnerOrOperatorSetup(cmd *cobra.Command) (common.Address, *ecdsa.PrivateKey, *ecdsa.PrivateKey, error) {
+func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr common.Address, auth *bind.TransactOpts, account accounts.Account, requesterKey *ecdsa.PrivateKey, err error) {
+	err = checkWalletMigrated()
+	if err != nil {
+		return common.Address{}, nil, accounts.Account{}, nil, err
+	}
+
 	as := util.AgentStore()
 	ks := util.KeyStore()
+	backends := []accounts.Backend{}
+	backends = append(backends, ks)
+	manager := accounts.NewManager(&accounts.Config{InsecureUnlockAllowed: false}, backends...)
 
-	opEvm, opFevm, err := ks.GetAddrs(util.OperatorKey)
+	opEvm, opFevm, err := as.GetAddrs(util.OperatorKey)
 	if err != nil {
-		return common.Address{}, nil, nil, err
+		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
-	owEvm, owFevm, err := ks.GetAddrs(util.OwnerKey)
+	owEvm, owFevm, err := as.GetAddrs(util.OwnerKey)
 	if err != nil {
-		return common.Address{}, nil, nil, err
+		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
-	var pk *ecdsa.PrivateKey
+	var fromAddress common.Address
 	// if no flag was passed, we just use the operator address by default
-	from := cmd.Flag("from").Value.String()
 	switch from {
 	case "", opEvm.String(), opFevm.String():
-		funded, err := as.IsFunded(cmd.Context(), PoolsSDK, opFevm, util.OperatorKeyFunded, opEvm.String())
+		funded, err := as.IsFunded(ctx, PoolsSDK, opFevm, util.OperatorKeyFunded, opEvm.String())
 		if err != nil {
-			return common.Address{}, nil, nil, err
+			return common.Address{}, nil, accounts.Account{}, nil, err
 		}
 		if funded {
-			pk, err = ks.GetPrivate(util.OperatorKey)
+			fromAddress = opEvm
 		} else {
 			log.Println("operator not funded, falling back to owner address")
-			pk, err = ks.GetPrivate(util.OwnerKey)
+			fromAddress = owEvm
 		}
 		if err != nil {
-			return common.Address{}, nil, nil, err
+			return common.Address{}, nil, accounts.Account{}, nil, err
 		}
 	case owEvm.String(), owFevm.String():
-		pk, err = ks.GetPrivate(util.OwnerKey)
+		fromAddress = owEvm
 	default:
-		return common.Address{}, nil, nil, errors.New("invalid from address")
+		return common.Address{}, nil, accounts.Account{}, nil, errors.New("invalid from address")
 	}
 	if err != nil {
-		return common.Address{}, nil, nil, err
+		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
-	agentAddrStr, err := as.Get("address")
+	agentAddr, err = getAgentAddress()
 	if err != nil {
-		return common.Address{}, nil, nil, err
+		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
-	if agentAddrStr == "" {
-		return common.Address{}, nil, nil, errors.New("No agent found. Did you forget to create one?")
-	}
-
-	agentAddr := common.HexToAddress(agentAddrStr)
-
-	requesterKey, err := ks.GetPrivate(util.RequestKey)
+	account = accounts.Account{Address: fromAddress}
+	wallet, err := manager.Find(account)
 	if err != nil {
-		return common.Address{}, nil, nil, err
+		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
-	if pk == nil {
-		return common.Address{}, nil, nil, errors.New("Requester key not found. Please check your `keys.toml` file.")
+	var passphrase string
+	var envSet bool
+	var message string
+	if fromAddress == owEvm {
+		passphrase, envSet = os.LookupEnv("GLIF_OWNER_PASSPHRASE")
+		message = "Owner key passphrase"
+	} else if fromAddress == opEvm {
+		passphrase, envSet = os.LookupEnv("GLIF_OPERATOR_PASSPHRASE")
+		message = "Operator key passphrase"
+	}
+	if !envSet {
+		err = ks.Unlock(account, "")
+		if err != nil {
+			prompt := &survey.Password{Message: message}
+			survey.AskOne(prompt, &passphrase)
+			if passphrase == "" {
+				return common.Address{}, nil, accounts.Account{}, nil, fmt.Errorf("Aborted")
+			}
+		}
 	}
 
-	return agentAddr, pk, requesterKey, nil
+	requesterKey, err = getRequesterKey(as, ks)
+	if err != nil {
+		return common.Address{}, nil, accounts.Account{}, nil, err
+	}
+
+	auth, err = walletutils.NewEthWalletTransactor(wallet, &account, passphrase, big.NewInt(chainID))
+	if err != nil {
+		logFatal(err)
+	}
+
+	return agentAddr, auth, account, requesterKey, nil
+}
+
+func getRequesterKey(as *util.AgentStorage, ks *keystore.KeyStore) (*ecdsa.PrivateKey, error) {
+	requesterAddr, _, err := as.GetAddrs(util.RequestKey)
+	if err != nil {
+		return nil, err
+	}
+	requesterAccount := accounts.Account{Address: requesterAddr}
+	requesterKeyJSON, err := ks.Export(requesterAccount, "", "")
+	if err != nil {
+		return nil, err
+	}
+	rk, err := keystore.DecryptKey(requesterKeyJSON, "")
+	if err != nil {
+		return nil, err
+	}
+	return rk.PrivateKey, nil
 }
 
 type PoolType uint64
@@ -291,6 +319,8 @@ func parsePoolType(pool string) (*big.Int, error) {
 	return big.NewInt(int64(poolType)), nil
 }
 
+// parseFILAmount takes a string amount of FIL and returns
+// that amount as a *big.Int in attoFIL
 func parseFILAmount(amount string) (*big.Int, error) {
 	amt, ok := new(big.Float).SetString(amount)
 	if !ok {
@@ -300,7 +330,23 @@ func parseFILAmount(amount string) (*big.Int, error) {
 	return denoms.ToAtto(amt), nil
 }
 
-func getAgentAddress(cmd *cobra.Command) (common.Address, error) {
+func getAgentAddress() (common.Address, error) {
+	as := util.AgentStore()
+
+	// Check if an agent already exists
+	agentAddrStr, err := as.Get("address")
+	if err != nil {
+		return common.Address{}, err
+	}
+
+	if agentAddrStr == "" {
+		return common.Address{}, errors.New("Did you forget to create your agent or specify an address? Try `glif agent id --address <address>`")
+	}
+
+	return common.HexToAddress(agentAddrStr), nil
+}
+
+func getAgentAddressWithFlags(cmd *cobra.Command) (common.Address, error) {
 	as := util.AgentStore()
 	var agentAddrStr string
 
@@ -352,4 +398,58 @@ func AddressesToStrings(addrs []address.Address) []string {
 		strs[i] = addr.String()
 	}
 	return strs
+}
+
+func checkWalletMigrated() error {
+	as := util.AgentStore()
+	ksLegacy := util.KeyStoreLegacy()
+
+	notMigratedError := fmt.Errorf("wallet not migrated to encrypted keystore. Please run \"glif wallet migrate\"")
+
+	keys := []util.KeyType{
+		util.OwnerKey,
+		util.OperatorKey,
+		util.RequestKey,
+	}
+
+	for _, key := range keys {
+		newAddr, _, err := as.GetAddrs(key)
+		if err != nil {
+			return err
+		}
+		if util.IsZeroAddress(newAddr) {
+			oldAddr, _, err := ksLegacy.GetAddrs(key)
+			if err != nil {
+				return err
+			}
+			if util.IsZeroAddress(oldAddr) {
+				return fmt.Errorf("missing %s key in legacy keys.toml", string(key))
+			}
+			return notMigratedError
+		}
+	}
+
+	return nil
+}
+
+func checkUnencryptedPrivateKeys() error {
+	ksLegacy := util.KeyStoreLegacy()
+
+	keys := []util.KeyType{
+		util.OwnerKey,
+		util.OperatorKey,
+		util.RequestKey,
+	}
+
+	for _, key := range keys {
+		pk, err := ksLegacy.Get(string(key))
+		if err != nil {
+			return fmt.Errorf("error checking private key %s: %w", string(key), err)
+		}
+		if pk != "" {
+			return fmt.Errorf("unencrypted keys found in legacy keys.toml after migration. Remove to improve security.")
+		}
+	}
+
+	return nil
 }
