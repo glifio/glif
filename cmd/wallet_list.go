@@ -14,7 +14,7 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Lists the addresses associated with your owner, operator, and requester keys",
 	Run: func(cmd *cobra.Command, args []string) {
-		as := util.AgentStore()
+		as := util.AccountsStore()
 		ownerEvm, ownerFevm, err := as.GetAddrs(util.OwnerKey)
 		if err != nil {
 			logFatal(err)

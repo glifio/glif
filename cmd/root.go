@@ -114,6 +114,10 @@ func initConfig() {
 		logFatal(err)
 	}
 
+	if err := util.NewAccountsStore(fmt.Sprintf("%s/accounts.toml", cfgDir)); err != nil {
+		logFatal(err)
+	}
+
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.

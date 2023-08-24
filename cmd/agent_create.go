@@ -23,7 +23,7 @@ var createCmd = &cobra.Command{
 	Short: "Create a Glif agent",
 	Long:  `Spins up a new Agent contract through the Agent Factory, passing the owner, operator, and requestor addresses.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		as := util.AgentStore()
+		as := util.AccountsStore()
 		ks := util.KeyStore()
 		backends := []accounts.Backend{}
 		backends = append(backends, ks)

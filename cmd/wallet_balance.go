@@ -102,7 +102,7 @@ var balCmd = &cobra.Command{
 	Use:   "balance",
 	Short: "Gets the balances associated with your owner and operator keys",
 	Run: func(cmd *cobra.Command, args []string) {
-		as := util.AgentStore()
+		as := util.AccountsStore()
 		ownerEvm, ownerFevm, err := as.GetAddrs(util.OwnerKey)
 		if err != nil {
 			logFatal(err)

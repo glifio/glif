@@ -31,7 +31,7 @@ var newCmd = &cobra.Command{
 	Long:  `Creates an owner, an operator, and a requester key and stores the values in $HOME/.config/glif/keys.toml. Note that the owner and requester keys are only applicable to Agents, the operator key is the primary key for interacting with smart contracts.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		as := util.AgentStore()
+		as := util.AccountsStore()
 		ks := util.KeyStore()
 
 		ownerAddr, _, err := as.GetAddrs(util.OwnerKey)

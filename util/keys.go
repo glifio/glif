@@ -12,6 +12,16 @@ import (
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
 )
 
+type KeyType string
+
+const (
+	OwnerKey          KeyType = "owner"
+	OperatorKey       KeyType = "operator"
+	RequestKey        KeyType = "request"
+	OperatorKeyFunded KeyType = "opkeyf"
+	OwnerKeyFunded    KeyType = "ownkeyf"
+)
+
 func DeriveAddrFromPkString(pk string) (common.Address, address.Address, error) {
 	pkECDSA, err := crypto.HexToECDSA(pk)
 	if err != nil {
@@ -91,4 +101,13 @@ func TruncateAddr(addr string) string {
 	firstSix := addr[:6]
 	lastFour := addr[len(addr)-4:]
 	return fmt.Sprintf("%s...%s", firstSix, lastFour)
+}
+
+func DelegatedFromEthAddr(addr common.Address) (address.Address, error) {
+	fevmAddr, err := ethtypes.ParseEthAddress(addr.String())
+	if err != nil {
+		return address.Address{}, err
+	}
+
+	return fevmAddr.ToFilecoinAddress()
 }

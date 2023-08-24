@@ -176,7 +176,7 @@ func parseAddress(ctx context.Context, addr string, lapi lotusapi.FullNode) (com
 }
 
 func commonSetupOwnerCall() (agentAddr common.Address, auth *bind.TransactOpts, ownerAccount accounts.Account, requesterKey *ecdsa.PrivateKey, err error) {
-	as := util.AgentStore()
+	as := util.AccountsStore()
 
 	ownerAddr, _, err := as.GetAddrs(util.OwnerKey)
 	if err != nil {
@@ -192,7 +192,8 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
-	as := util.AgentStore()
+	as := util.AccountsStore()
+	agentStore := util.AgentStore()
 	ks := util.KeyStore()
 	backends := []accounts.Backend{}
 	backends = append(backends, ks)
@@ -212,7 +213,7 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 	// if no flag was passed, we just use the operator address by default
 	switch from {
 	case "", opEvm.String(), opFevm.String():
-		funded, err := as.IsFunded(ctx, PoolsSDK, opFevm, util.OperatorKeyFunded, opEvm.String())
+		funded, err := agentStore.IsFunded(ctx, PoolsSDK, opFevm, util.OperatorKeyFunded, opEvm.String())
 		if err != nil {
 			return common.Address{}, nil, accounts.Account{}, nil, err
 		}
@@ -279,7 +280,7 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 	return agentAddr, auth, account, requesterKey, nil
 }
 
-func getRequesterKey(as *util.AgentStorage, ks *keystore.KeyStore) (*ecdsa.PrivateKey, error) {
+func getRequesterKey(as *util.AccountsStorage, ks *keystore.KeyStore) (*ecdsa.PrivateKey, error) {
 	requesterAddr, _, err := as.GetAddrs(util.RequestKey)
 	if err != nil {
 		return nil, err
@@ -401,7 +402,7 @@ func AddressesToStrings(addrs []address.Address) []string {
 }
 
 func checkWalletMigrated() error {
-	as := util.AgentStore()
+	as := util.AccountsStore()
 	ksLegacy := util.KeyStoreLegacy()
 
 	notMigratedError := fmt.Errorf("wallet not migrated to encrypted keystore. Please run \"glif wallet migrate\"")
