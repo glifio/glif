@@ -95,3 +95,10 @@ type WalletFILForward struct {
 	To     string `json:"to,omitempty"`
 	Amount string `json:"amount,omitempty"`
 }
+
+type AgentAdmin struct {
+	evtCommon
+	Action          string `json:"action"`
+	AgentID         string `json:"agent_id"`
+	NewAdminAddress string `json:"new_admin_address,omitempty"`
+}
