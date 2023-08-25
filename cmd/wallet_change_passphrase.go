@@ -36,6 +36,10 @@ func changePassphrase(addr common.Address) error {
 
 	account := accounts.Account{Address: addr}
 
+	if !ks.HasAddress(addr) {
+		logFatal("Address not found in keystore")
+	}
+
 	oldPassphrase := ""
 	err := ks.Unlock(account, "")
 	if err != nil {
@@ -51,6 +55,14 @@ func changePassphrase(addr common.Address) error {
 			Message: "New passphrase",
 		}
 		survey.AskOne(prompt, &newPassphrase)
+		var confirmPassphrase string
+		confirmPrompt := &survey.Password{
+			Message: "Confirm passphrase",
+		}
+		survey.AskOne(confirmPrompt, &confirmPassphrase)
+		if newPassphrase != confirmPassphrase {
+			logFatal("Aborting. Passphrase confirmation did not match.")
+		}
 	}
 
 	err = ks.Update(account, oldPassphrase, newPassphrase)

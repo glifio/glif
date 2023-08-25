@@ -24,11 +24,16 @@ func panicIfKeyExists(key util.KeyType, addr common.Address, err error) {
 	}
 }
 
-// newCmd represents the new command
-var newCmd = &cobra.Command{
-	Use:   "new",
-	Short: "Create a set of keys",
-	Long:  `Creates an owner, an operator, and a requester key and stores the values in $HOME/.config/glif/keys.toml. Note that the owner and requester keys are only applicable to Agents, the operator key is the primary key for interacting with smart contracts.`,
+// createAgentAccountsCmd represents the new command
+var createAgentAccountsCmd = &cobra.Command{
+	Use:   "create-agent-accounts",
+	Short: "Create a set of accounts for an agent",
+	Long: `Create 3 new accounts and store them in the keystore. The following accounts will be created:
+	  "owner" - a privileged account with full admin permissions for an agent (passphrase protected)
+		"operator" - a sub-account with reduced permissions to perform routine transactions (eg. payments),
+		             passphrase protection is optional
+		"requestor" - used for requesting credentials from the "Agent Data Oracle" (no passphrase)
+	`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		as := util.AccountsStore()
@@ -49,6 +54,14 @@ var newCmd = &cobra.Command{
 				Message: "Please type a passphrase to encrypt your owner private key",
 			}
 			survey.AskOne(prompt, &ownerPassphrase)
+			var confirmPassphrase string
+			confirmPrompt := &survey.Password{
+				Message: "Confirm passphrase",
+			}
+			survey.AskOne(confirmPrompt, &confirmPassphrase)
+			if ownerPassphrase != confirmPassphrase {
+				logFatal("Aborting. Passphrase confirmation did not match.")
+			}
 		}
 		owner, err := ks.NewAccount(ownerPassphrase)
 		if err != nil {
@@ -96,5 +109,5 @@ var newCmd = &cobra.Command{
 }
 
 func init() {
-	walletCmd.AddCommand(newCmd)
+	walletCmd.AddCommand(createAgentAccountsCmd)
 }

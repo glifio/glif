@@ -404,7 +404,7 @@ func checkWalletMigrated() error {
 	as := util.AccountsStore()
 	ksLegacy := util.KeyStoreLegacy()
 
-	notMigratedError := fmt.Errorf("wallet not migrated to encrypted keystore. Please run \"glif wallet migrate\"")
+	notMigratedError := fmt.Errorf("wallet not migrated to encrypted keystore. Please run: glif wallet migrate")
 
 	keys := []util.KeyType{
 		util.OwnerKey,
@@ -423,7 +423,7 @@ func checkWalletMigrated() error {
 				return err
 			}
 			if util.IsZeroAddress(oldAddr) {
-				return fmt.Errorf("missing %s key in legacy keys.toml", string(key))
+				return fmt.Errorf("agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
 			}
 			return notMigratedError
 		}
