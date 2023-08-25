@@ -15,11 +15,9 @@ import (
 type KeyType string
 
 const (
-	OwnerKey          KeyType = "owner"
-	OperatorKey       KeyType = "operator"
-	RequestKey        KeyType = "request"
-	OperatorKeyFunded KeyType = "opkeyf"
-	OwnerKeyFunded    KeyType = "ownkeyf"
+	OwnerKey    KeyType = "owner"
+	OperatorKey KeyType = "operator"
+	RequestKey  KeyType = "request"
 )
 
 func DeriveAddrFromPkString(pk string) (common.Address, address.Address, error) {

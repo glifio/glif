@@ -193,7 +193,6 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 	}
 
 	as := util.AccountsStore()
-	agentStore := util.AgentStore()
 	ks := util.KeyStore()
 	backends := []accounts.Backend{}
 	backends = append(backends, ks)
@@ -213,7 +212,7 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 	// if no flag was passed, we just use the operator address by default
 	switch from {
 	case "", opEvm.String(), opFevm.String():
-		funded, err := agentStore.IsFunded(ctx, PoolsSDK, opFevm, util.OperatorKeyFunded, opEvm.String())
+		funded, err := isFunded(ctx, opFevm)
 		if err != nil {
 			return common.Address{}, nil, accounts.Account{}, nil, err
 		}
@@ -453,4 +452,22 @@ func checkUnencryptedPrivateKeys() error {
 	}
 
 	return nil
+}
+
+func isFunded(ctx context.Context, caller address.Address) (bool, error) {
+	fmt.Println("Jim isFunded", caller)
+	lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
+	if err != nil {
+		return false, err
+	}
+	defer closer()
+
+	bal, err := lapi.WalletBalance(ctx, caller)
+	if err != nil {
+		return false, err
+	}
+	if bal.Cmp(big.NewInt(0)) > 0 {
+		return true, nil
+	}
+	return false, nil
 }

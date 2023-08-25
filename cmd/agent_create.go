@@ -24,6 +24,7 @@ var createCmd = &cobra.Command{
 	Long:  `Spins up a new Agent contract through the Agent Factory, passing the owner, operator, and requestor addresses.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		as := util.AccountsStore()
+		agentStore := util.AgentStore()
 		ks := util.KeyStore()
 		backends := []accounts.Backend{}
 		backends = append(backends, ks)
@@ -116,9 +117,9 @@ var createCmd = &cobra.Command{
 		fmt.Printf("Agent created: %s\n", addr.String())
 		fmt.Printf("Agent ID: %s\n", id.String())
 
-		as.Set("id", id.String())
-		as.Set("address", addr.String())
-		as.Set("tx", tx.Hash().String())
+		agentStore.Set("id", id.String())
+		agentStore.Set("address", addr.String())
+		agentStore.Set("tx", tx.Hash().String())
 	},
 }
 
