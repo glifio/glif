@@ -125,8 +125,4 @@ var createCmd = &cobra.Command{
 
 func init() {
 	agentCmd.AddCommand(createCmd)
-
-	createCmd.Flags().String("ownerfile", "", "Owner eth address")
-	createCmd.Flags().String("operatorfile", "", "Repayment eth address")
-	createCmd.Flags().String("deployerfile", "", "Deployer eth address")
 }
