@@ -455,7 +455,6 @@ func checkUnencryptedPrivateKeys() error {
 }
 
 func isFunded(ctx context.Context, caller address.Address) (bool, error) {
-	fmt.Println("Jim isFunded", caller)
 	lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
 	if err != nil {
 		return false, err
