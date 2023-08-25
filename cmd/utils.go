@@ -211,7 +211,7 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 	var fromAddress common.Address
 	// if no flag was passed, we just use the operator address by default
 	switch from {
-	case "", opEvm.String(), opFevm.String():
+	case "", opEvm.String(), opFevm.String(), string(util.OperatorKey):
 		funded, err := isFunded(ctx, opFevm)
 		if err != nil {
 			return common.Address{}, nil, accounts.Account{}, nil, err
@@ -225,7 +225,7 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 		if err != nil {
 			return common.Address{}, nil, accounts.Account{}, nil, err
 		}
-	case owEvm.String(), owFevm.String():
+	case owEvm.String(), owFevm.String(), string(util.OwnerKey):
 		fromAddress = owEvm
 	default:
 		return common.Address{}, nil, accounts.Account{}, nil, errors.New("invalid from address")
