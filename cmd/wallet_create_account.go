@@ -34,6 +34,12 @@ var createAccountCmd = &cobra.Command{
 			logFatalf("Account %s already exists", name)
 		}
 
+		if name == string(util.OwnerKey) ||
+			name == string(util.OperatorKey) ||
+			name == string(util.RequestKey) {
+			logFatalf("Account name %s reserved for agent, try: glif wallet create-agent-accounts", name)
+		}
+
 		fmt.Println("Creating account:", name)
 
 		var passphrase string
