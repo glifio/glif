@@ -115,3 +115,15 @@ func (s *Storage) Delete(key string) error {
 	delete(s.data, key)
 	return s.save()
 }
+
+// AccountNames retrieves a list of all the account names
+func (s *Storage) AccountNames() []string {
+	keys := make([]string, len(s.data))
+
+	i := 0
+	for k := range s.data {
+		keys[i] = k
+		i++
+	}
+	return keys
+}
