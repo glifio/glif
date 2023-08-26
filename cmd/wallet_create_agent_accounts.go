@@ -8,19 +8,20 @@ import (
 	"os"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/glifio/cli/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-func panicIfKeyExists(key util.KeyType, addr common.Address, err error) {
-	if err != nil {
-		logFatal(err)
-	}
-
-	if !util.IsZeroAddress(addr) {
-		logFatalf("Key already exists for %s", key)
+func panicIfKeyExists(key util.KeyType) {
+	as := util.AccountsStore()
+	_, _, err := as.GetAddrs(string(key))
+	if err == nil {
+		logFatal("owner account already created")
+	} else {
+		if err.Error() != "not found" {
+			logFatal(err)
+		}
 	}
 }
 
@@ -32,21 +33,13 @@ var createAgentAccountsCmd = &cobra.Command{
 	  "owner" - a privileged account with full admin permissions for an agent (passphrase protected)
 		"operator" - a sub-account with reduced permissions to perform routine transactions (eg. payments),
 		             passphrase protection is optional
-		"requestor" - used for requesting credentials from the "Agent Data Oracle" (no passphrase)
+		"requester" - used for requesting credentials from the "Agent Data Oracle" (no passphrase)
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		as := util.AccountsStore()
-		ks := util.KeyStore()
-
-		ownerAddr, _, err := as.GetAddrs(util.OwnerKey)
-		panicIfKeyExists(util.OwnerKey, ownerAddr, err)
-
-		operatorAddr, _, err := as.GetAddrs(util.OperatorKey)
-		panicIfKeyExists(util.OperatorKey, operatorAddr, err)
-
-		requestAddr, _, err := as.GetAddrs(util.RequestKey)
-		panicIfKeyExists(util.RequestKey, requestAddr, err)
+		panicIfKeyExists(util.OwnerKey)
+		panicIfKeyExists(util.OperatorKey)
+		panicIfKeyExists(util.RequestKey)
 
 		ownerPassphrase, envSet := os.LookupEnv("GLIF_OWNER_PASSPHRASE")
 		if !envSet {
@@ -63,6 +56,9 @@ var createAgentAccountsCmd = &cobra.Command{
 				logFatal("Aborting. Passphrase confirmation did not match.")
 			}
 		}
+
+		ks := util.KeyStore()
+
 		owner, err := ks.NewAccount(ownerPassphrase)
 		if err != nil {
 			logFatal(err)
@@ -79,6 +75,8 @@ var createAgentAccountsCmd = &cobra.Command{
 			logFatal(err)
 		}
 
+		as := util.AccountsStore()
+
 		as.Set(string(util.OwnerKey), owner.Address.String())
 		as.Set(string(util.OperatorKey), operator.Address.String())
 		as.Set(string(util.RequestKey), requester.Address.String())
@@ -87,15 +85,15 @@ var createAgentAccountsCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		ownerAddr, ownerDelAddr, err := as.GetAddrs(util.OwnerKey)
+		ownerAddr, ownerDelAddr, err := as.GetAddrs(string(util.OwnerKey))
 		if err != nil {
 			logFatal(err)
 		}
-		operatorAddr, operatorDelAddr, err := as.GetAddrs(util.OperatorKey)
+		operatorAddr, operatorDelAddr, err := as.GetAddrs(string(util.OperatorKey))
 		if err != nil {
 			logFatal(err)
 		}
-		requestAddr, requestDelAddr, err := as.GetAddrs(util.RequestKey)
+		requestAddr, requestDelAddr, err := as.GetAddrs(string(util.RequestKey))
 		if err != nil {
 			logFatal(err)
 		}

@@ -54,11 +54,11 @@ func (s *KeyStorageLegacy) GetPrivate(key KeyType) (*ecdsa.PrivateKey, error) {
 func (s *KeyStorageLegacy) GetAddrs(key KeyType) (common.Address, address.Address, error) {
 	pk, ok := s.data[string(key)]
 	if !ok {
-		return common.Address{}, address.Address{}, nil
+		return common.Address{}, address.Address{}, fmt.Errorf("not found")
 	}
 
 	if pk == "" {
-		return common.Address{}, address.Address{}, nil
+		return common.Address{}, address.Address{}, fmt.Errorf("not found")
 	}
 
 	pkECDSA, err := crypto.HexToECDSA(pk)

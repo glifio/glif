@@ -12,20 +12,20 @@ import (
 
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "Lists the addresses associated with your owner, operator, and requester keys",
+	Short: "Lists the addresses associated with your accounts",
 	Run: func(cmd *cobra.Command, args []string) {
 		as := util.AccountsStore()
-		ownerEvm, ownerFevm, err := as.GetAddrs(util.OwnerKey)
+		ownerEvm, ownerFevm, err := as.GetAddrs(string(util.OwnerKey))
 		if err != nil {
 			logFatal(err)
 		}
 
-		operatorEvm, operatorFevm, err := as.GetAddrs(util.OperatorKey)
+		operatorEvm, operatorFevm, err := as.GetAddrs(string(util.OperatorKey))
 		if err != nil {
 			logFatal(err)
 		}
 
-		requestEvm, requestFevm, err := as.GetAddrs(util.RequestKey)
+		requestEvm, requestFevm, err := as.GetAddrs(string(util.RequestKey))
 		if err != nil {
 			logFatal(err)
 		}

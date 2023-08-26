@@ -39,18 +39,27 @@ var createCmd = &cobra.Command{
 			logFatalf("Agent already exists: %s", addressStr)
 		}
 
-		ownerAddr, _, err := as.GetAddrs(util.OwnerKey)
+		ownerAddr, _, err := as.GetAddrs(string(util.OwnerKey))
 		if err != nil {
+			if err.Error() == "not found" {
+				logFatal("Agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
+			}
 			logFatal(err)
 		}
 
-		operatorAddr, _, err := as.GetAddrs(util.OperatorKey)
+		operatorAddr, _, err := as.GetAddrs(string(util.OperatorKey))
 		if err != nil {
+			if err.Error() == "not found" {
+				logFatal("Agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
+			}
 			logFatal(err)
 		}
 
-		requestAddr, _, err := as.GetAddrs(util.RequestKey)
+		requestAddr, _, err := as.GetAddrs(string(util.RequestKey))
 		if err != nil {
+			if err.Error() == "not found" {
+				logFatal("Agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
+			}
 			logFatal(err)
 		}
 

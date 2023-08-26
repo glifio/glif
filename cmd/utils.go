@@ -176,14 +176,7 @@ func parseAddress(ctx context.Context, addr string, lapi lotusapi.FullNode) (com
 }
 
 func commonSetupOwnerCall() (agentAddr common.Address, auth *bind.TransactOpts, ownerAccount accounts.Account, requesterKey *ecdsa.PrivateKey, err error) {
-	as := util.AccountsStore()
-
-	ownerAddr, _, err := as.GetAddrs(util.OwnerKey)
-	if err != nil {
-		return common.Address{}, nil, accounts.Account{}, nil, err
-	}
-
-	return commonOwnerOrOperatorSetup(context.Background(), ownerAddr.String())
+	return commonOwnerOrOperatorSetup(context.Background(), string(util.OwnerKey))
 }
 
 func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr common.Address, auth *bind.TransactOpts, account accounts.Account, requesterKey *ecdsa.PrivateKey, err error) {
@@ -198,13 +191,19 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 	backends = append(backends, ks)
 	manager := accounts.NewManager(&accounts.Config{InsecureUnlockAllowed: false}, backends...)
 
-	opEvm, opFevm, err := as.GetAddrs(util.OperatorKey)
+	opEvm, opFevm, err := as.GetAddrs(string(util.OperatorKey))
 	if err != nil {
+		if err.Error() == "not found" {
+			return common.Address{}, nil, accounts.Account{}, nil, fmt.Errorf("agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
+		}
 		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
-	owEvm, owFevm, err := as.GetAddrs(util.OwnerKey)
+	owEvm, owFevm, err := as.GetAddrs(string(util.OwnerKey))
 	if err != nil {
+		if err.Error() == "not found" {
+			return common.Address{}, nil, accounts.Account{}, nil, fmt.Errorf("agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
+		}
 		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
@@ -280,7 +279,7 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 }
 
 func getRequesterKey(as *util.AccountsStorage, ks *keystore.KeyStore) (*ecdsa.PrivateKey, error) {
-	requesterAddr, _, err := as.GetAddrs(util.RequestKey)
+	requesterAddr, _, err := as.GetAddrs(string(util.RequestKey))
 	if err != nil {
 		return nil, err
 	}
@@ -413,19 +412,20 @@ func checkWalletMigrated() error {
 	}
 
 	for _, key := range keys {
-		newAddr, _, err := as.GetAddrs(key)
+		_, _, err := as.GetAddrs(string(key))
 		if err != nil {
+			if err.Error() == "not found" {
+				_, _, err := ksLegacy.GetAddrs(key)
+				if err != nil {
+					if err.Error() == "not found" {
+						// Account not created yet
+						continue
+					}
+					return err
+				}
+				return notMigratedError
+			}
 			return err
-		}
-		if util.IsZeroAddress(newAddr) {
-			oldAddr, _, err := ksLegacy.GetAddrs(key)
-			if err != nil {
-				return err
-			}
-			if util.IsZeroAddress(oldAddr) {
-				return fmt.Errorf("agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
-			}
-			return notMigratedError
 		}
 	}
 

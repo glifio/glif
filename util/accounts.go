@@ -1,6 +1,8 @@
 package util
 
 import (
+	"fmt"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/filecoin-project/go-address"
 )
@@ -28,8 +30,12 @@ func NewAccountsStore(filename string) error {
 	return nil
 }
 
-func (a *AccountsStorage) GetAddrs(key KeyType) (common.Address, address.Address, error) {
-	evmAddress := common.HexToAddress(a.data[string(key)])
+func (a *AccountsStorage) GetAddrs(key string) (common.Address, address.Address, error) {
+	addr, ok := a.data[key]
+	if !ok || addr == "" {
+		return common.Address{}, address.Address{}, fmt.Errorf("not found")
+	}
+	evmAddress := common.HexToAddress(addr)
 
 	delegated, err := DelegatedFromEthAddr(evmAddress)
 	if err != nil {
