@@ -17,13 +17,15 @@ type StorageData map[string]string
 type Storage struct {
 	filename string
 	data     StorageData
+	writable bool
 }
 
 // NewStorage creates a new Storage instance and initializes it with the given filename.
-func NewStorage(filename string, defaultMap map[string]string) (*Storage, error) {
+func NewStorage(filename string, defaultMap map[string]string, writable bool) (*Storage, error) {
 	s := &Storage{
 		filename: filename,
 		data:     defaultMap,
+		writable: writable,
 	}
 
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
@@ -74,6 +76,9 @@ func (s *Storage) load() error {
 
 // save writes the current key-value pairs in the data map to the file.
 func (s *Storage) save() error {
+	if !s.writable {
+		return nil
+	}
 	keyStore, err := toml.Marshal(s.data)
 	if err != nil {
 		return err

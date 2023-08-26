@@ -27,7 +27,7 @@ func NewKeyStoreLegacy(filename string) error {
 		string(RequestKey):  "",
 	}
 
-	s, err := NewStorage(filename, keyDefault)
+	s, err := NewStorage(filename, keyDefault, false)
 	if err != nil {
 		return err
 	}

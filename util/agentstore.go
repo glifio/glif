@@ -17,7 +17,7 @@ func NewAgentStore(filename string) error {
 		"tx":      "",
 	}
 
-	s, err := NewStorage(filename, agentDefault)
+	s, err := NewStorage(filename, agentDefault, true)
 	if err != nil {
 		return err
 	}

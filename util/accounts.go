@@ -20,7 +20,7 @@ func AccountsStore() *AccountsStorage {
 func NewAccountsStore(filename string) error {
 	accountsDefault := map[string]string{}
 
-	s, err := NewStorage(filename, accountsDefault)
+	s, err := NewStorage(filename, accountsDefault, true)
 	if err != nil {
 		return err
 	}
