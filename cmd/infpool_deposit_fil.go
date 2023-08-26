@@ -19,7 +19,7 @@ var depositFILCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 		from := cmd.Flag("from").Value.String()
-		_, auth, senderAccount, _, err := commonOwnerOrOperatorSetup(ctx, from)
+		auth, senderAccount, err := commonGenericAccountSetup(ctx, from)
 		if err != nil {
 			logFatal(err)
 		}

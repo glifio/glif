@@ -278,6 +278,59 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 	return agentAddr, auth, account, requesterKey, nil
 }
 
+func commonGenericAccountSetup(ctx context.Context, from string) (auth *bind.TransactOpts, account accounts.Account, err error) {
+	err = checkWalletMigrated()
+	if err != nil {
+		return nil, accounts.Account{}, err
+	}
+
+	as := util.AccountsStore()
+	ks := util.KeyStore()
+	backends := []accounts.Backend{}
+	backends = append(backends, ks)
+	manager := accounts.NewManager(&accounts.Config{InsecureUnlockAllowed: false}, backends...)
+
+	// FIXME: Check if from is an EVM or FEVM address
+	fromAddress, _, err := as.GetAddrs(from)
+	if err != nil {
+		if err == util.ErrKeyNotFound {
+			return nil, accounts.Account{}, fmt.Errorf("account not found in wallet. Setup with: glif wallet create-account")
+		}
+		return nil, accounts.Account{}, err
+	}
+
+	account = accounts.Account{Address: fromAddress}
+	wallet, err := manager.Find(account)
+	if err != nil {
+		return nil, accounts.Account{}, err
+	}
+
+	// FIXME: Support GLIF_OWNER_PASSPHRASE and GLIF_OPERATOR_PASSPHRASE
+
+	var passphrase string
+	var envSet bool
+	var message string
+	passphrase, envSet = os.LookupEnv("GLIF_PASSPHRASE")
+	message = "Passphrase for account"
+	if !envSet {
+		err = ks.Unlock(account, "")
+		if err != nil {
+			prompt := &survey.Password{Message: message}
+			survey.AskOne(prompt, &passphrase)
+			if passphrase == "" {
+				return nil, accounts.Account{}, fmt.Errorf("Aborted")
+			}
+		}
+	}
+
+	auth, err = walletutils.NewEthWalletTransactor(wallet, &account, passphrase, big.NewInt(chainID))
+	if err != nil {
+		logFatal(err)
+	}
+
+	return auth, account, nil
+}
+
 func getRequesterKey(as *util.AccountsStorage, ks *keystore.KeyStore) (*ecdsa.PrivateKey, error) {
 	requesterAddr, _, err := as.GetAddrs(string(util.RequestKey))
 	if err != nil {
