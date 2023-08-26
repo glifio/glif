@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/glifio/cli/util"
@@ -23,7 +24,7 @@ var createAccountCmd = &cobra.Command{
 
 		var name string
 		if len(args) == 1 {
-			name = args[0]
+			name = strings.ToLower(args[0])
 		} else {
 			name = "default"
 		}

@@ -209,7 +209,7 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 
 	var fromAddress common.Address
 	// if no flag was passed, we just use the operator address by default
-	switch from {
+	switch strings.ToLower(from) {
 	case "", opEvm.String(), opFevm.String(), string(util.OperatorKey):
 		funded, err := isFunded(ctx, opFevm)
 		if err != nil {
