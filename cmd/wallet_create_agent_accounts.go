@@ -19,13 +19,13 @@ func panicIfKeyExists(key util.KeyType) {
 	if err == nil {
 		logFatal("owner account already created")
 	} else {
-		if err.Error() != "not found" {
+		if err != util.ErrKeyNotFound {
 			logFatal(err)
 		}
 	}
 }
 
-// createAgentAccountsCmd represents the new command
+// createAgentAccountsCmd represents the create-agent-accounts command
 var createAgentAccountsCmd = &cobra.Command{
 	Use:   "create-agent-accounts",
 	Short: "Create a set of accounts for an agent",

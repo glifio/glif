@@ -2,7 +2,6 @@ package util
 
 import (
 	"crypto/ecdsa"
-	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -40,7 +39,7 @@ func NewKeyStoreLegacy(filename string) error {
 func (s *KeyStorageLegacy) GetPrivate(key KeyType) (*ecdsa.PrivateKey, error) {
 	pk, ok := s.data[string(key)]
 	if !ok {
-		return nil, fmt.Errorf("key not found: %s", key)
+		return nil, ErrKeyNotFound
 	}
 
 	pkECDSA, err := crypto.HexToECDSA(pk)
@@ -54,11 +53,11 @@ func (s *KeyStorageLegacy) GetPrivate(key KeyType) (*ecdsa.PrivateKey, error) {
 func (s *KeyStorageLegacy) GetAddrs(key KeyType) (common.Address, address.Address, error) {
 	pk, ok := s.data[string(key)]
 	if !ok {
-		return common.Address{}, address.Address{}, fmt.Errorf("not found")
+		return common.Address{}, address.Address{}, ErrKeyNotFound
 	}
 
 	if pk == "" {
-		return common.Address{}, address.Address{}, fmt.Errorf("not found")
+		return common.Address{}, address.Address{}, ErrKeyNotFound
 	}
 
 	pkECDSA, err := crypto.HexToECDSA(pk)

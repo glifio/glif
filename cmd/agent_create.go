@@ -40,28 +40,13 @@ var createCmd = &cobra.Command{
 		}
 
 		ownerAddr, _, err := as.GetAddrs(string(util.OwnerKey))
-		if err != nil {
-			if err.Error() == "not found" {
-				logFatal("Agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
-			}
-			logFatal(err)
-		}
+		checkExists(err)
 
 		operatorAddr, _, err := as.GetAddrs(string(util.OperatorKey))
-		if err != nil {
-			if err.Error() == "not found" {
-				logFatal("Agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
-			}
-			logFatal(err)
-		}
+		checkExists(err)
 
 		requestAddr, _, err := as.GetAddrs(string(util.RequestKey))
-		if err != nil {
-			if err.Error() == "not found" {
-				logFatal("Agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
-			}
-			logFatal(err)
-		}
+		checkExists(err)
 
 		account := accounts.Account{Address: ownerAddr}
 		passphrase, envSet := os.LookupEnv("GLIF_OWNER_PASSPHRASE")
@@ -130,6 +115,15 @@ var createCmd = &cobra.Command{
 		agentStore.Set("address", addr.String())
 		agentStore.Set("tx", tx.Hash().String())
 	},
+}
+
+func checkExists(err error) {
+	if err != nil {
+		if err == util.ErrKeyNotFound {
+			logFatal("Agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
+		}
+		logFatal(err)
+	}
 }
 
 func init() {
