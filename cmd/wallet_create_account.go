@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -38,6 +39,11 @@ var createAccountCmd = &cobra.Command{
 			name == string(util.OperatorKey) ||
 			name == string(util.RequestKey) {
 			logFatalf("Account name %s reserved for agent, try: glif wallet create-agent-accounts", name)
+		}
+
+		re := regexp.MustCompile(`^[tf][0-9]`)
+		if strings.HasPrefix(name, "0x") || re.MatchString(name) {
+			logFatalf("Invalid name")
 		}
 
 		fmt.Println("Creating account:", name)

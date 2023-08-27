@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"regexp"
 	"runtime"
 	"strings"
 
@@ -85,13 +86,28 @@ func ParseAddressToNative(ctx context.Context, addr string) (address.Address, er
 }
 
 func ParseAddressToEVM(ctx context.Context, addr string) (common.Address, error) {
-	lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
+	if strings.HasPrefix(addr, "0x") {
+		return common.HexToAddress(addr), nil
+	}
+
+	re := regexp.MustCompile(`^[tf][0-9]`)
+	if re.MatchString(addr) {
+
+		lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
+		if err != nil {
+			return common.Address{}, err
+		}
+		defer closer()
+
+		return parseAddress(ctx, addr, lapi)
+	}
+
+	as := util.AccountsStore()
+	evmAddr, _, err := as.GetAddrs(addr)
 	if err != nil {
 		return common.Address{}, err
 	}
-	defer closer()
-
-	return parseAddress(ctx, addr, lapi)
+	return evmAddr, nil
 }
 
 func ToMinerID(ctx context.Context, addr string) (address.Address, error) {
@@ -290,13 +306,17 @@ func commonGenericAccountSetup(ctx context.Context, from string) (auth *bind.Tra
 	backends = append(backends, ks)
 	manager := accounts.NewManager(&accounts.Config{InsecureUnlockAllowed: false}, backends...)
 
-	// FIXME: Check if from is an EVM or FEVM address
-	fromAddress, _, err := as.GetAddrs(from)
-	if err != nil {
-		if err == util.ErrKeyNotFound {
-			return nil, accounts.Account{}, fmt.Errorf("account not found in wallet. Setup with: glif wallet create-account")
+	var fromAddress common.Address
+	if strings.HasPrefix(from, "0x") {
+		fromAddress = common.HexToAddress(from)
+	} else {
+		fromAddress, _, err = as.GetAddrs(from)
+		if err != nil {
+			if err == util.ErrKeyNotFound {
+				return nil, accounts.Account{}, fmt.Errorf("account \"%s\" not found in wallet. Setup with: glif wallet create-account %s", from, from)
+			}
+			return nil, accounts.Account{}, err
 		}
-		return nil, accounts.Account{}, err
 	}
 
 	account = accounts.Account{Address: fromAddress}
@@ -304,8 +324,6 @@ func commonGenericAccountSetup(ctx context.Context, from string) (auth *bind.Tra
 	if err != nil {
 		return nil, accounts.Account{}, err
 	}
-
-	// FIXME: Support GLIF_OWNER_PASSPHRASE and GLIF_OPERATOR_PASSPHRASE
 
 	var passphrase string
 	var envSet bool
