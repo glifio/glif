@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
 	"regexp"
 	"strings"
 
@@ -48,18 +49,20 @@ var createAccountCmd = &cobra.Command{
 
 		fmt.Println("Creating account:", name)
 
-		var passphrase string
-		prompt := &survey.Password{
-			Message: "Please type a passphrase to encrypt your private key",
-		}
-		survey.AskOne(prompt, &passphrase)
-		var confirmPassphrase string
-		confirmPrompt := &survey.Password{
-			Message: "Confirm passphrase",
-		}
-		survey.AskOne(confirmPrompt, &confirmPassphrase)
-		if passphrase != confirmPassphrase {
-			logFatal("Aborting. Passphrase confirmation did not match.")
+		passphrase, envSet := os.LookupEnv("GLIF_PASSPHRASE")
+		if !envSet {
+			prompt := &survey.Password{
+				Message: "Please type a passphrase to encrypt your private key",
+			}
+			survey.AskOne(prompt, &passphrase)
+			var confirmPassphrase string
+			confirmPrompt := &survey.Password{
+				Message: "Confirm passphrase",
+			}
+			survey.AskOne(confirmPrompt, &confirmPassphrase)
+			if passphrase != confirmPassphrase {
+				logFatal("Aborting. Passphrase confirmation did not match.")
+			}
 		}
 
 		ks := util.KeyStore()
