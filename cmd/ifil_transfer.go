@@ -16,7 +16,7 @@ var iFILTransferCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 		from := cmd.Flag("from").Value.String()
-		_, auth, _, _, err := commonOwnerOrOperatorSetup(ctx, from)
+		auth, _, err := commonGenericAccountSetup(ctx, from)
 		if err != nil {
 			logFatal(err)
 		}
@@ -64,5 +64,5 @@ var iFILTransferCmd = &cobra.Command{
 
 func init() {
 	iFILCmd.AddCommand(iFILTransferCmd)
-	iFILTransferCmd.Flags().String("from", "", "address of the owner or operator of the agent")
+	iFILTransferCmd.Flags().String("from", "default", "account to transfer iFIL from")
 }

@@ -20,7 +20,7 @@ var withdrawFILCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 		from := cmd.Flag("from").Value.String()
-		_, auth, senderAccount, _, err := commonOwnerOrOperatorSetup(ctx, from)
+		auth, senderAccount, err := commonGenericAccountSetup(ctx, from)
 		if err != nil {
 			logFatal(err)
 		}
@@ -68,5 +68,5 @@ var withdrawFILCmd = &cobra.Command{
 
 func init() {
 	infinitypoolCmd.AddCommand(withdrawFILCmd)
-	withdrawFILCmd.Flags().String("from", "", "address of the owner or operator of the agent")
+	withdrawFILCmd.Flags().String("from", "default", "account to send transaction from")
 }
