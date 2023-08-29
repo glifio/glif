@@ -20,7 +20,7 @@ var changeRequesterCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 
-		newRequester, err := ParseAddressToEVM(ctx, args[0])
+		newRequester, err := AddressOrAccountNameToEVM(ctx, args[0])
 		if err != nil {
 			logFatal(err)
 		}

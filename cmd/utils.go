@@ -85,7 +85,7 @@ func ParseAddressToNative(ctx context.Context, addr string) (address.Address, er
 	return filAddr, nil
 }
 
-func ParseAddressToEVM(ctx context.Context, addr string) (common.Address, error) {
+func AddressOrAccountNameToEVM(ctx context.Context, addr string) (common.Address, error) {
 	if strings.HasPrefix(addr, "0x") {
 		return common.HexToAddress(addr), nil
 	}
@@ -436,7 +436,7 @@ func getAgentAddressWithFlags(cmd *cobra.Command) (common.Address, error) {
 		}
 	}
 
-	return ParseAddressToEVM(cmd.Context(), agentAddrStr)
+	return AddressOrAccountNameToEVM(cmd.Context(), agentAddrStr)
 }
 
 func getAgentID(cmd *cobra.Command) (*big.Int, error) {

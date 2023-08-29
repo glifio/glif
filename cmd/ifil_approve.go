@@ -24,7 +24,7 @@ var iFILApproveCmd = &cobra.Command{
 		strAmt := args[1]
 		fmt.Printf("Approving %s to spend %s of your iFIL balance...\n", strAddr, strAmt)
 
-		addr, err := ParseAddressToEVM(ctx, strAddr)
+		addr, err := AddressOrAccountNameToEVM(ctx, strAddr)
 		if err != nil {
 			logFatalf("Failed to parse address %s", err)
 		}

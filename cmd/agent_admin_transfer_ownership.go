@@ -19,7 +19,7 @@ var transferOwnershipCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 
-		newOwner, err := ParseAddressToEVM(ctx, args[0])
+		newOwner, err := AddressOrAccountNameToEVM(ctx, args[0])
 		if err != nil {
 			logFatal(err)
 		}

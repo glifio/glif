@@ -30,7 +30,7 @@ var withdrawFILCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		receiver, err := ParseAddressToEVM(cmd.Context(), args[1])
+		receiver, err := AddressOrAccountNameToEVM(cmd.Context(), args[1])
 		if err != nil {
 			logFatal(err)
 		}

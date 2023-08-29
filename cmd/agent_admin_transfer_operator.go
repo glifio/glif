@@ -19,7 +19,7 @@ var transferOperatorCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 
-		newOperator, err := ParseAddressToEVM(ctx, args[0])
+		newOperator, err := AddressOrAccountNameToEVM(ctx, args[0])
 		if err != nil {
 			logFatal(err)
 		}
