@@ -536,8 +536,5 @@ func isFunded(ctx context.Context, caller address.Address) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if bal.Cmp(big.NewInt(0)) > 0 {
-		return true, nil
-	}
-	return false, nil
+	return bal.Cmp(big.NewInt(0)) > 0, nil
 }
