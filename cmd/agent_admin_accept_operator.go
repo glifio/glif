@@ -1,3 +1,6 @@
+//go:build advanced
+// +build advanced
+
 /*
 Copyright © 2023 Glif LTD
 */
