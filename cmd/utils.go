@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"regexp"
 	"runtime"
 	"strings"
 
@@ -84,14 +85,29 @@ func ParseAddressToNative(ctx context.Context, addr string) (address.Address, er
 	return filAddr, nil
 }
 
-func ParseAddressToEVM(ctx context.Context, addr string) (common.Address, error) {
-	lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
+func AddressOrAccountNameToEVM(ctx context.Context, addr string) (common.Address, error) {
+	if strings.HasPrefix(addr, "0x") {
+		return common.HexToAddress(addr), nil
+	}
+
+	re := regexp.MustCompile(`^[tf][0-9]`)
+	if re.MatchString(addr) {
+
+		lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
+		if err != nil {
+			return common.Address{}, err
+		}
+		defer closer()
+
+		return parseAddress(ctx, addr, lapi)
+	}
+
+	as := util.AccountsStore()
+	evmAddr, _, err := as.GetAddrs(addr)
 	if err != nil {
 		return common.Address{}, err
 	}
-	defer closer()
-
-	return parseAddress(ctx, addr, lapi)
+	return evmAddr, nil
 }
 
 func ToMinerID(ctx context.Context, addr string) (address.Address, error) {
@@ -176,14 +192,7 @@ func parseAddress(ctx context.Context, addr string, lapi lotusapi.FullNode) (com
 }
 
 func commonSetupOwnerCall() (agentAddr common.Address, auth *bind.TransactOpts, ownerAccount accounts.Account, requesterKey *ecdsa.PrivateKey, err error) {
-	as := util.AgentStore()
-
-	ownerAddr, _, err := as.GetAddrs(util.OwnerKey)
-	if err != nil {
-		return common.Address{}, nil, accounts.Account{}, nil, err
-	}
-
-	return commonOwnerOrOperatorSetup(context.Background(), ownerAddr.String())
+	return commonOwnerOrOperatorSetup(context.Background(), string(util.OwnerKey))
 }
 
 func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr common.Address, auth *bind.TransactOpts, account accounts.Account, requesterKey *ecdsa.PrivateKey, err error) {
@@ -192,27 +201,33 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
-	as := util.AgentStore()
+	as := util.AccountsStore()
 	ks := util.KeyStore()
 	backends := []accounts.Backend{}
 	backends = append(backends, ks)
 	manager := accounts.NewManager(&accounts.Config{InsecureUnlockAllowed: false}, backends...)
 
-	opEvm, opFevm, err := as.GetAddrs(util.OperatorKey)
+	opEvm, opFevm, err := as.GetAddrs(string(util.OperatorKey))
 	if err != nil {
+		if err == util.ErrKeyNotFound {
+			return common.Address{}, nil, accounts.Account{}, nil, fmt.Errorf("agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
+		}
 		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
-	owEvm, owFevm, err := as.GetAddrs(util.OwnerKey)
+	owEvm, owFevm, err := as.GetAddrs(string(util.OwnerKey))
 	if err != nil {
+		if err == util.ErrKeyNotFound {
+			return common.Address{}, nil, accounts.Account{}, nil, fmt.Errorf("agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
+		}
 		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
 	var fromAddress common.Address
 	// if no flag was passed, we just use the operator address by default
-	switch from {
-	case "", opEvm.String(), opFevm.String():
-		funded, err := as.IsFunded(ctx, PoolsSDK, opFevm, util.OperatorKeyFunded, opEvm.String())
+	switch strings.ToLower(from) {
+	case "", strings.ToLower(opEvm.String()), strings.ToLower(opFevm.String()), string(util.OperatorKey):
+		funded, err := isFunded(ctx, opFevm)
 		if err != nil {
 			return common.Address{}, nil, accounts.Account{}, nil, err
 		}
@@ -225,7 +240,7 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 		if err != nil {
 			return common.Address{}, nil, accounts.Account{}, nil, err
 		}
-	case owEvm.String(), owFevm.String():
+	case strings.ToLower(owEvm.String()), strings.ToLower(owFevm.String()), string(util.OwnerKey):
 		fromAddress = owEvm
 	default:
 		return common.Address{}, nil, accounts.Account{}, nil, errors.New("invalid from address")
@@ -279,8 +294,63 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 	return agentAddr, auth, account, requesterKey, nil
 }
 
-func getRequesterKey(as *util.AgentStorage, ks *keystore.KeyStore) (*ecdsa.PrivateKey, error) {
-	requesterAddr, _, err := as.GetAddrs(util.RequestKey)
+func commonGenericAccountSetup(ctx context.Context, from string) (auth *bind.TransactOpts, account accounts.Account, err error) {
+	err = checkWalletMigrated()
+	if err != nil {
+		return nil, accounts.Account{}, err
+	}
+
+	as := util.AccountsStore()
+	ks := util.KeyStore()
+	backends := []accounts.Backend{}
+	backends = append(backends, ks)
+	manager := accounts.NewManager(&accounts.Config{InsecureUnlockAllowed: false}, backends...)
+
+	var fromAddress common.Address
+	if strings.HasPrefix(from, "0x") {
+		fromAddress = common.HexToAddress(from)
+	} else {
+		fromAddress, _, err = as.GetAddrs(strings.ToLower(from))
+		if err != nil {
+			if err == util.ErrKeyNotFound {
+				return nil, accounts.Account{}, fmt.Errorf("account \"%s\" not found in wallet. Setup with: glif wallet create-account %s", from, from)
+			}
+			return nil, accounts.Account{}, err
+		}
+	}
+
+	account = accounts.Account{Address: fromAddress}
+	wallet, err := manager.Find(account)
+	if err != nil {
+		return nil, accounts.Account{}, err
+	}
+
+	var passphrase string
+	var envSet bool
+	var message string
+	passphrase, envSet = os.LookupEnv("GLIF_PASSPHRASE")
+	message = "Passphrase for account"
+	if !envSet {
+		err = ks.Unlock(account, "")
+		if err != nil {
+			prompt := &survey.Password{Message: message}
+			survey.AskOne(prompt, &passphrase)
+			if passphrase == "" {
+				return nil, accounts.Account{}, fmt.Errorf("Aborted")
+			}
+		}
+	}
+
+	auth, err = walletutils.NewEthWalletTransactor(wallet, &account, passphrase, big.NewInt(chainID))
+	if err != nil {
+		logFatal(err)
+	}
+
+	return auth, account, nil
+}
+
+func getRequesterKey(as *util.AccountsStorage, ks *keystore.KeyStore) (*ecdsa.PrivateKey, error) {
+	requesterAddr, _, err := as.GetAddrs(string(util.RequestKey))
 	if err != nil {
 		return nil, err
 	}
@@ -366,7 +436,7 @@ func getAgentAddressWithFlags(cmd *cobra.Command) (common.Address, error) {
 		}
 	}
 
-	return ParseAddressToEVM(cmd.Context(), agentAddrStr)
+	return AddressOrAccountNameToEVM(cmd.Context(), agentAddrStr)
 }
 
 func getAgentID(cmd *cobra.Command) (*big.Int, error) {
@@ -401,10 +471,10 @@ func AddressesToStrings(addrs []address.Address) []string {
 }
 
 func checkWalletMigrated() error {
-	as := util.AgentStore()
+	as := util.AccountsStore()
 	ksLegacy := util.KeyStoreLegacy()
 
-	notMigratedError := fmt.Errorf("wallet not migrated to encrypted keystore. Please run \"glif wallet migrate\"")
+	notMigratedError := fmt.Errorf("wallet not migrated to encrypted keystore. Please run: glif wallet migrate")
 
 	keys := []util.KeyType{
 		util.OwnerKey,
@@ -413,19 +483,20 @@ func checkWalletMigrated() error {
 	}
 
 	for _, key := range keys {
-		newAddr, _, err := as.GetAddrs(key)
+		_, _, err := as.GetAddrs(string(key))
 		if err != nil {
+			if err == util.ErrKeyNotFound {
+				_, _, err := ksLegacy.GetAddrs(key)
+				if err != nil {
+					if err == util.ErrKeyNotFound {
+						// Account not created yet
+						continue
+					}
+					return err
+				}
+				return notMigratedError
+			}
 			return err
-		}
-		if util.IsZeroAddress(newAddr) {
-			oldAddr, _, err := ksLegacy.GetAddrs(key)
-			if err != nil {
-				return err
-			}
-			if util.IsZeroAddress(oldAddr) {
-				return fmt.Errorf("missing %s key in legacy keys.toml", string(key))
-			}
-			return notMigratedError
 		}
 	}
 
@@ -452,4 +523,18 @@ func checkUnencryptedPrivateKeys() error {
 	}
 
 	return nil
+}
+
+func isFunded(ctx context.Context, caller address.Address) (bool, error) {
+	lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
+	if err != nil {
+		return false, err
+	}
+	defer closer()
+
+	bal, err := lapi.WalletBalance(ctx, caller)
+	if err != nil {
+		return false, err
+	}
+	return bal.Cmp(big.NewInt(0)) > 0, nil
 }

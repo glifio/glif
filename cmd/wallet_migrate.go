@@ -29,8 +29,8 @@ var migrateCmd = &cobra.Command{
 
 		fmt.Printf("Please set a new passphrase to encrypt the owner key:\n\n")
 
-		as := util.AgentStore()
-		ownerAddr, _, err := as.GetAddrs(util.OwnerKey)
+		as := util.AccountsStore()
+		ownerAddr, _, err := as.GetAddrs(string(util.OwnerKey))
 		if err != nil {
 			logFatal(err)
 		}
@@ -61,7 +61,7 @@ func migrateLegacyKeys() error {
 func migrateLegacyKey(key util.KeyType) error {
 	ksLegacy := util.KeyStoreLegacy()
 	ks := util.KeyStore()
-	as := util.AgentStore()
+	as := util.AccountsStore()
 
 	pkStr, err := ksLegacy.Get(string(key))
 	if err != nil {

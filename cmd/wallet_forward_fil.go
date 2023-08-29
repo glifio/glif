@@ -20,12 +20,12 @@ import (
 
 var forwardFIL = &cobra.Command{
 	Use:   "forward-fil <from> <to> <amount>",
-	Short: "Transfers balances from owner or operator wallet to another address through the FilForwarder smart contract",
+	Short: "Transfers balances from an account to another address through the FilForwarder smart contract",
 	Args:  cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 		from := args[0]
-		_, auth, senderAccount, _, err := commonOwnerOrOperatorSetup(ctx, from)
+		auth, senderAccount, err := commonGenericAccountSetup(ctx, from)
 		if err != nil {
 			logFatal(err)
 		}

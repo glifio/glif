@@ -23,7 +23,8 @@ var createCmd = &cobra.Command{
 	Short: "Create a Glif agent",
 	Long:  `Spins up a new Agent contract through the Agent Factory, passing the owner, operator, and requestor addresses.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		as := util.AgentStore()
+		as := util.AccountsStore()
+		agentStore := util.AgentStore()
 		ks := util.KeyStore()
 		backends := []accounts.Backend{}
 		backends = append(backends, ks)
@@ -38,20 +39,14 @@ var createCmd = &cobra.Command{
 			logFatalf("Agent already exists: %s", addressStr)
 		}
 
-		ownerAddr, _, err := as.GetAddrs(util.OwnerKey)
-		if err != nil {
-			logFatal(err)
-		}
+		ownerAddr, _, err := as.GetAddrs(string(util.OwnerKey))
+		checkExists(err)
 
-		operatorAddr, _, err := as.GetAddrs(util.OperatorKey)
-		if err != nil {
-			logFatal(err)
-		}
+		operatorAddr, _, err := as.GetAddrs(string(util.OperatorKey))
+		checkExists(err)
 
-		requestAddr, _, err := as.GetAddrs(util.RequestKey)
-		if err != nil {
-			logFatal(err)
-		}
+		requestAddr, _, err := as.GetAddrs(string(util.RequestKey))
+		checkExists(err)
 
 		account := accounts.Account{Address: ownerAddr}
 		passphrase, envSet := os.LookupEnv("GLIF_OWNER_PASSPHRASE")
@@ -116,16 +111,21 @@ var createCmd = &cobra.Command{
 		fmt.Printf("Agent created: %s\n", addr.String())
 		fmt.Printf("Agent ID: %s\n", id.String())
 
-		as.Set("id", id.String())
-		as.Set("address", addr.String())
-		as.Set("tx", tx.Hash().String())
+		agentStore.Set("id", id.String())
+		agentStore.Set("address", addr.String())
+		agentStore.Set("tx", tx.Hash().String())
 	},
+}
+
+func checkExists(err error) {
+	if err != nil {
+		if err == util.ErrKeyNotFound {
+			logFatal("Agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
+		}
+		logFatal(err)
+	}
 }
 
 func init() {
 	agentCmd.AddCommand(createCmd)
-
-	createCmd.Flags().String("ownerfile", "", "Owner eth address")
-	createCmd.Flags().String("operatorfile", "", "Repayment eth address")
-	createCmd.Flags().String("deployerfile", "", "Deployer eth address")
 }

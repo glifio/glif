@@ -15,7 +15,7 @@ var defaultMap = map[string]string{
 }
 
 func TestNewStorage(t *testing.T) {
-	_, err := util.NewStorage(testFilename, defaultMap)
+	_, err := util.NewStorage(testFilename, defaultMap, true)
 	if err != nil {
 		t.Errorf("NewStorage() error: %v", err)
 	}
@@ -25,7 +25,7 @@ func TestNewStorage(t *testing.T) {
 }
 
 func TestSetNonExistentKey(t *testing.T) {
-	store, err := util.NewStorage(testFilename, defaultMap)
+	store, err := util.NewStorage(testFilename, defaultMap, true)
 	if err != nil {
 		t.Fatalf("NewStorage() error: %v", err)
 	}
@@ -48,7 +48,7 @@ func TestSetNonExistentKey(t *testing.T) {
 }
 
 func TestGetSetDelete(t *testing.T) {
-	store, err := util.NewStorage(testFilename, defaultMap)
+	store, err := util.NewStorage(testFilename, defaultMap, true)
 	if err != nil {
 		t.Fatalf("NewStorage() error: %v", err)
 	}
@@ -85,7 +85,7 @@ func TestGetSetDelete(t *testing.T) {
 }
 
 func TestNonexistentKey(t *testing.T) {
-	store, err := util.NewStorage(testFilename, defaultMap)
+	store, err := util.NewStorage(testFilename, defaultMap, true)
 	if err != nil {
 		t.Fatalf("NewStorage() error: %v", err)
 	}
