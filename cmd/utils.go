@@ -226,7 +226,7 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 	var fromAddress common.Address
 	// if no flag was passed, we just use the operator address by default
 	switch strings.ToLower(from) {
-	case "", opEvm.String(), opFevm.String(), string(util.OperatorKey):
+	case "", strings.ToLower(opEvm.String()), strings.ToLower(opFevm.String()), string(util.OperatorKey):
 		funded, err := isFunded(ctx, opFevm)
 		if err != nil {
 			return common.Address{}, nil, accounts.Account{}, nil, err
@@ -240,7 +240,7 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 		if err != nil {
 			return common.Address{}, nil, accounts.Account{}, nil, err
 		}
-	case owEvm.String(), owFevm.String(), string(util.OwnerKey):
+	case strings.ToLower(owEvm.String()), strings.ToLower(owFevm.String()), string(util.OwnerKey):
 		fromAddress = owEvm
 	default:
 		return common.Address{}, nil, accounts.Account{}, nil, errors.New("invalid from address")
@@ -310,7 +310,7 @@ func commonGenericAccountSetup(ctx context.Context, from string) (auth *bind.Tra
 	if strings.HasPrefix(from, "0x") {
 		fromAddress = common.HexToAddress(from)
 	} else {
-		fromAddress, _, err = as.GetAddrs(from)
+		fromAddress, _, err = as.GetAddrs(strings.ToLower(from))
 		if err != nil {
 			if err == util.ErrKeyNotFound {
 				return nil, accounts.Account{}, fmt.Errorf("account \"%s\" not found in wallet. Setup with: glif wallet create-account %s", from, from)
