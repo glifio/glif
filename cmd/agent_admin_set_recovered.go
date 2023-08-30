@@ -58,5 +58,5 @@ var setRecoveredCmd = &cobra.Command{
 }
 
 func init() {
-	adminCmd.AddCommand(setRecoveredCmd)
+	agentCmd.AddCommand(setRecoveredCmd)
 }
