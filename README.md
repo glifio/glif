@@ -29,6 +29,7 @@
     - [Payment types](#payment-types)
     - [Autopilot](#autopilot)
     - [Leaving the pool](#leaving-the-pool)
+  - [Agent health](#agent-health)
 
 <hr />
 
@@ -265,8 +266,13 @@ If you want to leave the pool for good, all you have to do is pay back all of yo
 
 As this will ensure _all_ the principal is paid off, and no tiny amounts of attofil remain borrowed.
 
+## Agent health
 
+It's important to note that an Agent can enter into an "unhealthy" state if it begins accruing faulty sectors and/or misses its weekly payment. 
 
+If your Agent has been marked in a faulty state, `glif agent info` will tell you. If you have recovered from your faulty state, you should recover your Agent's health using the command:<br />
+
+`glif agent set-recovered`
 
 
 
