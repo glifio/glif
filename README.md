@@ -9,292 +9,264 @@
 
 **The GLIF Command Line Interface is the starting point for interacting with the GLIF Pools Protocol.**
 
-## Contents
-1. [Installation](##Installation)
-2. [Create a wallet](##create-a-wallet)
+- [GLIF CLI](#glif-cli)
+  - [Installation](#installation)
+  - [Named wallet accounts and addresses](#named-wallet-accounts-and-addresses)
+  - [Wallets](#wallets)
+    - [List existing wallet accounts and balances](#list-existing-wallet-accounts-and-balances)
+    - [Creating wallet accounts for use with an Agent](#creating-wallet-accounts-for-use-with-an-agent)
+    - [Generic wallet accounts](#generic-wallet-accounts)
+    - [Passphrases](#passphrases)
+    - [Migrate from a legacy keystore.toml wallet](#migrate-from-a-legacy-keystoretoml-wallet)
+  - [Agents - Get started borrowing](#agents---get-started-borrowing)
+    - [Create an Agent](#create-an-agent)
+    - [Add a Miner to an Agent](#add-a-miner-to-an-agent)
+    - [Borrow](#borrow)
+    - [Moving FIL from Miner to Agent and back](#moving-fil-from-miner-to-agent-and-back)
+    - [Withdraw Rewards / Cash Advance](#withdraw-rewards--cash-advance)
+    - [Remove a Miner from an Agent](#remove-a-miner-from-an-agent)
+  - [Payments](#payments)
+    - [Payment types](#payment-types)
+    - [Autopilot](#autopilot)
+    - [Leaving the pool](#leaving-the-pool)
+
+<hr />
 
 ## Installation
 
-## Create a wallet
-
-
-## Getting started (Calibnet)
-First, clone the repo:
+First, clone the repo from GitHub:<br />
 `git clone git@github.com:glifio/cli.git`<br />
 `cd cli`<br />
-`make calibnet`<br />
-`sudo make install`<br />
-`make calibnet-config`<br />
 
-## Getting started (Mainnet)
-First, clone the repo:
-`git clone git@github.com:glifio/cli.git`<br />
-`cd cli`<br />
+**Mainnet installation**<br />
 `make glif`<br />
 `sudo make install`<br />
 `make config`<br />
 
-Now when you run:
-```
-➜ ✗ glif wallet new
-```
+**Testnet installation**<br />
+`make calibnet`<br />
+`sudo make install`<br />
+`make calibnet-config`<br />
 
-You should see:
+## Named wallet accounts and addresses
 
-```
-➜  cli git:(main) ✗ glif --help
-Usage:
-  glif [command]
+The GLIF CLI maps human readable names to account addresses. Whenever you pass an `address` argument or flag to a command, you can use the human readable version of the name. For example, if you have an account named `testing-account`, you can specify sending a transaction `from` `testing-account` by:
 
-Available Commands:
-  agent         Commands for interacting with the Glif Agent
-  completion    Generate the autocompletion script for the specified shell
-  help          Help about any command
-  ifil          Commands for interacting with the Infinity Pool Liquid Staking Token (iFIL)
-  infinity-pool Commands for interacting with the Infinity Pool
-  pools         Commands for interacting with the GLIF Pools Protocol
-  wallet        Manage Glif wallets
+`glif <command> <command-args> --from testing-account`<br />
 
-Flags:
-      --config string   config file (default is $HOME/.config/glif/config.toml)
-  -h, --help            help for glif
-  -t, --toggle          Help message for toggle
+## Wallets
 
-Use "glif [command] --help" for more information about a command.
-```
+The GLIF CLI embeds a wallet inside of it for writing transactions to Filecoin. The wallet is built off of [go-ethereum's encrypted keystore](https://geth.ethereum.org/docs/developers/dapp-developer/native-accounts). A single "wallet" can hold many separate "accounts", and each "account" has a human readable name.
 
-## Creating your Agent
+The encrypted account information is stored at `~/.glif/keystore` and the human readable name to address mappings are stored in `~/.glif/accounts` 
 
-The Agent is a crucial component of the underlying [GLIF Pools Protocol](https://glif.io/docs) (the Protocol on which the Infinity Pool is built) - the Agent is a wrapper contract around one or more [Miner Actors](https://github.com/filecoin-project/specs-actors/blob/master/actors/builtin/miner/miner_actor.go). The Agent is primarily responsible for:
+Note that all wallet accounts are EVM actor types, meaning they have a 0x/f4 address on Filecoin. The GLIF CLI wallet does not yet support f1/f2/f3 style addresses.
 
-1. Adding miner(s) to the Agent
-2. Borrowing FIL from a pool
-3. Making a payment to a pool
-4. Pushing funds to any of the Agent's miners
-5. Pulling funds up from any of the Agent's miners
-6. Withdrawing funds from the Agent
-7. Removing a miner
-8. Changing operator addresses
+### List existing wallet accounts and balances
 
-**Owner** - The Owner Address owns your agent. The Agent's Owner is like your Miner Owner - it has the permission to call any method on your Agent. Additionally, it is the only address that is able to: (1) Borrow funds from pools into the Agent, (2) Withdraw funds from the Agent to a recipient, and (3) Remove a miner from the agent. We recommend keeping your Owner private key cold and not kept on a machine that's directly connected to the internet.<br />
-**Operator** - The Operator Address is primarily useful for automation - the operator can (1) Make a payment to the pool, and (2) Push/pull funds from the Agent back and forth with the Agent's miner actors.<br />
-**Requester** - The requester signs your requests to the Agent Data Oracle (ADO) to ensure that only _you_ can request a signed credential for your Agent.
+`glif wallet list`<br />
+`glif wallet balance`<br />
 
-To create your Agent, first, we need to create 3 new addresses:
+### Creating wallet accounts for use with an Agent
 
-`glif wallet new`<br />
+`glif wallet create-agent-accounts`
 
-This command will randomly generate 3 new private keys that represent your `owner`, `operator`, and `requester`. It will store the keys in `$HOME/.glif/config/keys.toml`
+This command will create 3 new wallet accounts: (1) `owner`, (2) `operator`, and (3) `requester`, which correspond to an Agent smart contract. You can read more about those keys in our [docs](https://docs.glif.io/agents/owner-and-address-keys).
 
-You should see the output:
+**It is strongly recommended to securely backup your `owner` encrypted key - losing this key means losing access to your Agent**.
 
-```
-➜ ✗ glif wallet new
-2023/05/03 19:53:37 Owner address: 0x8b35624Ed57789D18445142a51A4a51eFb375F26 (ETH), f410frm2wetwvo6e5dbcfcqvfdjffd35toxzgtslcqja (FIL)
-2023/05/03 19:53:37 Operator address: 0x69D2CE31DDABF4A7098a2547147c13cF10F5Ea7b (ETH), f410fnhjm4mo5vp2kocmkevdri7atz4ipl2t3zcdiani (FIL)
-2023/05/03 19:53:37 Request key: 0x115fFf27B67875032D6E6D2F28a3aAbC31A69f54 (ETH), f410fcfp76j5wpb2qgllonuxsri5kxqy2nh2uqbvcnoy (FIL)
-```
+### Generic wallet accounts
 
-Next, we need to fund our owner key. To do this, please navigate over to the [GLIF Wallet](https://glif.io/wallet), and send some funds to your owner address. **IMPORTANT** - do NOT manually craft and send a `method 0` send transaction to an EVM address, passing it `value`. Use [fil-forwarder](https://docs.filecoin.io/smart-contracts/filecoin-evm-runtime/filforwader/) instead.
+You can also create generic named wallets for use in other commands:<br />
+`glif wallet create-account <account-name>`
+
+### Passphrases
+
+Wallet accounts can each be protected with a unique passphrase for additional security. The private keys are encrypted with the passphrase, so an attacker who gains access to your GLIF CLI Keystore cannot feasibly gain access to your account private keys. **It is strongly recommended to protect your wallet accounts with a secure passphrase**.
+
+**Note that if you forget your passphrase, your private keys cannot be recovered. It is extremely important to write down your passphrase in a secure place where it cannot be stolen or lost.**
+
+You can change your passphrase at any time by: <br />
+`glif wallet change-passphrase <account-name>`<br />
+
+### Migrate from a legacy keystore.toml wallet
+
+If you're coming from an older version of this command line, you will have raw, unencrypted private keys stored in `~/.glif/keys.toml`. You will also not (yet) have an encrypted keystore. You can migrate to the new encrypted keystore by:<br />
+
+`glif wallet migrate`
+
+After you've migrated your wallet, we recommend testing a command or two to ensure the migration occurred smoothly. After the migration, you can safely remove your `keys.toml` file:<br />
+
+`rm ~/.glif/keys.toml`
+
+## Agents - Get started borrowing
+
+The Agent is a crucial component of the underlying [GLIF Pools Protocol](https://glif.io/docs) (the Protocol on which the Infinity Pool is built) - the Agent is a wrapper contract around one or more [Miner Actors](https://github.com/filecoin-project/specs-actors/blob/master/actors/builtin/miner/miner_actor.go). The Agent is the Storage Provider's tool for interacting with the Pools as a Storage Provider. Soon, Agent commands will be available on our website.
+
+### Create an Agent
+
+If you haven't already, the first step in creating your Agent is to create the Agent wallet accounts:<br />
+
+`glif wallet create-agent-accounts`
+
+Next, you have to fund the owner key for your Agent to pay for gas. You can get your Agent's owner account with:<br />
+`glif wallet list`
+
+To fund your account, you can navigate over to the [GLIF Wallet](https://glif.io/wallet), and send some funds to your owner address. **IMPORTANT** - do NOT manually craft and send a `method 0` send transaction to an EVM address, passing it `value`. Use [fil-forwarder](https://docs.filecoin.io/smart-contracts/filecoin-evm-runtime/filforwader/) instead.
 
 Once you've funded your owner key, verify:
 
 ```
-➜ ✗ glif wallet balance
-2023/05/15 10:57:53 owner balance: 2.00 FIL
-2023/05/15 10:57:53 operator balance: 0.00 FIL
-2023/05/15 10:57:53 request balance: 0.00 FIL
+➜ glif wallet balance
+
+Agent accounts:
+
+owner balance: 1.00 FIL
+operator balance: 0.00 FIL
+requester balance 0.00 FIL
 ```
 
-Lastly, you can go ahead and create your agent:
+The final step is to create your Agent:<br />
+`glif agent create`<br />
 
-```
-➜ ✗ glif agent create
-```
-
-If all goes successfully, you can run:
-
-```
-➜ ✗ cli git:(main) glif agent info
-```
-
-And you should see something like:
-
-```
-➜  cli git:(main) glif agent info
-
-BASIC INFO
-Agent Address: 0xbf11d189D528736d25D3a342C826cF60253Df41c
-Agent ID: 4
-Agent Version: 1
-
-AGENT ASSETS
-0.000000 FIL
-|
-INFINITY POOL ACCOUNT
-No account exists with the Infinity Pool
-```
-
-If you see an error that looks like:
-
-```
-2023/05/15 17:38:18 pools sdk: agent create: failed to estimate gas: CallWithGas failed: call raw get actor: resolution lookup failed (t410f52ogwtdgdaafchdrj54tiftjdjpbn3kiemnaiay): resolve address t410f52ogwtdgdaafchdrj54tiftjdjpbn3kiemnaiay: actor not found
-```
-
-It means that your owner key is not properly funded. You must send FIL to this actor before creating an Agent.
-
-## Add a miner to your Agent
-
-Adding a miner to your Agent occurs in two steps:
-
-1. Setting the owner address on your miner actor to point to your agent
-2. Adding the miner to your Agent
-
-### Step 1 - Proposing an Ownership change
-
-**NOTE** - if your owner key is the default wallet selected on your Lotus daemon, you can adjust your `~/.glif/config.toml` to point to your own Lotus daemon to use our built-in change-miner-owner command. For example, with a `~/.glif/config.toml` that looks like:
-
-```
-[daemon]
-rpc-url = 'http://localhost:1234/rpc/v1'
-token = 'eyJh...om49Vu1w'
-```
-
-Then you can simply run:<br />
-`glif agent miners change-owner <miner addr>`<br />
-
-This will propose the ownership change. Alternatively, you can call:<br />
+If all goes successfully, you can run:<br />
 `glif agent info`<br />
 
-To retrieve your delegated `f4` address of your Agent. Then you can go ahead and manually propose an ownership change, setting your Agent's `f4` address as the new owner.
+Which will print information about your Agent.
 
-### Step 2 - Adding miner to your Agent
+### Add a Miner to an Agent
 
-Once you've successfully proposed an ownership change to your agent, you can then call `glif agent miners add <miner addr>` to pledge your miner.
+Adding a Miner to your Agent requires the Agent to become the owner of your Miner. This process occurs in two steps:
 
-You should see:
+1. Proposing an ownership change to your Miner Actor, passing your Agent's `f4` Filecoin address as the new owner.
+2. Approving the ownership change from your Agent.
 
-```
-2023/05/15 14:05:44 Adding miner f0xxx to agent 0x...
-|Transaction: 0x....
-Successfully added miner f0xxx to agent
-```
+**Step 1 - Proposing an Ownership change**
 
-### Confirm - Miner added successfully:
+This step occurs outside of GLIF and our command line. Depending on what mining software you use, this step will change. However, if you are running the `lotus-miner` command line, you can run the following command to propose the ownership change:<br />
 
-You can call `glif agent miners list` and you should see your new miner in the returned list!
+`lotus-miner actor set-owner --really-do-it <agent-f410> <current-miner-owner>`<br />
 
-# Command Reference
-
-## Preview Flag
-
-Several of the critical commands have a `--preview` flag that allows you to perform a dry-run and get an indication of the impact of that operation on the financial position of your agent. Check whether a command has a `--preview` flag by calling the `--help` flag on that command.
-
-## Borrow funds
-
-You can borrow funds from the Infinity Pool by calling `glif agent borrow <amount>`. For example, to borrow 1 FIL, you can call:
+Your Agent's `f4` address can be found by running `glif agent info` and inspecting the logs:
 
 ```
-➜ ✗ glif agent borrow 1
-2023/05/15 14:08:44 Borrowing 1 FIL from Infinity Pool
-|Transaction: 0x....
-Successfully borrowed 1 FIL from Infinity Pool
+➜ glif agent info
+
+BASIC INFO
+                                                                                    
+...
+Agent f4 Addr                         f410fh3njwnl6uirpnvi2o7qtnki43c47iyn5mf2q3nq  
+...
 ```
 
-## Make a payment
+Once this transaction succeeds, you can proceed to step 2.
 
-### To-Current payment
+**Step 2 - Approving the ownership change**
 
-You can pay all current fees by calling `glif agent pay to-current`. For example, to pay the to-current amount, you can call:
+Your Agent must approve the ownership change in order to complete the process of adding a Miner to your Agent. To approve the ownership change, run:<br />
 
-```
-➜ ✗ glif agent pay to-current
-2023/05/15 14:08:44 Making a to-current payment to Infinity Pool
-|Transaction: 0x....
-Successfully paid 5 FIL
-```
+`glif agent miners add <miner-id>`<br />
 
-### Principal payment
+A single Agent can own more than 1 Miner, which increases the aggregate amount a Storage Provider can borrow under a single Agent. 
 
-To make a payment against the principal, make the following call `glif agent pay principal`. Note, that the amount specified is how much principle you wish to pay off, but the call will also pay off an outstanding fees, so the total amount paid will be equal to having called `glif agent pay to-current` plus the amount specified against the principle. For example:
+### Borrow
 
-```
-➜ ✗ glif agent pay principal 10
-2023/05/15 14:08:44 Paying fees of 5 FIL to the Infinity Pool
-2023/05/15 14:08:45 Paying principle of 10 FIL to the Infinity Pool
-|Transaction: 0x....
-Successfully paid principal amount to Infinity Pool
-```
+Once your Agent has a Miner pledged to it, you can run `glif agent preview borrow-max` to get your maximum borrow amount. Note that this information is also available after running `glif agent info`. 
 
-### Custom payment
+When you decide how much to borrow, simply run:<br />
+`glif agent borrow <amount>`<br />
 
-You can make a payment to the Infinity Pool by calling `glif agent pay custom <amount>`. For example, to pay 1 FIL, you can call:
+Once the transaction confirms, the FIL will be available on your Agent smart contract. See the next section for how to push funds to one of your Agent's Miners.
 
-```
-➜ ✗ glif agent pay custom 1
-2023/05/15 14:08:44 Paying 1 FIL to the Infinity Pool
-|Transaction: 0x....
-Successfully paid 1 FIL
-```
+**NOTE** - In order to borrow funds, your Agent must have made a payment back to the pool for _at least_ the fees it owes within the last 24 hours.
 
-## Push funds to a miner
+### Moving FIL from Miner to Agent and back
 
-You can push funds to a miner by calling `glif agent push <miner addr> <amount>`. For example, to push 1 FIL to a miner, you can call:
+You can push funds directly from your Agent to a Miner owned by your Agent to use as pledge collateral on the Filecoin network:<br />
+`glif agent miners push-funds <miner-id> <amount>`<br />
+
+You can change your `~/.lotusminer/config.toml` to use available miner balance for sector collateral instead of sending it with each message:<br />
 
 ```
-➜ ✗ glif agent push f0xxx 1
-|Transaction: 0x....
-Successfully pushed funds down to miner f0xxx
+  # Whether to use available miner balance for sector collateral instead of sending it with each message
+  #
+  # type: bool
+  # env var: LOTUS_SEALING_COLLATERALFROMMINERBALANCE
+  #CollateralFromMinerBalance = false
 ```
 
-## Pull funds from a miner
+When you want to pull funds up from your Miner to your Agent to withdraw rewards or make a weekly payment, you can use:<br />
+`glif agent miners pull-funds <miner-id> <amount>`<br />
 
-You can pull funds from a miner by calling `glif agent pull <miner addr> <amount>`. For example, to pull 1 FIL from a miner, you can call:
+### Withdraw Rewards / Cash Advance
 
-```
-➜ ✗ glif agent pull f0xxx 1
-2023/05/15 14:08:44 Pulling 1 FIL from miner f0xxx
-|Transaction: 0x....
-Successfully pulled funds up from miner f0xxx
-```
+Sometimes you may need Filecoin to pay for gas or to sell on exchanges to pay for fiat denominated bills. In this case, you will want to withdraw funds off your Agent, and out of the GLIF Pools Protocol. You can do this when you have excess equity on your Agent - to read more about the economics, see our [docs](https://docs.glif.io/storage-provider-economics/withdraw-funds).
 
-## Withdraw funds from your Agent
+To withdraw funds from your Agent:<br />
+`glif agent withdraw <amount> <receiver>`<br />
 
-You can withdraw funds from your Agent by calling `glif agent withdraw <amount>`. For example, to withdraw 1 FIL from your Agent, you can call:
+Remember that the `receiver` can be a named wallet account, so for example, you can withdraw funds to your Agent's owner key with:<br />
 
-```
-➜ ✗ glif agent withdraw 1
-2023/05/15 14:08:44 Withdrawing 1 FIL from Agent
-|Transaction: 0x....
-Successfully withdrew 1 FIL
-```
+`glif agent withdraw <amount> owner`
 
-## Remove a miner from your Agent
+### Remove a Miner from an Agent
 
-You can remove a miner from your Agent by calling `glif agent miners remove <miner addr>`. For example, to remove a miner from your Agent, you can call:
+You can remove a Miner from your Agent by calling `glif agent miners remove <miner-id> <new-owner-address>`. This call will propose an ownership change to the Agent's Miner, passing the `new-owner-address` as the proposed new owner. Once this transaction succeeds, you will need to approve the ownership change from the `new-owner-address`. It's important to note that this call will fail if you try to set an EVM actor as the new owner on a Miner.
 
-```
-➜ ✗ glif agent miners remove f0xxx f3xxx
-2023/05/15 14:08:44 Removing miner f0xxx from agent
-|Transaction: 0x....
-Successfully removed miner f0xxx from Agent
-```
+It's important to note that removing a Miner from your Agent is removing equity, so this call may fail if you are economically not allowed to remove a Miner due to collateral requirements. The rules are treated identically to withdrawing funds from your Agent - you can read more about the economics [here](https://docs.glif.io/storage-provider-economics/withdraw-funds).
 
-# Glif Autopilot
+## Payments
 
-Glif Autopilot allows for the automatic payment of fees and/or principal to the Infinity Pool. It is a daemon that runs in the background and will automatically make payments to the Infinity Pool on your behalf. It is configured via a `config.toml` file that is located in your `~/.glif` directory.
+After borrowing, Storage Providers are expected to make a payment once a week, for the amount of fees that have accrued throughout the given time period. You are not restricted to only make payments once a week - you can pay daily, every other day, or once a week. The amount of fees you pay does not depend on how frequently you choose to make payments.
 
-## Configuration
+To make a payment, your Agent must have sufficient balance on it (funds move from the Agent back into the pool):<br />
+`glif agent pay <payment-type>`<br />
 
-The `config.toml` file is located in your `~/.glif` directory. It is a TOML file that looks like:
+### Payment types
+
+There are currently 3 types of payments:
+
+1. `to-current` - pays only the current fees owed
+2. `principal` - pays the current fees owed and a specific amount of principal
+3. `custom` - pays a custom amount. If the amount is greater than the current owed fees, the rest of the payment is applied to principal.
+
+Note that if you overpay principal, the overpayment amount is refunded to your Agent. So you cannot overpay on what you owe.
+
+### Autopilot
+
+It gets annoying to have to manually make payments each week - that's why we built autopilot. Autopilot is a service that automates: (1) pulling up funds from one of your Agent's Miners, and (2) making a payment back into the pool.
+
+Autopilot's configuration settings can be found in `~/.glif/config.toml`. The default settings are as follows:
 
 ```
 [autopilot]
-# payment-type can be one of "to-current", "principal", or "custom", each working as described by the matching cli commands
-payment-type = "principal"
-# amount is in FIL and only applies to payment-type = "custom" or "principal"
-amount = 5
-# frequency is the frequency at which payments are made in days
+# <to-current|principal|custom>
+payment-type = 'to-current'
+# amount is only required for 'principal' and 'custom' payment types
+amount = 0
 frequency = 5
+
+[autopilot.pullfunds]
+enabled = true
+# to save on gas fees, pull the payment amount * pull-amount-factor
+pull-amount-factor = 3
+# miner that will have funds pulled from it
+miner = '<miner-id>'
 ```
+
+You can configure autopilot to whatever settings you'd like, and when you're ready to start the process, run:<br />
+`glif agent autopilot`
+
+### Leaving the pool
+
+If you want to leave the pool for good, all you have to do is pay back all of your principal. We highly recommend using the command:<br />
+
+`glif agent exit`<br />
+
+As this will ensure _all_ the principal is paid off, and no tiny amounts of attofil remain borrowed.
+
+
+
+
+
 
