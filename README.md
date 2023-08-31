@@ -1,4 +1,22 @@
-# glif cli
+<img src="./logo.png" alt="GLIF Logo" align="right" width="60px" />
+
+# GLIF CLI
+
+![Github Actions][gha-badge] ![Discord Channel][discord-badge]
+
+[gha-badge]: https://img.shields.io/github/actions/workflow/status/glifio/cli/test.yml?branch=main
+[discord-badge]: https://dcbadge.vercel.app/api/server/5qsJjsP3Re?style=flat-square&theme=clean-inverted&compact=true&theme=blurple
+
+**The GLIF Command Line Interface is the starting point for interacting with the GLIF Pools Protocol.**
+
+## Contents
+1. [Installation](##Installation)
+2. [Create a wallet](##create-a-wallet)
+
+## Installation
+
+## Create a wallet
+
 
 ## Getting started (Calibnet)
 First, clone the repo:
