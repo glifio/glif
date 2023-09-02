@@ -54,35 +54,45 @@ func logFatalf(format string, args ...interface{}) {
 	Exit(1)
 }
 
-func ParseAddressToNative(ctx context.Context, addr string) (address.Address, error) {
+func AddressOrAccountNameToNative(ctx context.Context, addr string) (address.Address, error) {
 	lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
 	if err != nil {
 		return address.Undef, err
 	}
 	defer closer()
 
-	// user passed 0x addr, convert to f4
-	if strings.HasPrefix(addr, "0x") {
-		ethAddr, err := ethtypes.ParseEthAddress(addr)
+	re := regexp.MustCompile(`^[tf][0-9]`)
+	if re.MatchString(addr) {
+		// user passed f0, f1, f2, f3, or f4
+		filAddr, err := address.NewFromString(addr)
 		if err != nil {
 			return address.Undef, err
 		}
 
+		// Note that in testing, sending to an ID actor address works ok but we still block it, as this isn't intended good behavior (passing ID addrs as representations of 0x style EVM addrs)
+		if err := checkIDNotEVMActorType(ctx, filAddr, lapi); err != nil {
+			return address.Undef, err
+		}
+
+		return filAddr, nil
+	}
+
+	// user passed 0x addr or account name, convert to f4
+	var ethAddr ethtypes.EthAddress
+	if strings.HasPrefix(addr, "0x") {
+		ethAddr, err = ethtypes.ParseEthAddress(addr)
+		if err != nil {
+			return address.Undef, err
+		}
 		return ethAddr.ToFilecoinAddress()
+	} else {
+		as := util.AccountsStore()
+		_, fevmAddr, err := as.GetAddrs(addr)
+		if err != nil {
+			return address.Undef, err
+		}
+		return fevmAddr, nil
 	}
-
-	// user passed f0, f1, f2, f3, or f4
-	filAddr, err := address.NewFromString(addr)
-	if err != nil {
-		return address.Undef, err
-	}
-
-	// Note that in testing, sending to an ID actor address works ok but we still block it, as this isn't intended good behavior (passing ID addrs as representations of 0x style EVM addrs)
-	if err := checkIDNotEVMActorType(ctx, filAddr, lapi); err != nil {
-		return address.Undef, err
-	}
-
-	return filAddr, nil
 }
 
 func AddressOrAccountNameToEVM(ctx context.Context, addr string) (common.Address, error) {
@@ -92,7 +102,6 @@ func AddressOrAccountNameToEVM(ctx context.Context, addr string) (common.Address
 
 	re := regexp.MustCompile(`^[tf][0-9]`)
 	if re.MatchString(addr) {
-
 		lapi, closer, err := PoolsSDK.Extern().ConnectLotusClient()
 		if err != nil {
 			return common.Address{}, err

@@ -38,7 +38,7 @@ var forwardFIL = &cobra.Command{
 
 		toStr := args[1]
 
-		to, err := ParseAddressToNative(cmd.Context(), toStr)
+		to, err := AddressOrAccountNameToNative(cmd.Context(), toStr)
 		if err != nil {
 			logFatal(err)
 		}
