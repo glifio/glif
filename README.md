@@ -55,10 +55,13 @@ The GLIF CLI maps human readable names to account addresses. Whenever you pass a
 
 `glif <command> <command-args> --from testing-account`<br />
 
-To create a label for an arbitrary address:<br />
+To create a read-only label for an arbitrary address:<br />
 `glif wallet label-account <name> <address>`<br />
 
 Note that if you add a built-in actor's address (`f1/f2/f3`), it will be converted to an `f0` ID Address and encoded into a `0x` EVM address format. `0x` style addresses are used when interacting with smart contracts on the FEVM. Read more about it [here](https://docs.filecoin.io/smart-contracts/filecoin-evm-runtime/address-types/#converting-to-a-0x-style-address).
+
+To list all your accounts, including read-only labeled ones:<br />
+`glif wallet list --include-read-only`
 
 ## Wallets
 
