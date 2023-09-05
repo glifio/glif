@@ -15,6 +15,7 @@ import (
 var labelAccountCmd = &cobra.Command{
 	Use:   "label-account <name> <address>",
 	Short: "Label an account with a human readable name",
+	Long:  "Labeling an account creates a read-only alias for an account's address.",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		as := util.AccountsStore()
@@ -41,7 +42,7 @@ var labelAccountCmd = &cobra.Command{
 		}
 
 		if addr.Hex() != args[1] {
-			log.Printf("Transforming %s into its EVM representation: %s\n", args[1], addr.Hex())
+			log.Printf("Converting %s into its EVM representation: %s\n", args[1], addr.Hex())
 		}
 
 		log.Printf("Successfully added new read-only account to wallet - %s\n", addr.Hex())
