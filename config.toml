@@ -13,4 +13,4 @@ enabled = true
 # to save on gas fees, pull the payment amount * pull-amount-factor
 pull-amount-factor = 3
 # miner that will have funds pulled from it
-miner = 't020802'
+miner = ''
