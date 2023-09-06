@@ -55,17 +55,28 @@ The GLIF CLI maps human readable names to account addresses. Whenever you pass a
 
 `glif <command> <command-args> --from testing-account`<br />
 
+To create a read-only label for an arbitrary address:<br />
+`glif wallet label-account <name> <address>`<br />
+
+Note that if you add a built-in actor's address (`f1/f2/f3`), it will be converted to an `f0` ID Address and encoded into a `0x` EVM address format. `0x` style addresses are used when interacting with smart contracts on the FEVM. Read more about it [here](https://docs.filecoin.io/smart-contracts/filecoin-evm-runtime/address-types/#converting-to-a-0x-style-address).
+
+To list all your accounts, including read-only labeled ones:<br />
+`glif wallet list --include-read-only`
+
 ## Wallets
 
 The GLIF CLI embeds a wallet inside of it for writing transactions to Filecoin. The wallet is built off of [go-ethereum's encrypted keystore](https://geth.ethereum.org/docs/developers/dapp-developer/native-accounts). A single "wallet" can hold many separate "accounts", and each "account" has a human readable name.
 
-The encrypted account information is stored at `~/.glif/keystore` and the human readable name to address mappings are stored in `~/.glif/accounts` 
+The encrypted account information is stored at `~/.glif/keystore` and the human readable name to address mappings are stored in `~/.glif/accounts`
 
 Note that all wallet accounts are EVM actor types, meaning they have a 0x/f4 address on Filecoin. The GLIF CLI wallet does not yet support f1/f2/f3 style addresses.
 
 ### List existing wallet accounts and balances
 
 `glif wallet list`<br />
+
+To include
+
 `glif wallet balance`<br />
 
 ### Creating wallet accounts for use with an Agent
@@ -154,9 +165,9 @@ Your Agent's `f4` address can be found by running `glif agent info` and inspecti
 ➜ glif agent info
 
 BASIC INFO
-                                                                                    
+
 ...
-Agent f4 Addr                         f410fh3njwnl6uirpnvi2o7qtnki43c47iyn5mf2q3nq  
+Agent f4 Addr                         f410fh3njwnl6uirpnvi2o7qtnki43c47iyn5mf2q3nq
 ...
 ```
 
@@ -168,11 +179,11 @@ Your Agent must approve the ownership change in order to complete the process of
 
 `glif agent miners add <miner-id>`<br />
 
-A single Agent can own more than 1 Miner, which increases the aggregate amount a Storage Provider can borrow under a single Agent. 
+A single Agent can own more than 1 Miner, which increases the aggregate amount a Storage Provider can borrow under a single Agent.
 
 ### Borrow
 
-Once your Agent has a Miner pledged to it, you can run `glif agent preview borrow-max` to get your maximum borrow amount. Note that this information is also available after running `glif agent info`. 
+Once your Agent has a Miner pledged to it, you can run `glif agent preview borrow-max` to get your maximum borrow amount. Note that this information is also available after running `glif agent info`.
 
 When you decide how much to borrow, simply run:<br />
 `glif agent borrow <amount>`<br />
@@ -268,11 +279,8 @@ As this will ensure _all_ the principal is paid off, and no tiny amounts of atto
 
 ## Agent health
 
-It's important to note that an Agent can enter into an "unhealthy" state if it begins accruing faulty sectors and/or misses its weekly payment. 
+It's important to note that an Agent can enter into an "unhealthy" state if it begins accruing faulty sectors and/or misses its weekly payment.
 
 If your Agent has been marked in a faulty state, `glif agent info` will tell you. If you have recovered from your faulty state, you should recover your Agent's health using the command:<br />
 
 `glif agent set-recovered`
-
-
-

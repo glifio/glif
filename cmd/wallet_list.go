@@ -15,6 +15,7 @@ var listCmd = &cobra.Command{
 	Short: "Lists the addresses associated with your accounts",
 	Run: func(cmd *cobra.Command, args []string) {
 		as := util.AccountsStore()
+		ks := util.KeyStore()
 
 		owner, _ := as.Get(string(util.OwnerKey))
 		operator, _ := as.Get(string(util.OperatorKey))
@@ -46,7 +47,16 @@ var listCmd = &cobra.Command{
 		if len(names) > 0 {
 			fmt.Printf("Regular accounts:\n\n")
 			for _, name := range names {
-				printAddresses(as, name)
+				evm, _, err := as.GetAddrs(name)
+				if err != nil {
+					logFatal(err)
+				}
+
+				includeReadOnly := cmd.Flags().Changed("include-read-only")
+
+				if ks.HasAddress(evm) || includeReadOnly {
+					printAddresses(as, name)
+				}
 			}
 			fmt.Println()
 		}
@@ -66,4 +76,5 @@ func printAddresses(as *util.AccountsStorage, name string) {
 
 func init() {
 	walletCmd.AddCommand(listCmd)
+	listCmd.Flags().Bool("include-read-only", false, "Include read-only wallet accounts in the list")
 }
