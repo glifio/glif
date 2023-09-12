@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -14,23 +13,24 @@ var iFILApproveCmd = &cobra.Command{
 	Short: "Approve another address to spend your iFIL",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		_, pk, _, err := commonOwnerOrOperatorSetup(cmd)
+		ctx := cmd.Context()
+		from := cmd.Flag("from").Value.String()
+		auth, _, err := commonGenericAccountSetup(ctx, from)
 		if err != nil {
 			logFatal(err)
 		}
 
 		strAddr := args[0]
 		strAmt := args[1]
-		fmt.Printf("Approving %s to spend %s of your iFIL balance...", strAddr, strAmt)
+		fmt.Printf("Approving %s to spend %s of your iFIL balance...\n", strAddr, strAmt)
 
-		addr, err := ParseAddressToEVM(cmd.Context(), strAddr)
+		addr, err := AddressOrAccountNameToEVM(ctx, strAddr)
 		if err != nil {
 			logFatalf("Failed to parse address %s", err)
 		}
 
-		amt := big.NewInt(0)
-		amt, ok := amt.SetString(strAmt, 10)
-		if !ok {
+		amount, err := parseFILAmount(strAmt)
+		if err != nil {
 			logFatalf("Failed to parse amount %s", err)
 		}
 
@@ -38,12 +38,12 @@ var iFILApproveCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().IFILApprove(cmd.Context(), addr, amt, pk)
+		tx, err := PoolsSDK.Act().IFILApprove(ctx, auth, addr, amount)
 		if err != nil {
 			logFatalf("Failed to approve iFIL %s", err)
 		}
 
-		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
+		_, err = PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
 		if err != nil {
 			logFatalf("Failed to approve iFIL %s", err)
 		}
@@ -56,4 +56,5 @@ var iFILApproveCmd = &cobra.Command{
 
 func init() {
 	iFILCmd.AddCommand(iFILApproveCmd)
+	iFILApproveCmd.Flags().String("from", "default", "account to approve iFIL transfer from")
 }

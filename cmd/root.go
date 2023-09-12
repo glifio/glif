@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log"
 	"math/big"
 	"os"
 
@@ -33,6 +34,7 @@ import (
 	types "github.com/glifio/go-pools/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/exp/slices"
 )
 
 var cfgDir string
@@ -74,10 +76,11 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	if os.Getenv("GLIF_CONFIG_DIR") != "" {
+		cfgDir = os.Getenv("GLIF_CONFIG_DIR")
+	}
 	if cfgDir != "" {
 		viper.AddConfigPath(cfgDir)
-	} else if os.Getenv("GLIF_CONFIG_DIR") != "" {
-		viper.AddConfigPath(os.Getenv("GLIF_CONFIG_DIR"))
 	} else {
 		// Find home directory.
 		home, err := os.UserHomeDir()
@@ -101,11 +104,17 @@ func initConfig() {
 		logFatal(err)
 	}
 
-	if err := util.NewKeyStore(fmt.Sprintf("%s/keys.toml", cfgDir)); err != nil {
+	util.NewKeyStore(fmt.Sprintf("%s/keystore", cfgDir))
+
+	if err := util.NewKeyStoreLegacy(fmt.Sprintf("%s/keys.toml", cfgDir)); err != nil {
 		logFatal(err)
 	}
 
 	if err := util.NewAgentStore(fmt.Sprintf("%s/agent.toml", cfgDir)); err != nil {
+		logFatal(err)
+	}
+
+	if err := util.NewAccountsStore(fmt.Sprintf("%s/accounts.toml", cfgDir)); err != nil {
 		logFatal(err)
 	}
 
@@ -125,6 +134,23 @@ func initConfig() {
 
 	viper.WatchConfig()
 
+	if slices.Contains(os.Args[1:], "wallet") &&
+		(slices.Contains(os.Args[1:], "create-agent-accounts") ||
+			slices.Contains(os.Args[1:], "create-account") ||
+			slices.Contains(os.Args[1:], "migrate")) {
+		// Skip migration check
+	} else {
+		err = checkWalletMigrated()
+		if err != nil {
+			logFatal(err)
+		}
+
+		err = checkUnencryptedPrivateKeys()
+		if err != nil {
+			log.Println(err)
+		}
+	}
+
 	daemonURL := viper.GetString("daemon.rpc-url")
 	daemonToken := viper.GetString("daemon.token")
 	adoURL := viper.GetString("ado.address")
@@ -136,33 +162,32 @@ func initConfig() {
 		if err != nil {
 			logFatal(err)
 		}
-		return
-	}
+	} else {
+		var extern types.Extern
+		switch chainID {
+		case constants.MainnetChainID:
+			extern = deploy.Extern
+		case constants.CalibnetChainID:
+			extern = deploy.TestExtern
+		default:
+			logFatalf("Unknown chain id %d", chainID)
+		}
 
-	var extern types.Extern
-	switch chainID {
-	case constants.MainnetChainID:
-		extern = deploy.Extern
-	case constants.CalibnetChainID:
-		extern = deploy.TestExtern
-	default:
-		logFatalf("Unknown chain id %d", chainID)
-	}
+		if daemonURL != "" {
+			extern.LotusDialAddr = daemonURL
+		}
+		if daemonToken != "" {
+			extern.LotusToken = daemonToken
+		}
 
-	if daemonURL != "" {
-		extern.LotusDialAddr = daemonURL
-	}
-	if daemonToken != "" {
-		extern.LotusToken = daemonToken
-	}
+		if adoURL != "" {
+			extern.AdoAddr = adoURL
+		}
 
-	if adoURL != "" {
-		extern.AdoAddr = adoURL
+		sdk, err := sdk.New(context.Background(), big.NewInt(chainID), extern)
+		if err != nil {
+			logFatalf("Failed to initialize pools sdk %s", err)
+		}
+		PoolsSDK = sdk
 	}
-
-	sdk, err := sdk.New(context.Background(), big.NewInt(chainID), extern)
-	if err != nil {
-		logFatalf("Failed to initialize pools sdk %s", err)
-	}
-	PoolsSDK = sdk
 }

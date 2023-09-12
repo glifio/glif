@@ -14,9 +14,9 @@ var wFILBalanceOfCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		strAddr := args[0]
-		fmt.Printf("Checking wFIL balance of %s...", strAddr)
+		fmt.Printf("Checking wFIL balance of %s...\n", strAddr)
 
-		addr, err := ParseAddressToEVM(cmd.Context(), strAddr)
+		addr, err := AddressOrAccountNameToEVM(cmd.Context(), strAddr)
 		if err != nil {
 			logFatalf("Failed to parse address %s", err)
 		}
