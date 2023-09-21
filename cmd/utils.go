@@ -598,7 +598,7 @@ func confirmBackupExists() error {
 	}
 
 	if choice == options[2] { // No, continue
-		color.Red("Continuing without backup. Dangerous!! Make sure you make a backup soon!\n\n")
+		color.Red("DANGER! Continuing without backup. Make a backup soon!\n\n")
 		return nil
 	}
 
