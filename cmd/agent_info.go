@@ -101,6 +101,16 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 		return common.Big0, address.Undef, 0, 0, err
 	}
 
+	operator, err := query.AgentOperator(ctx, agent)
+	if err != nil {
+		return common.Big0, address.Undef, 0, 0, err
+	}
+
+	requester, err := query.AgentRequester(ctx, agent)
+	if err != nil {
+		return common.Big0, address.Undef, 0, 0, err
+	}
+
 	goodVersion := agVersion == ntwVersion
 
 	agentMiners, err := query.MinerRegistryAgentMinersList(ctx, agentID, nil)
@@ -121,6 +131,8 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 		"Agent f0 Addr",
 		"Agent GLIF ID",
 		"Agent Owner",
+		"Agent Operator",
+		"Agent ADO Requester",
 		"Agent Miners",
 		"Version",
 	}
@@ -131,6 +143,8 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 		agentFILIDAddr.String(),
 		agentID.String(),
 		owner.String(),
+		operator.String(),
+		requester.String(),
 		fmt.Sprintf("%v", len(agentMiners)),
 		versionCopy,
 	}

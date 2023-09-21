@@ -30,6 +30,10 @@
     - [Autopilot](#autopilot)
     - [Leaving the pool](#leaving-the-pool)
   - [Agent health](#agent-health)
+  - [Advanced Mode](#advanced-mode)
+    - [Reset your Agent's owner key](#reset-your-agents-owner-key)
+    - [Reset your Agent's operator key](#reset-your-agents-operator-key)
+    - [Reset your Agent's requester key](#reset-your-agents-requester-key)
 
 <hr />
 
@@ -284,3 +288,63 @@ It's important to note that an Agent can enter into an "unhealthy" state if it b
 If your Agent has been marked in a faulty state, `glif agent info` will tell you. If you have recovered from your faulty state, you should recover your Agent's health using the command:<br />
 
 `glif agent set-recovered`
+
+## Advanced Mode
+
+The GLIF CLI can be built in "advanced mode", which allows you to make ownership and administrative changes to your Agent. To build the CLI in advanced mode, run:<br />
+`make advanced`<br />
+`sudo make install`<br />
+
+When run in advanced mode, you should be able to see the `glif agent admin` commands.
+
+### Reset your Agent's owner key
+
+1. First, generate a new account that will act as the Agent's new owner by running: <br />`glif wallet create-account new-owner`. <br /> This will create a new key-value pair in your `~/.glif/accounts.toml`. You should see the account when you run `glif wallet list`.
+2. **Securely backup your `new-owner` keystore file and (optional) passphrase.** <br />Losing access to this key and passphrase is like losing your Miner Actor owner's key.
+3. Next, send funds to your `new-owner` key, so that it can send transactions on the Filecoin blockchain.
+4. Propose the ownership change to your Agent by running:<br />`glif agent admin transfer-ownership new-owner`
+5. Once the initial transfer-ownership proposal command confirms, you will need to re-configure your `~/.glif/accounts.toml` to swap the old owner account with the new owner account. All you have to do is rename the keys. You can do this in your favorite IDE. For example:<br />
+
+```
+# ~/.glif/accounts.toml BEFORE reconfiguration
+
+owner = '0xEBF92B930245060ce67235F23482De5ef200Df3f'
+operator = '0x...'
+request = '0x...'
+new-owner = '0x5b49f3548592282A1f84c1b2C2c9FA40AF263aCA'
+```
+
+```
+# ~/.glif/accounts.toml AFTER reconfiguration
+# Notice how `owner` became `old-owner` and `new-owner` became `owner`
+
+old-owner = '0xEBF92B930245060ce67235F23482De5ef200Df3f'
+operator = '0x...'
+request = '0x...'
+owner = '0x5b49f3548592282A1f84c1b2C2c9FA40AF263aCA'
+```
+
+6. Finally, to complete the ownership transfer, run: <br />`glif agent admin accept-ownership`
+
+If all goes successfully, you should see the new owner address when you run `glif agent info`
+
+### Reset your Agent's operator key
+
+1. Recreate your `operator` key by running:<br /> `glif agent admin new-key operator`<br />Copy your new operator key to use in step 2.
+2. **Securely backup your `operator` keystore file and (optional) passphrase.**
+3. Send some funds to your new `operator` address so it can pay for gas
+4. Propose the `operator` change by running:<br />`glif agent admin transfer-operator operator`
+5. Approve the `operator` change by running:<br />`glif agent admin accept-operator`
+
+If all goes successfully, you should see the new operator address when you run `glif agent info`
+
+### Reset your Agent's requester key
+
+When resetting your Agent's requester key, we will not be removing any old keys for safety purposes. Instead, we'll rename your current requester key and replace it with a new one. This is a 2 step process:
+
+1. Recreate your `request` key by running:<br /> `glif agent admin new-key request`<br />Copy your new request key to use in step 2.
+2. Change the `request` key on your Agent (this triggers an on-chain transaction):<br />`glif agent admin change-requester request`
+
+Once the second transaction confirms on-chain, you should be good to go!
+
+If all goes successfully, you should see the new requester address when you run `glif agent info`
