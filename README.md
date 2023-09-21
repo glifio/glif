@@ -300,7 +300,7 @@ When run in advanced mode, you should be able to see the `glif agent admin` comm
 ### Reset your Agent's owner key
 
 1. First, generate a new account that will act as the Agent's new owner by running: <br />`glif wallet create-account new-owner`. <br /> This will create a new key-value pair in your `~/.glif/accounts.toml`. You should see the account when you run `glif wallet list`.
-2. **Securely backup your `new-owner` keystore file and )(optional) passphrase.** <br />Losing access to this key and passphrase is like losing your Miner Actor owner's key.
+2. **Securely backup your `new-owner` keystore file and (optional) passphrase.** <br />Losing access to this key and passphrase is like losing your Miner Actor owner's key.
 3. Next, send funds to your `new-owner` key, so that it can send transactions on the Filecoin blockchain.
 4. Propose the ownership change to your Agent by running:<br />`glif agent admin transfer-ownership new-owner`
 5. Once the initial transfer-ownership proposal command confirms, you will need to re-configure your `~/.glif/accounts.toml` to swap the old owner account with the new owner account. All you have to do is rename the keys. You can do this in your favorite IDE. For example:<br />
@@ -331,8 +331,10 @@ If all goes successfully, you should see the new owner address when you run `gli
 ### Reset your Agent's operator key
 
 1. Recreate your `operator` key by running:<br /> `glif agent admin create-key operator`<br />Copy your new operator key to use in step 2.
-2. Propose the `operator` change by running:<br />`glif agent admin transfer-operator operator`
-3. Approve the `operator` change by running:<br />`glif agent admin accept-operator`
+2. **Securely backup your `operator` keystore file and (optional) passphrase.**
+3. Send some funds to your new `operator` address so it can pay for gas
+4. Propose the `operator` change by running:<br />`glif agent admin transfer-operator operator`
+5. Approve the `operator` change by running:<br />`glif agent admin accept-operator`
 
 ### Reset your Agent's requester key
 
