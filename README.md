@@ -109,7 +109,7 @@ If you're coming from an older version of this command line, you will have raw, 
 
 After you've migrated your wallet, we recommend testing a command or two to ensure the migration occurred smoothly. After the migration, you can safely remove your `keys.toml` file:<br />
 
-`rm ~/.glif/keys.toml`
+`shred -fuzv ~/.glif/keys.toml`
 
 ## Agents - Get started borrowing
 
