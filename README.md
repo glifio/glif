@@ -332,7 +332,7 @@ If all goes successfully, you should see the new owner address when you run `gli
 
 1. Recreate your `operator` key by running:<br /> `glif agent admin create-key operator`<br />Copy your new operator key to use in step 2.
 2. Propose the `operator` change by running:<br />`glif agent admin transfer-operator operator`
-3. Approve the `operator` change by running:<br />`glif agent admin accept-operator --from operator`
+3. Approve the `operator` change by running:<br />`glif agent admin accept-operator`
 
 ### Reset your Agent's requester key
 
