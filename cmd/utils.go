@@ -589,7 +589,7 @@ func confirmBackupExists() error {
 		bs.Set("confirmed-exists", "true")
 		v, _ := time.Now().UTC().MarshalText()
 		bs.Set("confirmed-at", string(v))
-		color.GreenString("Excellent!!!\n\n")
+		color.Green("Keys secured.\n\n")
 		return nil
 	}
 
