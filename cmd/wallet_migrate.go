@@ -41,6 +41,9 @@ var migrateCmd = &cobra.Command{
 
 		fmt.Printf("\nFor increased security, please delete the legacy %s/keys.toml file with the cleartext private keys.\n", cfgDir)
 		fmt.Println("The legacy keys.toml file is no longer needed, unless you are just testing and plan to downgrade.")
+
+		bs := util.BackupsStore()
+		bs.Invalidate()
 	},
 }
 

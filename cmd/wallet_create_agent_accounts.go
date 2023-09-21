@@ -103,6 +103,9 @@ var createAgentAccountsCmd = &cobra.Command{
 		log.Printf("Request key: %s (ETH), %s (FIL)\n", requestAddr, requestDelAddr)
 		log.Println()
 		log.Println("Please make sure to fund your Owner Address with FIL before creating an Agent")
+
+		bs := util.BackupsStore()
+		bs.Invalidate()
 	},
 }
 
