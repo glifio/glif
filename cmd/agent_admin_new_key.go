@@ -18,7 +18,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// createAccountCmd represents the create-account command
+// newRequestKeyCmd represents the new-key command
 var newRequestKeyCmd = &cobra.Command{
 	Use:   "new-key <name>",
 	Short: "Create a new request key",
