@@ -12,7 +12,6 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/glifio/cli/events"
-	"github.com/glifio/cli/util"
 	"github.com/spf13/cobra"
 )
 
@@ -23,17 +22,7 @@ var acceptOperatorCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 
-		as := util.AccountsStore()
-
-		opEvm, opFevm, err := as.GetAddrs(string(util.OperatorKey))
-		if err != nil {
-			if err == util.ErrKeyNotFound {
-				logFatal("agent operator not found in wallet")
-			}
-			logFatal(err)
-		}
-
-		agentAddr, auth, _, _, err := commonOwnerOrOperatorSetup(ctx, from)
+		agentAddr, auth, _, _, err := commonOwnerOrOperatorSetup(ctx, "operator")
 		if err != nil {
 			logFatal(err)
 		}

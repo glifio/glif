@@ -330,17 +330,21 @@ If all goes successfully, you should see the new owner address when you run `gli
 
 ### Reset your Agent's operator key
 
-1. Recreate your `operator` key by running:<br /> `glif agent admin create-key operator`<br />Copy your new operator key to use in step 2.
+1. Recreate your `operator` key by running:<br /> `glif agent admin new-key operator`<br />Copy your new operator key to use in step 2.
 2. **Securely backup your `operator` keystore file and (optional) passphrase.**
 3. Send some funds to your new `operator` address so it can pay for gas
 4. Propose the `operator` change by running:<br />`glif agent admin transfer-operator operator`
 5. Approve the `operator` change by running:<br />`glif agent admin accept-operator`
 
+If all goes successfully, you should see the new operator address when you run `glif agent info`
+
 ### Reset your Agent's requester key
 
 When resetting your Agent's requester key, we will not be removing any old keys for safety purposes. Instead, we'll rename your current requester key and replace it with a new one. This is a 2 step process:
 
-1. Recreate your `request` key by running:<br /> `glif agent admin create-key request`<br />Copy your new request key to use in step 2.
-2. Change the `request` key on your Agent (this triggers an on-chain transaction):<br />`glif agent admin change-requester <new-request-key>`
+1. Recreate your `request` key by running:<br /> `glif agent admin new-key request`<br />Copy your new request key to use in step 2.
+2. Change the `request` key on your Agent (this triggers an on-chain transaction):<br />`glif agent admin change-requester request`
 
 Once the second transaction confirms on-chain, you should be good to go!
+
+If all goes successfully, you should see the new requester address when you run `glif agent info`
