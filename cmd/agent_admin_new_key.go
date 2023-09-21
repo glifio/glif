@@ -21,7 +21,7 @@ import (
 // newRequestKeyCmd represents the new-key command
 var newRequestKeyCmd = &cobra.Command{
 	Use:   "new-key <name>",
-	Short: "Create a new request key",
+	Short: "Create a new key to replace an existing key for an account",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		keyName := args[0]
