@@ -118,6 +118,10 @@ func initConfig() {
 		logFatal(err)
 	}
 
+	if err := util.NewBackupsStore(fmt.Sprintf("%s/backups.toml", cfgDir)); err != nil {
+		logFatal(err)
+	}
+
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
@@ -148,6 +152,11 @@ func initConfig() {
 		err = checkUnencryptedPrivateKeys()
 		if err != nil {
 			log.Println(err)
+		}
+
+		err = confirmBackupExists()
+		if err != nil {
+			logFatal(err)
 		}
 	}
 

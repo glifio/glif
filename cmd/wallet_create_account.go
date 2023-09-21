@@ -83,6 +83,9 @@ var createAccountCmd = &cobra.Command{
 			logFatal(err)
 		}
 
+		bs := util.BackupsStore()
+		bs.Invalidate()
+
 		log.Printf("%s address: %s (ETH), %s (FIL)\n", name, accountAddr, accountDelAddr)
 	},
 }

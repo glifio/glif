@@ -11,12 +11,14 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/fatih/color"
 	"github.com/filecoin-project/go-address"
 	actorstypes "github.com/filecoin-project/go-state-types/actors"
 	"github.com/filecoin-project/go-state-types/manifest"
@@ -546,4 +548,75 @@ func isFunded(ctx context.Context, caller address.Address) (bool, error) {
 		return false, err
 	}
 	return bal.Cmp(big.NewInt(0)) > 0, nil
+}
+
+func confirmBackupExists() error {
+	backupExists := os.Getenv("GLIF_BACKUP_EXISTS")
+	if backupExists != "" {
+		return nil
+	}
+
+	as := util.AccountsStore()
+	if len(as.AccountNames()) == 0 {
+		return nil
+	}
+
+	bs := util.BackupsStore()
+	confirmedExists, err := bs.Get("confirmed-exists")
+	if err != nil {
+		return err
+	}
+
+	if confirmedExists == "true" {
+		return nil
+	}
+
+	options := []string{
+		"Yes, I made a backup",
+		"No, I did not make a backup, abort",
+		"No, I did not make a backup, continue anyways (dangerous!!!)",
+		"How do I make a backup?",
+	}
+
+	choice := ""
+	prompt := &survey.Select{
+		Message: fmt.Sprintf("The keystore has been updated, have you made a backup of %s ?", cfgDir),
+		Options: options,
+	}
+	survey.AskOne(prompt, &choice)
+
+	if choice == options[0] { // Yes, I made a backup
+		bs.Set("confirmed-exists", "true")
+		v, _ := time.Now().UTC().MarshalText()
+		bs.Set("confirmed-at", string(v))
+		color.Green("Keys secured.\n\n")
+		return nil
+	}
+
+	if choice == options[1] { // No, abort
+		return fmt.Errorf("aborting")
+	}
+
+	if choice == options[2] { // No, continue
+		color.Red("DANGER! Continuing without backup. Make a backup soon!\n\n")
+		return nil
+	}
+
+	if choice == options[3] { // How do I make a backup?
+		fmt.Println("How to make a backup")
+		fmt.Println("====================")
+		fmt.Println()
+		fmt.Println("The configuration and keys are stored in the following directory:")
+		fmt.Println()
+		fmt.Printf("  %s\n\n", cfgDir)
+		fmt.Println("You can use a tool such as zip or tar to make an archive, and")
+		fmt.Println("then copy that file to a safe place. In the event of data loss,")
+		fmt.Println("you can use the backup to restore the files.")
+		fmt.Println()
+		fmt.Println("If you lose your keys and you don't have a backup, then you will")
+		fmt.Println("lose access to the funds in your agent and control of your miners!")
+		Exit(0)
+	}
+
+	return nil
 }

@@ -83,6 +83,10 @@ func changePassphrase(addr common.Address) error {
 	if err != nil {
 		return err
 	}
+
+	bs := util.BackupsStore()
+	bs.Invalidate()
+
 	fmt.Println("Passphrase successfully changed.")
 
 	return nil
