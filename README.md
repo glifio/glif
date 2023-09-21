@@ -30,6 +30,10 @@
     - [Autopilot](#autopilot)
     - [Leaving the pool](#leaving-the-pool)
   - [Agent health](#agent-health)
+  - [Advanced Mode](#advanced-mode)
+    - [Reset your Agent's owner key](#reset-your-agents-owner-key)
+    - [Reset your Agent's operator key](#reset-your-agents-operator-key)
+    - [Reset your Agent's requester key](#reset-your-agents-requester-key)
 
 <hr />
 
@@ -284,3 +288,24 @@ It's important to note that an Agent can enter into an "unhealthy" state if it b
 If your Agent has been marked in a faulty state, `glif agent info` will tell you. If you have recovered from your faulty state, you should recover your Agent's health using the command:<br />
 
 `glif agent set-recovered`
+
+## Advanced Mode
+
+The GLIF CLI can be built in "advanced mode", which allows you to make ownership and administrative changes to your Agent. To build the CLI in advanced mode, run:<br />
+`make advanced`<br />
+`sudo make install`<br />
+
+When run in advanced mode, you should be able to see the `glif agent admin` commands.
+
+### Reset your Agent's owner key
+
+### Reset your Agent's operator key
+
+### Reset your Agent's requester key
+
+When resetting your Agent's requester key, we will not be removing any old keys for safety purposes. Instead, we'll rename your current requester key and replace it with a new one. This is a 2 step process:
+
+1. Recreate your `request` key by running:<br /> `glif agent admin create-key request`<br />Copy your new request key to use in step 2.
+2. Change the `request` key on your Agent (this triggers an on-chain transaction):<br />`glif agent admin change-requester <new-request-key>`
+
+Once the second transaction confirms on-chain, you should be good to go!
