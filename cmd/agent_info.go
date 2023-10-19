@@ -16,6 +16,7 @@ import (
 	"github.com/filecoin-project/lotus/api"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
+	"github.com/glifio/go-pools/abigen"
 	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/econ"
 	"github.com/glifio/go-pools/rpc"
@@ -81,42 +82,50 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 ) {
 	query := PoolsSDK.Query()
 
-	agentID, err = query.AgentID(ctx, agent)
+	tasks := []util.TaskFunc{
+		func() (interface{}, error) {
+			return query.AgentID(ctx, agent)
+		},
+		func() (interface{}, error) {
+			return lapi.StateLookupID(ctx, agentDel, types.EmptyTSK)
+		},
+		func() (interface{}, error) {
+			ver, ntwVer, err := query.AgentVersion(ctx, agent)
+			return []interface{}{ver, ntwVer}, err
+		},
+		func() (interface{}, error) {
+			return query.AgentOwner(ctx, agent)
+		},
+		func() (interface{}, error) {
+			return query.AgentOperator(ctx, agent)
+		},
+		func() (interface{}, error) {
+			return query.AgentRequester(ctx, agent)
+		},
+		func() (interface{}, error) {
+			agentID, err := query.AgentID(ctx, agent)
+			if err != nil {
+				return nil, err
+			}
+			return query.MinerRegistryAgentMinersList(ctx, agentID, nil)
+		},
+	}
+	results, err := util.Multiread(tasks)
 	if err != nil {
 		return common.Big0, address.Undef, 0, 0, err
 	}
 
-	agentFILIDAddr, err = lapi.StateLookupID(ctx, agentDel, types.EmptyTSK)
-	if err != nil {
-		return common.Big0, address.Undef, 0, 0, err
-	}
-
-	agVersion, ntwVersion, err = query.AgentVersion(ctx, agent)
-	if err != nil {
-		return common.Big0, address.Undef, 0, 0, err
-	}
-
-	owner, err := query.AgentOwner(ctx, agent)
-	if err != nil {
-		return common.Big0, address.Undef, 0, 0, err
-	}
-
-	operator, err := query.AgentOperator(ctx, agent)
-	if err != nil {
-		return common.Big0, address.Undef, 0, 0, err
-	}
-
-	requester, err := query.AgentRequester(ctx, agent)
-	if err != nil {
-		return common.Big0, address.Undef, 0, 0, err
-	}
+	agentID = results[0].(*big.Int)
+	agentFILIDAddr = results[1].(address.Address)
+	versionResults := results[2].([]interface{})
+	agVersion = versionResults[0].(uint8)
+	ntwVersion = versionResults[1].(uint8)
+	owner := results[3].(common.Address)
+	operator := results[4].(common.Address)
+	requester := results[5].(common.Address)
+	agentMiners := results[6].([]address.Address)
 
 	goodVersion := agVersion == ntwVersion
-
-	agentMiners, err := query.MinerRegistryAgentMinersList(ctx, agentID, nil)
-	if err != nil {
-		return common.Big0, address.Undef, 0, 0, err
-	}
 
 	s.Stop()
 
@@ -160,11 +169,6 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi *api.FullNodeStruct, s *spinner.Spinner) error {
 	query := PoolsSDK.Query()
 
-	assets, err := query.AgentLiquidAssets(ctx, agent, nil)
-	if err != nil {
-		return err
-	}
-
 	adoCloser, err := PoolsSDK.Extern().ConnectAdoClient(ctx)
 	if err != nil {
 		return err
@@ -176,25 +180,39 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 		return err
 	}
 
-	maxBorrow, err := PoolsSDK.Query().InfPoolAgentMaxBorrow(ctx, agent, agentData)
+	tasks := []util.TaskFunc{
+		func() (interface{}, error) {
+			return query.AgentLiquidAssets(ctx, agent, nil)
+		},
+		func() (interface{}, error) {
+			return PoolsSDK.Query().InfPoolAgentMaxBorrow(ctx, agent, agentData)
+		},
+		func() (interface{}, error) {
+			amountOwed, _, err := query.AgentOwes(ctx, agent)
+			if err != nil {
+				return nil, err
+			}
+			return amountOwed, nil
+		},
+		func() (interface{}, error) {
+			lvl, cap, err := query.InfPoolGetAgentLvl(ctx, agentID)
+			if err != nil {
+				return nil, err
+			}
+			return []interface{}{lvl, cap}, nil
+		},
+	}
+
+	results, err := util.Multiread(tasks)
 	if err != nil {
 		return err
 	}
-
-	// maxWithdraw, err := PoolsSDK.Query().InfPoolAgentMaxWithdraw(ctx, agent, agentData)
-	// if err != nil {
-	// 	return err
-	// }
-
-	lvl, cap, err := query.InfPoolGetAgentLvl(ctx, agentID)
-	if err != nil {
-		return err
-	}
-
-	amountOwed, _, err := query.AgentOwes(ctx, agent)
-	if err != nil {
-		return err
-	}
+	assets := results[0].(*big.Int)
+	maxBorrow := results[1].(*big.Int)
+	amountOwed := results[2].(*big.Int)
+	lvlAndCap := results[3].([]interface{})
+	lvl := lvlAndCap[0].(*big.Int)
+	cap := lvlAndCap[1].(float64)
 
 	nullCred, err := vc.NullishVerifiableCredential(*agentData)
 	if err != nil {
@@ -320,30 +338,35 @@ func printTable(keys []string, values []string) {
 func agentHealth(ctx context.Context, agent common.Address, s *spinner.Spinner) error {
 	query := PoolsSDK.Query()
 
-	agentAdmin, err := query.AgentAdministrator(ctx, agent)
+	tasks := []util.TaskFunc{
+		func() (interface{}, error) {
+			return query.AgentAdministrator(ctx, agent)
+		},
+
+		func() (interface{}, error) {
+			return query.AgentDefaulted(ctx, agent)
+		},
+		func() (interface{}, error) {
+			return query.AgentFaultyEpochStart(ctx, agent)
+		},
+		func() (interface{}, error) {
+			return query.DefaultEpoch(ctx)
+		},
+		func() (interface{}, error) {
+			return query.InfPoolGetAccount(ctx, agent, nil)
+		},
+	}
+
+	results, err := util.Multiread(tasks)
 	if err != nil {
 		return err
 	}
 
-	defaulted, err := query.AgentDefaulted(ctx, agent)
-	if err != nil {
-		return err
-	}
-
-	faultySectorStart, err := query.AgentFaultyEpochStart(ctx, agent)
-	if err != nil {
-		return err
-	}
-
-	defaultEpoch, err := query.DefaultEpoch(ctx)
-	if err != nil {
-		return err
-	}
-
-	account, err := query.InfPoolGetAccount(ctx, agent, nil)
-	if err != nil {
-		return err
-	}
+	agentAdmin := results[0].(common.Address)
+	defaulted := results[1].(bool)
+	faultySectorStart := results[2].(*big.Int)
+	defaultEpoch := results[3].(*big.Int)
+	account := results[4].(abigen.Account)
 
 	weekOneDeadline := new(big.Int).Add(defaultEpoch, big.NewInt(constants.EpochsInWeek*2))
 
