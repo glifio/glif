@@ -246,10 +246,12 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 	generateHeader("ECON INFO")
 
 	printTable([]string{
+		"Borrow now",
 		"Max borrow",
 		// "Agent's max withdraw",
 	}, []string{
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(maxBorrow)),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(equity)),
 		// fmt.Sprintf("%0.09f FIL", util.ToFIL(maxWithdraw)),
 	})
 
