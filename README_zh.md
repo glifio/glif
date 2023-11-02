@@ -2,10 +2,12 @@
 
 # GLIF CLI
 
-![Github Actions][gha-badge] ![Discord Channel][discord-badge]
+![Github Actions][gha-badge] [![Discord Channel][discord-badge]](https://discord.gg/qKF9HN9a2M)
 
 [gha-badge]: https://img.shields.io/github/actions/workflow/status/glifio/cli/test.yml?branch=main
 [discord-badge]: https://dcbadge.vercel.app/api/server/5qsJjsP3Re?style=flat-square&theme=clean-inverted&compact=true&theme=blurple
+
+For English README, please click [here](../cli/README.md).
 
 **GLIF 命令行界面是与 GLIF Pools 协议交互的起点**
 
