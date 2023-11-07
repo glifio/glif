@@ -7,7 +7,7 @@
 [gha-badge]: https://img.shields.io/github/actions/workflow/status/glifio/cli/test.yml?branch=main
 [discord-badge]: https://dcbadge.vercel.app/api/server/5qsJjsP3Re?style=flat-square&theme=clean-inverted&compact=true&theme=blurple
 
-查看中文README，请点击[这里](../cli/README_zh.md)。
+查看中文 README，请点击[这里](https://github.com/glifio/cli/blob/main/README_zh.md)。
 
 **The GLIF Command Line Interface is the starting point for interacting with the GLIF Pools Protocol.**
 
