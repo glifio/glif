@@ -402,7 +402,7 @@ func agentHealth(ctx context.Context, agent common.Address, agentData *vc.AgentD
 	// convert limit into percentage for logging
 	limit := new(big.Float).Mul(constants.FAULTY_SECTOR_TOLERANCE, big.NewFloat(100))
 
-	if !badPmtStatus && !badFaultStatus {
+	if !badPmtStatus && !badFaultStatus && !pendingBadFaultStatus {
 		fmt.Printf("Status healthy 🟢\n")
 		if owesPmt {
 			fmt.Printf("Your account owes its weekly payment (`to-current`) within the next: %s (by epoch # %s)\n", formatSinceDuration(weekOneDeadlineTime, epochsPaidTime), weekOneDeadline)
