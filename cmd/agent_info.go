@@ -408,7 +408,7 @@ func agentHealth(ctx context.Context, agent common.Address, agentData *vc.AgentD
 			fmt.Printf("Your account owes its weekly payment (`to-current`) within the next: %s (by epoch # %s)\n", formatSinceDuration(weekOneDeadlineTime, epochsPaidTime), weekOneDeadline)
 		}
 	} else {
-		fmt.Println(chalk.Bold.TextStyle("Status unhealthy 🔴 - Contact someone from the GLIF team immediately"))
+		fmt.Println(chalk.Bold.TextStyle("Status unhealthy 🔴"))
 	}
 
 	if badPmtStatus {
@@ -432,18 +432,16 @@ func agentHealth(ctx context.Context, agent common.Address, agentData *vc.AgentD
 		liableForFaultySectorDefault := consecutiveFaultEpochs.Cmp(consecutiveFaultEpochTolerance) >= 0
 
 		if liableForFaultySectorDefault {
-			fmt.Printf("You are at risk of liquidation due to consecutive faulty sectors\n")
+			fmt.Printf("You are at risk of liquidation due to consecutive faulty sectors - recover your sectors as soon as possible\n")
 			fmt.Printf("Faulty sector start epoch: %v\n", faultySectorStart)
 		} else {
 			epochsBeforeZeroTolerance := new(big.Int).Sub(consecutiveFaultEpochTolerance, consecutiveFaultEpochs)
 			fmt.Printf("WARNING: You are approaching risk of liquidation due to consecutive faulty sectors\n")
 			fmt.Printf("With %v more consecutive epochs of faulty sectors, you will be at risk of liquidation\n", epochsBeforeZeroTolerance)
 		}
-	}
-
-	if pendingBadFaultStatus {
+	} else if pendingBadFaultStatus {
 		fmt.Printf("WARNING: Your Agent has one or more miners with faulty sectors - recover your sectors as soon as possible\n")
-		fmt.Printf("Faulty sector ratio: %v%%\n", faultRatio.String())
+		fmt.Printf("Faulty sector ratio: %.02f%%\n", faultRatio)
 		fmt.Printf("Faulty sector ratio limit: %v%%\n", limit.String())
 	}
 
