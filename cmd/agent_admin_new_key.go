@@ -7,6 +7,7 @@ Copyright © 2023 Glif LTD
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -54,7 +55,8 @@ var newRequestKeyCmd = &cobra.Command{
 		}
 
 		key, err := as.Get(keyName)
-		if err != util.ErrKeyNotFound {
+		var e *util.ErrKeyNotFound
+		if !errors.As(err, &e) {
 			// rename the existing key
 			newKeyName := fmt.Sprintf("%s-%s", keyName, time.Now().Format(time.RFC3339))
 			as.Set(newKeyName, key)

@@ -4,6 +4,7 @@ Copyright © 2023 Glif LTD
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -32,7 +33,8 @@ var createAccountCmd = &cobra.Command{
 		}
 
 		_, err := as.Get(name)
-		if err != util.ErrKeyNotFound {
+		var e *util.ErrKeyNotFound
+		if !errors.As(err, &e) {
 			logFatalf("Account %s already exists", name)
 		}
 

@@ -4,6 +4,7 @@ Copyright © 2023 Glif LTD
 package cmd
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/glifio/cli/util"
@@ -66,7 +67,8 @@ var listCmd = &cobra.Command{
 func printAddresses(as *util.AccountsStorage, name string) {
 	evm, fevm, err := as.GetAddrs(name)
 	if err != nil {
-		if err == util.ErrKeyNotFound {
+		var e *util.ErrKeyNotFound
+		if errors.As(err, &e) {
 			return
 		}
 		logFatal(err)

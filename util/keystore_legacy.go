@@ -39,7 +39,7 @@ func NewKeyStoreLegacy(filename string) error {
 func (s *KeyStorageLegacy) GetPrivate(key KeyType) (*ecdsa.PrivateKey, error) {
 	pk, ok := s.data[string(key)]
 	if !ok {
-		return nil, ErrKeyNotFound
+		return nil, &ErrKeyNotFound{string(key)}
 	}
 
 	pkECDSA, err := crypto.HexToECDSA(pk)
@@ -53,11 +53,11 @@ func (s *KeyStorageLegacy) GetPrivate(key KeyType) (*ecdsa.PrivateKey, error) {
 func (s *KeyStorageLegacy) GetAddrs(key KeyType) (common.Address, address.Address, error) {
 	pk, ok := s.data[string(key)]
 	if !ok {
-		return common.Address{}, address.Address{}, ErrKeyNotFound
+		return common.Address{}, address.Address{}, &ErrKeyNotFound{string(key)}
 	}
 
 	if pk == "" {
-		return common.Address{}, address.Address{}, ErrKeyNotFound
+		return common.Address{}, address.Address{}, &ErrKeyNotFound{string(key)}
 	}
 
 	pkECDSA, err := crypto.HexToECDSA(pk)

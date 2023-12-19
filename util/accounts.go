@@ -31,7 +31,7 @@ func NewAccountsStore(filename string) error {
 func (a *AccountsStorage) GetAddrs(key string) (common.Address, address.Address, error) {
 	addr, ok := a.data[key]
 	if !ok || addr == "" {
-		return common.Address{}, address.Address{}, ErrKeyNotFound
+		return common.Address{}, address.Address{}, &ErrKeyNotFound{key}
 	}
 	evmAddress := common.HexToAddress(addr)
 
