@@ -61,12 +61,12 @@ var agentInfoCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		err = econInfo(cmd.Context(), agentAddr, agentID, lapi, s)
+		agentData, err := econInfo(cmd.Context(), agentAddr, agentID, lapi, s)
 		if err != nil {
 			logFatal(err)
 		}
 
-		err = agentHealth(cmd.Context(), agentAddr, s)
+		err = agentHealth(cmd.Context(), agentAddr, agentData, s)
 		if err != nil {
 			logFatal(err)
 		}
@@ -166,18 +166,18 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 	return agentID, agentFILIDAddr, agVersion, ntwVersion, nil
 }
 
-func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi *api.FullNodeStruct, s *spinner.Spinner) error {
+func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi *api.FullNodeStruct, s *spinner.Spinner) (*vc.AgentData, error) {
 	query := PoolsSDK.Query()
 
 	adoCloser, err := PoolsSDK.Extern().ConnectAdoClient(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer adoCloser()
 
 	agentData, err := rpc.ADOClient.AgentData(context.Background(), agent)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	tasks := []util.TaskFunc{
@@ -205,7 +205,7 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 
 	results, err := util.Multiread(tasks)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	assets := results[0].(*big.Int)
 	maxBorrow := results[1].(*big.Int)
@@ -216,12 +216,12 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 
 	nullCred, err := vc.NullishVerifiableCredential(*agentData)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	rate, err := query.InfPoolGetRate(ctx, *nullCred)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	wpr := new(big.Float).Mul(new(big.Float).SetInt(rate), big.NewFloat(constants.EpochsInWeek))
@@ -323,7 +323,7 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 
 	s.Start()
 
-	return nil
+	return agentData, nil
 }
 
 func printTable(keys []string, values []string) {
@@ -337,7 +337,7 @@ func printTable(keys []string, values []string) {
 	tbl.Print()
 }
 
-func agentHealth(ctx context.Context, agent common.Address, s *spinner.Spinner) error {
+func agentHealth(ctx context.Context, agent common.Address, agentData *vc.AgentData, s *spinner.Spinner) error {
 	query := PoolsSDK.Query()
 
 	tasks := []util.TaskFunc{
@@ -384,13 +384,31 @@ func agentHealth(ctx context.Context, agent common.Address, s *spinner.Spinner) 
 	owesPmt := account.Principal.Cmp(big.NewInt(0)) > 0
 	badPmtStatus := owesPmt && account.EpochsPaid.Cmp(weekOneDeadline) < 1
 	badFaultStatus := faultySectorStart.Cmp(big.NewInt(0)) > 0
-	if !badPmtStatus && !badFaultStatus {
+
+	faultRatio := big.NewFloat(0)
+
+	// check to see if we have faulty sectors (regardless of the Agent's state)
+	pendingBadFaultStatus := false
+	if agentData.LiveSectors.Int64() > 0 {
+		faultRatio = new(big.Float).Quo(new(big.Float).SetInt(agentData.FaultySectors), new(big.Float).SetInt(agentData.LiveSectors))
+		// faulty sectors exist over the limit
+		if faultRatio.Cmp(constants.FAULTY_SECTOR_TOLERANCE) > 0 {
+			pendingBadFaultStatus = true
+		}
+	}
+
+	// convert faults into percentage for logging
+	faultRatio = faultRatio.Mul(faultRatio, big.NewFloat(100))
+	// convert limit into percentage for logging
+	limit := new(big.Float).Mul(constants.FAULTY_SECTOR_TOLERANCE, big.NewFloat(100))
+
+	if !badPmtStatus && !badFaultStatus && !pendingBadFaultStatus {
 		fmt.Printf("Status healthy 🟢\n")
 		if owesPmt {
 			fmt.Printf("Your account owes its weekly payment (`to-current`) within the next: %s (by epoch # %s)\n", formatSinceDuration(weekOneDeadlineTime, epochsPaidTime), weekOneDeadline)
 		}
 	} else {
-		fmt.Println(chalk.Bold.TextStyle("Status unhealthy 🔴 - Contact someone from the GLIF team immediately"))
+		fmt.Println(chalk.Bold.TextStyle("Status unhealthy 🔴"))
 	}
 
 	if badPmtStatus {
@@ -414,13 +432,17 @@ func agentHealth(ctx context.Context, agent common.Address, s *spinner.Spinner) 
 		liableForFaultySectorDefault := consecutiveFaultEpochs.Cmp(consecutiveFaultEpochTolerance) >= 0
 
 		if liableForFaultySectorDefault {
-			fmt.Printf("You are at risk of liquidation due to consecutive faulty sectors\n")
+			fmt.Printf("You are at risk of liquidation due to consecutive faulty sectors - recover your sectors as soon as possible\n")
 			fmt.Printf("Faulty sector start epoch: %v\n", faultySectorStart)
 		} else {
 			epochsBeforeZeroTolerance := new(big.Int).Sub(consecutiveFaultEpochTolerance, consecutiveFaultEpochs)
 			fmt.Printf("WARNING: You are approaching risk of liquidation due to consecutive faulty sectors\n")
 			fmt.Printf("With %v more consecutive epochs of faulty sectors, you will be at risk of liquidation\n", epochsBeforeZeroTolerance)
 		}
+	} else if pendingBadFaultStatus {
+		fmt.Printf("WARNING: Your Agent has one or more miners with faulty sectors - recover your sectors as soon as possible\n")
+		fmt.Printf("Faulty sector ratio: %.02f%%\n", faultRatio)
+		fmt.Printf("Faulty sector ratio limit: %v%%\n", limit.String())
 	}
 
 	printTable([]string{
