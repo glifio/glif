@@ -24,7 +24,7 @@ var payToCurrentCmd = &cobra.Command{
 				logFatal(err)
 			}
 
-			amountOwed, _, err := PoolsSDK.Query().AgentOwes(cmd.Context(), agentAddr)
+			amountOwed, err := PoolsSDK.Query().AgentInterestOwed(cmd.Context(), agentAddr, nil)
 			if err != nil {
 				logFatal(err)
 			}

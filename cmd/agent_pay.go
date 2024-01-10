@@ -124,14 +124,14 @@ func payAmount(ctx context.Context, cmd *cobra.Command, args []string, paymentTy
 			return nil, err
 		}
 
-		amountOwed, _, err := PoolsSDK.Query().AgentOwes(ctx, agentAddr)
+		amountOwed, err := PoolsSDK.Query().AgentInterestOwed(ctx, agentAddr, nil)
 		if err != nil {
 			return nil, err
 		}
 
 		payAmt = new(big.Int).Add(amount, amountOwed)
 	case ToCurrent:
-		amountOwed, _, err := PoolsSDK.Query().AgentOwes(ctx, agentAddr)
+		amountOwed, err := PoolsSDK.Query().AgentInterestOwed(ctx, agentAddr, nil)
 		if err != nil {
 			return nil, err
 		}

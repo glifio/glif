@@ -188,7 +188,7 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 			return PoolsSDK.Query().InfPoolAgentMaxBorrow(ctx, agent, agentData)
 		},
 		func() (interface{}, error) {
-			amountOwed, _, err := query.AgentOwes(ctx, agent)
+			amountOwed, err := query.AgentInterestOwed(ctx, agent, nil)
 			if err != nil {
 				return nil, err
 			}

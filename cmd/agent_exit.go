@@ -41,7 +41,7 @@ var exitCmd = &cobra.Command{
 			logFatalf("Failed to get iFIL balance %s", err)
 		}
 
-		amountOwed, _, err := PoolsSDK.Query().AgentOwes(ctx, agentAddr)
+		amountOwed, err := PoolsSDK.Query().AgentInterestOwed(ctx, agentAddr, nil)
 		if err != nil {
 			logFatal(err)
 		}
