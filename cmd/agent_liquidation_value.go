@@ -70,9 +70,47 @@ var liquidationValueCmd = &cobra.Command{
 		if err != nil {
 			logFatal(err)
 		}
+		s.Stop()
 
-		collateralStatsKeys := []string{
-			"Liquidation value",
+		minersKeys := []string{
+			"Miner liquidation values",
+		}
+
+		minersValues := []string{
+			"",
+		}
+
+		totalMinerBal := big.NewInt(0)
+
+		for _, minerCollateral := range agentCollateralStats.MinersTerminationStats {
+			minersKeys = append(minersKeys, fmt.Sprintf("%s", minerCollateral.MinerAddr))
+			minerBal, ok := new(big.Int).SetString(minerCollateral.MinerBal, 10)
+			if !ok {
+				logFatal(err)
+			}
+
+			totalMinerBal = totalMinerBal.Add(totalMinerBal, minerBal)
+
+			minerTerminationPenalty, ok := new(big.Int).SetString(minerCollateral.TerminationPenalty, 10)
+			if !ok {
+				logFatal(err)
+			}
+
+			minerLiquidationValue := new(big.Int).Sub(minerBal, minerTerminationPenalty)
+			// format recovery rate as a percentage
+			recoveryRate := new(big.Int).Div(new(big.Int).Mul(minerLiquidationValue, big.NewInt(1e18)), minerBal)
+			recoveryRate.Mul(recoveryRate, big.NewInt(100))
+
+			minersValues = append(minersValues, fmt.Sprintf("%0.09f FIL (%0.02f%%)", util.ToFIL(minerLiquidationValue), util.ToFIL(recoveryRate)))
+		}
+
+		liquidFIL, ok := new(big.Int).SetString(agentCollateralStats.AgentLiquidCollateral, 10)
+		if !ok {
+			logFatal(err)
+		}
+
+		agentCollateralStatsKeys := []string{
+			"Agent liquidation value",
 		}
 
 		lv, ok := new(big.Int).SetString(agentCollateralStats.LiquidationValue, 10)
@@ -80,13 +118,24 @@ var liquidationValueCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		collateralStatsVals := []string{
-			fmt.Sprintf("%0.09f FIL", util.ToFIL(lv)),
+		recoveryRate := new(big.Int).Div(new(big.Int).Mul(lv, big.NewInt(1e18)), totalMinerBal)
+		recoveryRate.Mul(recoveryRate, big.NewInt(100))
+
+		agentCollateralStatsVals := []string{
+			fmt.Sprintf("%0.03f FIL (%0.02f%% recovery)", util.ToFIL(lv), util.ToFIL(recoveryRate)),
 		}
 
-		s.Stop()
+		agentLiquidFILKey := []string{
+			"Agent's liquid FIL",
+		}
 
-		printTable(collateralStatsKeys, collateralStatsVals)
+		agentLiquidFILValue := []string{
+			fmt.Sprintf("%0.04f FIL", util.ToFIL(liquidFIL)),
+		}
+
+		printTable(agentCollateralStatsKeys, agentCollateralStatsVals)
+		printTable(agentLiquidFILKey, agentLiquidFILValue)
+		printTable(minersKeys, minersValues)
 		fmt.Println()
 	},
 }
