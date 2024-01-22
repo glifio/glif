@@ -20,6 +20,7 @@ import (
 	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/econ"
 	"github.com/glifio/go-pools/rpc"
+	"github.com/glifio/go-pools/terminate"
 	"github.com/glifio/go-pools/util"
 	"github.com/glifio/go-pools/vc"
 	"github.com/rodaine/table"
@@ -188,6 +189,9 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 			return PoolsSDK.Query().InfPoolAgentMaxBorrow(ctx, agent, agentData)
 		},
 		func() (interface{}, error) {
+			return PoolsSDK.Query().AgentPreviewTerminationQuick(ctx, agent)
+		},
+		func() (interface{}, error) {
 			amountOwed, err := query.AgentInterestOwed(ctx, agent, nil)
 			if err != nil {
 				return nil, err
@@ -209,8 +213,9 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 	}
 	assets := results[0].(*big.Int)
 	maxBorrow := results[1].(*big.Int)
-	amountOwed := results[2].(*big.Int)
-	lvlAndCap := results[3].([]interface{})
+	ats := results[2].(terminate.PreviewAgentTerminationSummary)
+	amountOwed := results[3].(*big.Int)
+	lvlAndCap := results[4].([]interface{})
 	lvl := lvlAndCap[0].(*big.Int)
 	cap := lvlAndCap[1].(float64)
 
@@ -253,6 +258,12 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(maxBorrow)),
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(equity)),
 		// fmt.Sprintf("%0.09f FIL", util.ToFIL(maxWithdraw)),
+	})
+
+	printTable([]string{
+		"Liquidation value",
+	}, []string{
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(ats.LiquidationValue())),
 	})
 
 	if lvl.Cmp(big.NewInt(0)) == 0 && chainID == constants.MainnetChainID {
