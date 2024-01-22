@@ -58,7 +58,7 @@ var liquidationValueCmd = &cobra.Command{
 				AgentAvailableBal:  big.NewInt(0),
 			}
 
-			minersValues = append(minersValues, fmt.Sprintf("%0.04f FIL (%0.02f%%)", util.ToFIL(ts.LiquidationValue()), util.ToFIL(ts.RecoveryRate())))
+			minersValues = append(minersValues, fmt.Sprintf("%0.04f FIL (%0.02f%%)", util.ToFIL(ts.LiquidationValue()), bigIntAttoToPercent(ts.RecoveryRate())))
 		}
 
 		agentCollateralStatsKeys := []string{
@@ -66,7 +66,7 @@ var liquidationValueCmd = &cobra.Command{
 		}
 
 		agentCollateralStatsVals := []string{
-			fmt.Sprintf("%0.03f FIL (%0.02f%% recovery)", util.ToFIL(ats.LiquidationValue()), util.ToFIL(ats.RecoveryRate())),
+			fmt.Sprintf("%0.03f FIL (%0.02f%% recovery)", util.ToFIL(ats.LiquidationValue()), bigIntAttoToPercent(ats.RecoveryRate())),
 		}
 
 		agentLiquidFILKey := []string{
