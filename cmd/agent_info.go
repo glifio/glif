@@ -62,12 +62,12 @@ var agentInfoCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		agentData, err := econInfo(cmd.Context(), agentAddr, agentID, lapi, s)
+		agentData, ats, err := econInfo(cmd.Context(), agentAddr, agentID, lapi, s)
 		if err != nil {
 			logFatal(err)
 		}
 
-		err = agentHealth(cmd.Context(), agentAddr, agentData, s)
+		err = agentHealth(cmd.Context(), agentAddr, agentData, ats, s)
 		if err != nil {
 			logFatal(err)
 		}
@@ -167,18 +167,18 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 	return agentID, agentFILIDAddr, agVersion, ntwVersion, nil
 }
 
-func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi *api.FullNodeStruct, s *spinner.Spinner) (*vc.AgentData, error) {
+func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi *api.FullNodeStruct, s *spinner.Spinner) (*vc.AgentData, terminate.PreviewAgentTerminationSummary, error) {
 	query := PoolsSDK.Query()
 
 	adoCloser, err := PoolsSDK.Extern().ConnectAdoClient(ctx)
 	if err != nil {
-		return nil, err
+		return nil, terminate.PreviewAgentTerminationSummary{}, err
 	}
 	defer adoCloser()
 
 	agentData, err := rpc.ADOClient.AgentData(context.Background(), agent)
 	if err != nil {
-		return nil, err
+		return nil, terminate.PreviewAgentTerminationSummary{}, err
 	}
 
 	tasks := []util.TaskFunc{
@@ -209,11 +209,12 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 
 	results, err := util.Multiread(tasks)
 	if err != nil {
-		return nil, err
+		return nil, terminate.PreviewAgentTerminationSummary{}, err
 	}
 	assets := results[0].(*big.Int)
 	maxBorrow := results[1].(*big.Int)
 	ats := results[2].(terminate.PreviewAgentTerminationSummary)
+	liquidationValue := ats.LiquidationValue()
 	amountOwed := results[3].(*big.Int)
 	lvlAndCap := results[4].([]interface{})
 	lvl := lvlAndCap[0].(*big.Int)
@@ -221,12 +222,12 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 
 	nullCred, err := vc.NullishVerifiableCredential(*agentData)
 	if err != nil {
-		return nil, err
+		return nil, terminate.PreviewAgentTerminationSummary{}, err
 	}
 
 	rate, err := query.InfPoolGetRate(ctx, *nullCred)
 	if err != nil {
-		return nil, err
+		return nil, terminate.PreviewAgentTerminationSummary{}, err
 	}
 
 	wpr := new(big.Float).Mul(new(big.Float).SetInt(rate), big.NewFloat(constants.EpochsInWeek))
@@ -262,8 +263,10 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 
 	printTable([]string{
 		"Liquidation value",
+		"Recovery rate",
 	}, []string{
-		fmt.Sprintf("%0.09f FIL", util.ToFIL(ats.LiquidationValue())),
+		fmt.Sprintf("\033[1m%0.09f FIL\033[0m", util.ToFIL(liquidationValue)),
+		fmt.Sprintf("%0.03f%%", bigIntAttoToPercent(ats.RecoveryRate())),
 	})
 
 	if lvl.Cmp(big.NewInt(0)) == 0 && chainID == constants.MainnetChainID {
@@ -308,16 +311,17 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 		printTable(somethingBorrowedKeys, somethingBorrowedValues)
 
 		dti := new(big.Int).Div(dailyFees, agentData.ExpectedDailyRewards)
-		dtiFloat := new(big.Float).Mul(new(big.Float).SetInt(dti), big.NewFloat(100))
-		dtiFloat.Quo(dtiFloat, big.NewFloat(1e18))
+
+		ltv := ats.LTV(agentData.Principal)
 
 		coreEconKeys := []string{
-			"Agent's liquid FIL",
-			"Agent's total FIL",
-			"Agent's equity",
-			"Agent's expected weekly earnings",
-			"Agent's debt-to-equity (DTE)",
-			"Agent's debt-to-income (DTI)",
+			"Liquid FIL",
+			"Total FIL",
+			"Equity",
+			"Expected weekly earnings",
+			"Debt-to-liquidation-value (LTV)",
+			"Debt-to-equity (DTE)",
+			"Debt-to-income (DTI)",
 		}
 
 		coreEconValues := []string{
@@ -325,8 +329,9 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 			fmt.Sprintf("%0.08f FIL", util.ToFIL(agentData.AgentValue)),
 			fmt.Sprintf("%0.08f FIL", util.ToFIL(equity)),
 			fmt.Sprintf("%0.08f FIL", util.ToFIL(weeklyEarnings)),
-			fmt.Sprintf("%0.03f%% (must stay below 100%%)", dte.Mul(dte, big.NewFloat(100))),
-			fmt.Sprintf("%0.03f%% (must stay below 25%%)", dtiFloat),
+			fmt.Sprintf("%0.03f%% (must stay below %0.00f%%)", bigIntAttoToPercent(ltv), bigIntAttoToPercent(constants.MAX_LTV)),
+			fmt.Sprintf("%0.03f%% (must stay below %0.00f%%)", dte.Mul(dte, big.NewFloat(100)), bigIntAttoToPercent(constants.MAX_DTE)),
+			fmt.Sprintf("%0.03f%% (must stay below %0.00f%%)", bigIntAttoToPercent(dti), bigIntAttoToPercent(constants.MAX_DTI)),
 		}
 
 		printTable(coreEconKeys, coreEconValues)
@@ -334,7 +339,11 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 
 	s.Start()
 
-	return agentData, nil
+	return agentData, ats, nil
+}
+
+func bigIntAttoToPercent(atto *big.Int) *big.Float {
+	return new(big.Float).Mul(util.ToFIL(atto), big.NewFloat(100))
 }
 
 func printTable(keys []string, values []string) {
@@ -348,7 +357,7 @@ func printTable(keys []string, values []string) {
 	tbl.Print()
 }
 
-func agentHealth(ctx context.Context, agent common.Address, agentData *vc.AgentData, s *spinner.Spinner) error {
+func agentHealth(ctx context.Context, agent common.Address, agentData *vc.AgentData, ats terminate.PreviewAgentTerminationSummary, s *spinner.Spinner) error {
 	query := PoolsSDK.Query()
 
 	tasks := []util.TaskFunc{
@@ -380,6 +389,8 @@ func agentHealth(ctx context.Context, agent common.Address, agentData *vc.AgentD
 	faultySectorStart := results[2].(*big.Int)
 	defaultEpoch := results[3].(*big.Int)
 	account := results[4].(abigen.Account)
+
+	overLTV := ats.LTV(agentData.Principal).Cmp(constants.MAX_LTV) > 0
 
 	weekOneDeadline := new(big.Int).Add(defaultEpoch, big.NewInt(constants.EpochsInWeek*2))
 
@@ -413,7 +424,7 @@ func agentHealth(ctx context.Context, agent common.Address, agentData *vc.AgentD
 	// convert limit into percentage for logging
 	limit := new(big.Float).Mul(constants.FAULTY_SECTOR_TOLERANCE, big.NewFloat(100))
 
-	if !badPmtStatus && !badFaultStatus && !pendingBadFaultStatus {
+	if !badPmtStatus && !badFaultStatus && !pendingBadFaultStatus && !overLTV {
 		fmt.Printf("Status healthy 🟢\n")
 		if owesPmt {
 			fmt.Printf("Your account owes its weekly payment (`to-current`) within the next: %s (by epoch # %s)\n", formatSinceDuration(weekOneDeadlineTime, epochsPaidTime), weekOneDeadline)
@@ -422,12 +433,19 @@ func agentHealth(ctx context.Context, agent common.Address, agentData *vc.AgentD
 		fmt.Println(chalk.Bold.TextStyle("Status unhealthy 🔴"))
 	}
 
+	if overLTV {
+		fmt.Printf("WARNING: Your Agent is over the LTV limit of %0.00f%%\n", bigIntAttoToPercent(constants.MAX_LTV))
+		fmt.Printf("Your Agent must pay down its debt or increase its collateral to avoid liquidation\n")
+		fmt.Printf("Contact the GLIF team as soon as possible\n")
+	}
+
 	if badPmtStatus {
 		fmt.Println("You are late on your weekly payment")
 		fmt.Printf("Your account *must* make a payment to-current within the next: %s (by epoch # %s)\n", formatSinceDuration(defaultEpochTime, epochsPaidTime), defaultEpoch)
 	}
 
-	if badFaultStatus {
+	// since we have to report faulty sectors when the Agent is overLTV, we only display this message if the Agent is not overLTV AND has faulty sectors
+	if badFaultStatus && !overLTV {
 		chainHeight, err := query.ChainHeight(ctx)
 		if err != nil {
 			return err
