@@ -20,6 +20,7 @@ import (
 	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/econ"
 	"github.com/glifio/go-pools/rpc"
+	"github.com/glifio/go-pools/sdk"
 	"github.com/glifio/go-pools/terminate"
 	"github.com/glifio/go-pools/util"
 	"github.com/glifio/go-pools/vc"
@@ -212,13 +213,29 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 		return nil, terminate.PreviewAgentTerminationSummary{}, err
 	}
 	assets := results[0].(*big.Int)
-	maxBorrow := results[1].(*big.Int)
+	borrowNow := results[1].(*big.Int)
 	ats := results[2].(terminate.PreviewAgentTerminationSummary)
 	liquidationValue := ats.LiquidationValue()
+	recoveryRate := ats.RecoveryRate()
 	amountOwed := results[3].(*big.Int)
 	lvlAndCap := results[4].([]interface{})
 	lvl := lvlAndCap[0].(*big.Int)
 	cap := lvlAndCap[1].(float64)
+
+	// here borrowMax does not ignores existing principal, so we add back existing principal to compute the max borrow (that does not account for existing principal)
+	borrowMaxDTE := sdk.ComputeMaxDTECap(agentData.AgentValue, agentData.Principal)
+	borrowMaxDTE.Add(borrowMaxDTE, agentData.Principal)
+
+	borrowMaxLTV := sdk.ComputeMaxLTVCap(liquidationValue, agentData.Principal, recoveryRate)
+	borrowMaxLTV.Add(borrowMaxLTV, agentData.Principal)
+
+	borrowMax := big.NewInt(0)
+	// take the minimum between DTE and LTV limits
+	if borrowMaxDTE.Cmp(borrowMaxLTV) > 0 {
+		borrowMax = borrowMaxLTV
+	} else {
+		borrowMax = borrowMaxDTE
+	}
 
 	nullCred, err := vc.NullishVerifiableCredential(*agentData)
 	if err != nil {
@@ -256,8 +273,8 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 		"Max borrow",
 		// "Agent's max withdraw",
 	}, []string{
-		fmt.Sprintf("%0.09f FIL", util.ToFIL(maxBorrow)),
-		fmt.Sprintf("%0.09f FIL", util.ToFIL(equity)),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(borrowNow)),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(borrowMax)),
 		// fmt.Sprintf("%0.09f FIL", util.ToFIL(maxWithdraw)),
 	})
 

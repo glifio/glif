@@ -2,9 +2,9 @@ module github.com/glifio/cli
 
 go 1.19
 
-replace github.com/glifio/go-pools v0.0.0-20240109211719-cd1a1f3bdcb1 => ../go-pools
-
 replace github.com/ipsn/go-secp256k1 v0.0.0-20180726113642-9d62b9f0bc52 => github.com/glifio/go-secp256k1 v0.0.1
+
+replace github.com/glifio/go-pools v0.0.0-20240126000757-14b138eb6e81 => ../go-pools
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -14,7 +14,7 @@ require (
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-state-types v0.12.8
 	github.com/filecoin-project/lotus v1.25.3-0.20240122193923-8f73f1579334
-	github.com/glifio/go-pools v0.0.0-20240109211719-cd1a1f3bdcb1
+	github.com/glifio/go-pools v0.0.0-20240126001724-b22073b67a9e
 	github.com/glifio/go-wallet-utils v0.0.0-20230719050429-ff6c4bc75533
 	github.com/golang/mock v1.6.0
 	github.com/ipfs/go-cid v0.4.1
