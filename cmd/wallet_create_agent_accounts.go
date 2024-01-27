@@ -4,6 +4,7 @@ Copyright © 2023 Glif LTD
 package cmd
 
 import (
+	"errors"
 	"log"
 	"os"
 
@@ -19,7 +20,8 @@ func panicIfKeyExists(key util.KeyType) {
 	if err == nil {
 		logFatal("owner account already created")
 	} else {
-		if err != util.ErrKeyNotFound {
+		var e *util.ErrKeyNotFound
+		if !errors.As(err, &e) {
 			logFatal(err)
 		}
 	}

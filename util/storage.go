@@ -1,7 +1,6 @@
 package util
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -9,7 +8,11 @@ import (
 	toml "github.com/pelletier/go-toml/v2"
 )
 
-var ErrKeyNotFound error = errors.New("key not found")
+type ErrKeyNotFound struct {
+	Key string
+}
+
+func (e *ErrKeyNotFound) Error() string { return "key not found: " + e.Key }
 
 type StorageData map[string]string
 
@@ -96,7 +99,7 @@ func (s *Storage) save() error {
 func (s *Storage) Get(key string) (string, error) {
 	value, ok := s.data[key]
 	if !ok {
-		return "", ErrKeyNotFound
+		return "", &ErrKeyNotFound{key}
 	}
 	return value, nil
 }
@@ -110,7 +113,7 @@ func (s *Storage) Set(key, value string) error {
 // Delete removes a key-value pair from the data map and saves the data to the file.
 func (s *Storage) Delete(key string) error {
 	if _, ok := s.data[key]; !ok {
-		return ErrKeyNotFound
+		return &ErrKeyNotFound{key}
 	}
 	delete(s.data, key)
 	return s.save()

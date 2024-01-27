@@ -4,6 +4,7 @@ Copyright © 2023 Glif LTD
 package cmd
 
 import (
+	"errors"
 	"log"
 
 	"github.com/glifio/cli/util"
@@ -25,7 +26,8 @@ var labelAccountCmd = &cobra.Command{
 		if err == nil {
 			logFatalf("%s account already created\n", name)
 		} else {
-			if err != util.ErrKeyNotFound {
+			var e *util.ErrKeyNotFound
+			if !errors.As(err, &e) {
 				logFatal(err)
 			}
 		}
