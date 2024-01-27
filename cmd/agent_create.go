@@ -4,6 +4,7 @@ Copyright © 2023 Glif LTD
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 	"os"
@@ -32,8 +33,11 @@ var createCmd = &cobra.Command{
 
 		// Check if an agent already exists
 		addressStr, err := as.Get("address")
-		if err != nil && err != util.ErrKeyNotFound {
-			logFatal(err)
+		if err != nil {
+			var e *util.ErrKeyNotFound
+			if !errors.As(err, &e) {
+				logFatal(err)
+			}
 		}
 		if addressStr != "" {
 			logFatalf("Agent already exists: %s", addressStr)
@@ -119,7 +123,8 @@ var createCmd = &cobra.Command{
 
 func checkExists(err error) {
 	if err != nil {
-		if err == util.ErrKeyNotFound {
+		var e *util.ErrKeyNotFound
+		if errors.As(err, &e) {
 			logFatal("Agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
 		}
 		logFatal(err)

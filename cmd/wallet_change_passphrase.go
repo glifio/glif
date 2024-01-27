@@ -4,6 +4,7 @@ Copyright © 2023 Glif LTD
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -28,7 +29,8 @@ var changePassphraseCmd = &cobra.Command{
 			as := util.AccountsStore()
 			addr, _, err = as.GetAddrs(args[0])
 			if err != nil {
-				if err == util.ErrKeyNotFound {
+				var e *util.ErrKeyNotFound
+				if errors.As(err, &e) {
 					logFatal("Account not found in wallet")
 				}
 				logFatal(err)

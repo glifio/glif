@@ -220,7 +220,8 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 
 	opEvm, opFevm, err := as.GetAddrs(string(util.OperatorKey))
 	if err != nil {
-		if err == util.ErrKeyNotFound {
+		var e *util.ErrKeyNotFound
+		if errors.As(err, &e) {
 			return common.Address{}, nil, accounts.Account{}, nil, fmt.Errorf("agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
 		}
 		return common.Address{}, nil, accounts.Account{}, nil, err
@@ -228,7 +229,8 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 
 	owEvm, owFevm, err := as.GetAddrs(string(util.OwnerKey))
 	if err != nil {
-		if err == util.ErrKeyNotFound {
+		var e *util.ErrKeyNotFound
+		if errors.As(err, &e) {
 			return common.Address{}, nil, accounts.Account{}, nil, fmt.Errorf("agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
 		}
 		return common.Address{}, nil, accounts.Account{}, nil, err
@@ -323,7 +325,8 @@ func commonGenericAccountSetup(ctx context.Context, from string) (auth *bind.Tra
 	} else {
 		fromAddress, _, err = as.GetAddrs(strings.ToLower(from))
 		if err != nil {
-			if err == util.ErrKeyNotFound {
+			var e *util.ErrKeyNotFound
+			if errors.As(err, &e) {
 				return nil, accounts.Account{}, fmt.Errorf("account \"%s\" not found in wallet. Setup with: glif wallet create-account %s", from, from)
 			}
 			return nil, accounts.Account{}, err
@@ -496,10 +499,12 @@ func checkWalletMigrated() error {
 	for _, key := range keys {
 		_, _, err := as.GetAddrs(string(key))
 		if err != nil {
-			if err == util.ErrKeyNotFound {
+			var e *util.ErrKeyNotFound
+			if errors.As(err, &e) {
 				_, _, err := ksLegacy.GetAddrs(key)
 				if err != nil {
-					if err == util.ErrKeyNotFound {
+					var e *util.ErrKeyNotFound
+					if errors.As(err, &e) {
 						// Account not created yet
 						continue
 					}
