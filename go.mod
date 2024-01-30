@@ -4,8 +4,6 @@ go 1.19
 
 replace github.com/ipsn/go-secp256k1 v0.0.0-20180726113642-9d62b9f0bc52 => github.com/glifio/go-secp256k1 v0.0.1
 
-replace github.com/glifio/go-pools v0.0.0-20240126000757-14b138eb6e81 => ../go-pools
-
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/briandowns/spinner v1.23.0
