@@ -7,12 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/glifio/cli/util"
 	"github.com/spf13/cobra"
@@ -32,7 +30,7 @@ var importAccountCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		protectWPassphrase, err := cmd.Flags().GetBool("add-passphrase")
+		passphrase, err := cmd.Flags().GetString("passphrase")
 		if err != nil {
 			logFatal(err)
 		}
@@ -55,6 +53,10 @@ var importAccountCmd = &cobra.Command{
 			log.Printf("Importing account: %s\n", name)
 		}
 
+		if passphrase != "" {
+			log.Println("Encrypting account with supplied passphrase")
+		}
+
 		re := regexp.MustCompile(`^[tf][0-9]`)
 		if strings.HasPrefix(name, "0x") || re.MatchString(name) {
 			logFatalf("Invalid name")
@@ -64,25 +66,6 @@ var importAccountCmd = &cobra.Command{
 		pkECDSA, err := crypto.HexToECDSA(pk)
 		if err != nil {
 			logFatalf("Invalid private key")
-		}
-
-		passphrase := ""
-		if protectWPassphrase {
-			passphrase, envSet := os.LookupEnv("GLIF_PASSPHRASE")
-			if !envSet {
-				prompt := &survey.Password{
-					Message: "Please type a passphrase to encrypt your private key",
-				}
-				survey.AskOne(prompt, &passphrase)
-				var confirmPassphrase string
-				confirmPrompt := &survey.Password{
-					Message: "Confirm passphrase",
-				}
-				survey.AskOne(confirmPrompt, &confirmPassphrase)
-				if passphrase != confirmPassphrase {
-					logFatal("Aborting. Passphrase confirmation did not match.")
-				}
-			}
 		}
 
 		ks := util.KeyStore()
@@ -111,12 +94,12 @@ var importAccountCmd = &cobra.Command{
 		bs := util.BackupsStore()
 		bs.Invalidate()
 
-		log.Printf("%s address: %s (ETH), %s (FIL)\n", name, accountAddr, accountDelAddr)
+		log.Printf("%s address: %s (ETH), %s (FIL) imported successfully\n", name, accountAddr, accountDelAddr)
 	},
 }
 
 func init() {
 	walletCmd.AddCommand(importAccountCmd)
 	importAccountCmd.Flags().Bool("overwrite", false, "overwrite an existing account with the same name")
-	importAccountCmd.Flags().Bool("add-passphrase", false, "add a passphrase to encrypt the account")
+	importAccountCmd.Flags().String("add-passphrase", "", "add a passphrase to encrypt the account")
 }
