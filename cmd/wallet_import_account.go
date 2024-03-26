@@ -101,5 +101,5 @@ var importAccountCmd = &cobra.Command{
 func init() {
 	walletCmd.AddCommand(importAccountCmd)
 	importAccountCmd.Flags().Bool("overwrite", false, "overwrite an existing account with the same name")
-	importAccountCmd.Flags().String("add-passphrase", "", "add a passphrase to encrypt the account")
+	importAccountCmd.Flags().String("passphrase", "", "add a passphrase to encrypt the account")
 }
