@@ -17,7 +17,7 @@ import (
 
 // exportAccountCmd represents the export-account command
 var exportAccountCmd = &cobra.Command{
-	Use:   "export-raw-key [account-name or account-address]",
+	Use:   "export-raw-key [account-name]",
 	Short: "(Dangerous) Export a single private key account",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
