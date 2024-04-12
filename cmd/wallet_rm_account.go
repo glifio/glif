@@ -66,6 +66,8 @@ var rmAccountCmd = &cobra.Command{
 		if err := viper.WriteConfig(); err != nil {
 			logFatal(err)
 		}
+
+		log.Printf("Account %s removed successfully\n", name)
 	},
 }
 

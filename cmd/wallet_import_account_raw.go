@@ -22,13 +22,14 @@ import (
 func validateImportKeyParams(name string, overwrite bool) (string, string, string, error) {
 	as := util.AccountsStore()
 
+	var passphrase string
 	addrToOverwrite, err := as.Get(name)
 
 	rename := fmt.Sprintf("%s-replaced-%s", name, time.Now().Format(time.RFC3339))
 
 	var e *util.ErrKeyNotFound
 	if !errors.As(err, &e) && !overwrite {
-		logFatalf("Account %s already exists", name)
+		return passphrase, addrToOverwrite, rename, errors.New("Account already exists")
 	} else if !errors.As(err, &e) {
 		log.Printf("Warning: account '%s' already exists, renaming to '%s' and overriding with new '%s' key\n", name, rename, name)
 	} else if overwrite {
@@ -39,7 +40,6 @@ func validateImportKeyParams(name string, overwrite bool) (string, string, strin
 		log.Printf("Importing account: %s\n", name)
 	}
 
-	var passphrase string
 	var message = "Passphrase for account (or hit enter for no passphrase)"
 	prompt := &survey.Password{Message: message}
 	survey.AskOne(prompt, &passphrase)
