@@ -4,6 +4,7 @@ Copyright © 2023 Glif LTD
 package cmd
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
@@ -12,7 +13,6 @@ import (
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/glifio/cli/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -20,8 +20,8 @@ import (
 
 // importAccountCmd represents the import-account command
 var importAccountCmd = &cobra.Command{
-	Use:   "import-account [account-name] [account-private-key]",
-	Short: "Import a single private key account",
+	Use:   "import-account [account-name] [account-encrypted-key-json]",
+	Short: "Import a single private key account, using an encrypted json key file",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		as := util.AccountsStore()
@@ -59,15 +59,14 @@ var importAccountCmd = &cobra.Command{
 			logFatalf("Invalid name")
 		}
 
-		pk := args[1]
-		pkECDSA, err := crypto.HexToECDSA(pk)
-		if err != nil {
-			logFatalf("Invalid private key")
-		}
-
 		ks := util.KeyStore()
 
-		account, err := ks.ImportECDSA(pkECDSA, passphrase)
+		pkJSON, err := hex.DecodeString(args[1])
+		if err != nil {
+			logFatalf("Invalid private key hex string")
+		}
+
+		account, err := ks.Import(pkJSON, passphrase, passphrase)
 		if err != nil {
 			logFatal(err)
 		}
@@ -98,5 +97,4 @@ var importAccountCmd = &cobra.Command{
 func init() {
 	walletCmd.AddCommand(importAccountCmd)
 	importAccountCmd.Flags().Bool("overwrite", false, "overwrite an existing account with the same name")
-	importAccountCmd.Flags().String("passphrase", "", "add a passphrase to encrypt the account")
 }
