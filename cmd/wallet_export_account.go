@@ -67,7 +67,7 @@ var exportAccountCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		fmt.Println("Private key: ", hex.EncodeToString(key.PrivateKey.D.Bytes()))
+		fmt.Println(hex.EncodeToString(key.PrivateKey.D.Bytes()))
 	},
 }
 
