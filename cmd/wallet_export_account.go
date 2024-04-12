@@ -9,7 +9,6 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/ethereum/go-ethereum/accounts"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/glifio/cli/util"
 	"github.com/spf13/cobra"
@@ -17,7 +16,7 @@ import (
 
 // exportAccountCmd represents the export-account command
 var exportAccountCmd = &cobra.Command{
-	Use:   "export-raw-key [account-name]",
+	Use:   "export-account [account-name]",
 	Short: "(Dangerous) Export a single private key account",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -57,17 +56,12 @@ var exportAccountCmd = &cobra.Command{
 			}
 		}
 
-		keyJSON, err := ks.Export(account, passphrase, "")
+		keyJSON, err := ks.Export(account, passphrase, passphrase)
 		if err != nil {
 			logFatal(err)
 		}
 
-		key, err := keystore.DecryptKey(keyJSON, "")
-		if err != nil {
-			logFatal(err)
-		}
-
-		fmt.Println(hex.EncodeToString(key.PrivateKey.D.Bytes()))
+		fmt.Println(hex.EncodeToString(keyJSON))
 	},
 }
 
