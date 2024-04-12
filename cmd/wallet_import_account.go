@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/glifio/cli/util"
 	"github.com/spf13/cobra"
@@ -26,11 +27,6 @@ var importAccountCmd = &cobra.Command{
 		as := util.AccountsStore()
 
 		overWrite, err := cmd.Flags().GetBool("overwrite")
-		if err != nil {
-			logFatal(err)
-		}
-
-		passphrase, err := cmd.Flags().GetString("passphrase")
 		if err != nil {
 			logFatal(err)
 		}
@@ -53,9 +49,10 @@ var importAccountCmd = &cobra.Command{
 			log.Printf("Importing account: %s\n", name)
 		}
 
-		if passphrase != "" {
-			log.Println("Encrypting account with supplied passphrase")
-		}
+		var passphrase string
+		var message = "Passphrase for account (or hit enter for no passphrase)"
+		prompt := &survey.Password{Message: message}
+		survey.AskOne(prompt, &passphrase)
 
 		re := regexp.MustCompile(`^[tf][0-9]`)
 		if strings.HasPrefix(name, "0x") || re.MatchString(name) {
