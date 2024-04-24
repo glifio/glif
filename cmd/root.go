@@ -137,8 +137,10 @@ func initConfig() {
 		if errors.Is(err, fs.ErrNotExist) {
 			logFatalf("No config file found at %s\n", viper.ConfigFileUsed())
 		} else if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			// Config file not found; ignore error if desired
-			fmt.Fprintln(os.Stderr, "Warning: No config file found.")
+			// No .glif/config.toml, populate with mainnet defaults
+			viper.Set("daemon.rpc-url", deploy.Extern.LotusDialAddr)
+			viper.Set("daemon.token", "")
+			viper.SafeWriteConfig()
 		} else {
 			logFatalf("Config file error: %v\n", err)
 		}
