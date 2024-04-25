@@ -10,7 +10,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/filecoin-project/go-address"
-	"github.com/glifio/glif/events"
+	"github.com/glifio/glif/v2/events"
 	"github.com/spf13/cobra"
 )
 

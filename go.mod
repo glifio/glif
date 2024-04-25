@@ -1,4 +1,4 @@
-module github.com/glifio/glif
+module github.com/glifio/glif/v2
 
 go 1.21
 

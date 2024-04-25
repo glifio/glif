@@ -11,7 +11,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/glifio/glif/events"
+	"github.com/glifio/glif/v2/events"
 	"github.com/glifio/go-pools/abigen"
 	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/deploy"

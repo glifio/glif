@@ -14,7 +14,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/glifio/glif/util"
+	"github.com/glifio/glif/v2/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

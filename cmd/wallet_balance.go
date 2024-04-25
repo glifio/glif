@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/filecoin-project/lotus/api"
-	"github.com/glifio/glif/util"
+	"github.com/glifio/glif/v2/util"
 	denoms "github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )

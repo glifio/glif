@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/glifio/glif/events"
+	"github.com/glifio/glif/v2/events"
 	"github.com/glifio/go-pools/util"
 	denoms "github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"

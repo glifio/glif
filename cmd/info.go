@@ -102,7 +102,7 @@ var rootInfoCmd = &cobra.Command{
 		fmt.Printf("Latest release: %s (prelease / draft release): %t\n", release, stableVersion)
 
 		if stableVersion && release != CommitHash {
-			fmt.Println("There may be a new version of the CLI available at https://github.com/glifio/glif")
+			fmt.Println("There may be a new version of the CLI available at https://github.com/glifio/glif/v2")
 		}
 	},
 }

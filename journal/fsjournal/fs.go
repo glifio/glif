@@ -11,7 +11,7 @@ import (
 	clk "github.com/raulk/clock"
 	"golang.org/x/xerrors"
 
-	"github.com/glifio/glif/journal"
+	"github.com/glifio/glif/v2/journal"
 )
 
 var clock = clk.New()

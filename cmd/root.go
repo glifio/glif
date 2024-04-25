@@ -26,9 +26,9 @@ import (
 	"runtime/debug"
 
 	"github.com/ethereum/go-ethereum/common"
-	jnal "github.com/glifio/glif/journal"
-	"github.com/glifio/glif/journal/fsjournal"
-	"github.com/glifio/glif/util"
+	jnal "github.com/glifio/glif/v2/journal"
+	"github.com/glifio/glif/v2/journal/fsjournal"
+	"github.com/glifio/glif/v2/util"
 	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/deploy"
 	"github.com/glifio/go-pools/sdk"
