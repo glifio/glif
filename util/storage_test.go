@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/glifio/cli/util"
+	"github.com/glifio/glif/util"
 )
 
 const testFilename = "test_data.toml"

@@ -8,8 +8,8 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/glifio/cli/journal"
-	"github.com/glifio/cli/journal/mockjournal"
+	"github.com/glifio/glif/journal"
+	"github.com/glifio/glif/journal/mockjournal"
 )
 
 func TestAlerting(t *testing.T) {

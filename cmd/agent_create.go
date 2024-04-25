@@ -13,7 +13,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/briandowns/spinner"
 	"github.com/ethereum/go-ethereum/accounts"
-	"github.com/glifio/cli/util"
+	"github.com/glifio/glif/util"
 	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
 )

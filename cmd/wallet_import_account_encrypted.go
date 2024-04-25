@@ -7,7 +7,7 @@ import (
 	"encoding/hex"
 	"strings"
 
-	"github.com/glifio/cli/util"
+	"github.com/glifio/glif/util"
 	"github.com/spf13/cobra"
 )
 

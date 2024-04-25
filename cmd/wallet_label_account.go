@@ -7,7 +7,7 @@ import (
 	"errors"
 	"log"
 
-	"github.com/glifio/cli/util"
+	"github.com/glifio/glif/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/glifio/cli/util"
+	"github.com/glifio/glif/util"
 	"github.com/spf13/cobra"
 )
 
