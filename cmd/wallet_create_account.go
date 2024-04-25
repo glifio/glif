@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/glifio/cli/util"
+	"github.com/glifio/glif/v2/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

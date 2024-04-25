@@ -7,7 +7,7 @@
 [gha-badge]: https://img.shields.io/github/actions/workflow/status/glifio/cli/test.yml?branch=main
 [discord-badge]: https://dcbadge.vercel.app/api/server/5qsJjsP3Re?style=flat-square&theme=clean-inverted&compact=true&theme=blurple
 
-For English README, please click [here](https://github.com/glifio/cli/blob/main/README.md).
+For English README, please click [here](https://github.com/glifio/glif/blob/main/README.md).
 
 **GLIF 命令行界面是与 GLIF Pools 协议交互的起点**
 

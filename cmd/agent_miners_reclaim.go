@@ -12,7 +12,7 @@ import (
 	"github.com/filecoin-project/lotus/build"
 	"github.com/filecoin-project/lotus/chain/actors"
 	"github.com/filecoin-project/lotus/chain/types"
-	"github.com/glifio/cli/events"
+	"github.com/glifio/glif/v2/events"
 	"github.com/spf13/cobra"
 )
 

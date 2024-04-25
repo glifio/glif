@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/filecoin-project/go-address"
-	"github.com/glifio/cli/events"
-	"github.com/glifio/cli/journal/fsjournal"
+	"github.com/glifio/glif/v2/events"
+	"github.com/glifio/glif/v2/journal/fsjournal"
 	"github.com/glifio/go-pools/abigen"
 	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/util"

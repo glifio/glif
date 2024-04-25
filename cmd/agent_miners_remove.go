@@ -9,7 +9,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/filecoin-project/go-address"
-	"github.com/glifio/cli/events"
+	"github.com/glifio/glif/v2/events"
 	"github.com/glifio/go-pools/constants"
 	"github.com/spf13/cobra"
 )

@@ -18,7 +18,7 @@ package main
 import (
 	"os"
 
-	"github.com/glifio/cli/cmd"
+	"github.com/glifio/glif/v2/cmd"
 )
 
 func main() {

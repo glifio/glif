@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/glifio/cli/util"
+	"github.com/glifio/glif/v2/util"
 	"github.com/spf13/cobra"
 )
 

@@ -12,7 +12,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/glifio/cli/util"
+	"github.com/glifio/glif/v2/util"
 	"github.com/spf13/cobra"
 )
 

@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/glifio/cli/journal"
+	"github.com/glifio/glif/v2/journal"
 )
 
 // Alerting provides simple stateful alert system. Consumers can register alerts,
