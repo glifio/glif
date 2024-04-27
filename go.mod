@@ -2,8 +2,6 @@ module github.com/glifio/glif/v2
 
 go 1.21
 
-replace github.com/glifio/go-pools v1.0.1 => ../go-pools
-
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/briandowns/spinner v1.23.0
