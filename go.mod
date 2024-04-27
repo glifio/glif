@@ -2,6 +2,8 @@ module github.com/glifio/glif/v2
 
 go 1.21
 
+replace github.com/glifio/go-pools v1.0.1 => ../go-pools
+
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/briandowns/spinner v1.23.0
@@ -10,7 +12,7 @@ require (
 	github.com/filecoin-project/go-address v1.1.0
 	github.com/filecoin-project/go-state-types v0.13.3
 	github.com/filecoin-project/lotus v1.26.3-0.20240424142548-f907354300ba
-	github.com/glifio/go-pools v1.0.1
+	github.com/glifio/go-pools v1.0.2
 	github.com/glifio/go-wallet-utils v0.0.0-20230719050429-ff6c4bc75533
 	github.com/golang/mock v1.6.0
 	github.com/ipfs/go-cid v0.4.1
