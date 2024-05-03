@@ -4,7 +4,7 @@
 
 ![Github Actions][gha-badge] [![Discord Channel][discord-badge]](https://discord.gg/qKF9HN9a2M)
 
-[gha-badge]: https://img.shields.io/github/actions/workflow/status/glifio/cli/test.yml?branch=main
+[gha-badge]: https://img.shields.io/github/actions/workflow/status/glifio/glif/test.yml?branch=main
 [discord-badge]: https://dcbadge.vercel.app/api/server/5qsJjsP3Re?style=flat-square&theme=clean-inverted&compact=true&theme=blurple
 
 查看中文 README，请点击[这里](https://github.com/glifio/glif/blob/main/README_zh.md)。
@@ -13,12 +13,17 @@
 
 - [GLIF CLI](#glif-cli)
   - [Installation](#installation)
+    - [Use go install](#use-go-install)
+    - [Linux (Coming soon)](#linux-coming-soon)
+    - [MacOS (Coming soon)](#macos-coming-soon)
+    - [Build from source](#build-from-source)
   - [Named wallet accounts and addresses](#named-wallet-accounts-and-addresses)
   - [Wallets](#wallets)
     - [List existing wallet accounts and balances](#list-existing-wallet-accounts-and-balances)
     - [Creating wallet accounts for use with an Agent](#creating-wallet-accounts-for-use-with-an-agent)
     - [Generic wallet accounts](#generic-wallet-accounts)
     - [Passphrases](#passphrases)
+    - [Import/Export/Remove Accounts](#importexportremove-accounts)
     - [Migrate from a legacy keystore.toml wallet](#migrate-from-a-legacy-keystoretoml-wallet)
   - [Agents - Get started borrowing](#agents---get-started-borrowing)
     - [Create an Agent](#create-an-agent)
@@ -41,8 +46,21 @@
 
 ## Installation
 
+### Use go install
+
+If you already have go version 1.21 installed, you can install the GLIF CLI simply by using the go installer:<br />
+`go install github.com/glifio/glif/v2@latest`
+
+### Linux (Coming soon)
+
+### MacOS (Coming soon)
+
+### Build from source
+
+In order to build from source, you must have go version 1.21 or higher installed.
+
 First, clone the repo from GitHub:<br />
-`git clone git@github.com:glifio/cli.git`<br />
+`git clone git@github.com:glifio/glif.git`<br />
 `cd cli`<br />
 
 **Mainnet installation**<br />
@@ -101,6 +119,17 @@ You can also create generic named wallets for use in other commands:<br />
 ### Passphrases
 
 Wallet accounts can each be protected with a unique passphrase for additional security. The private keys are encrypted with the passphrase, so an attacker who gains access to your GLIF CLI Keystore cannot feasibly gain access to your account private keys. **It is strongly recommended to protect your wallet accounts with a secure passphrase**.
+
+### Import/Export/Remove Accounts
+
+You can easily import, export, and remove accounts from your wallet. When importing and/or exporting accounts, raw private key formats and passphrase encrypted key formats are both supported. See below for more info.
+
+- Export a private key, encrypted with your passphrase: `glif wallet export-account <account-name> --really-do-it`<br />
+Note that you will need your password in order to import the account back into your wallet.
+- Export a raw private key, unencrypted (dangerous): `glif wallet export-account-raw <account-name> --really-do-it`<br />
+- Import a passphrase encrypted private key: `glif wallet import-account <account-name> <hex-encrypted-keyfile>` <br />
+- Import a raw, hex encoded private key: `glif wallet import-account-raw <account-name> <hex-raw-key>`<br />
+- Remove an account entirely from the keystore: `glif wallet remove-account <account-name> --reall-do-it`<br />
 
 **Note that if you forget your passphrase, your private keys cannot be recovered. It is extremely important to write down your passphrase in a secure place where it cannot be stolen or lost.**
 
