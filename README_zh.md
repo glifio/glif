@@ -23,7 +23,7 @@ For English README, please click [here](https://github.com/glifio/glif/blob/main
     - [为使用 Agent 创建钱包账户](#为使用-agent-创建钱包账户)
     - [通用钱包账户](#通用钱包账户)
     - [密码短语](#密码短语)
-    - [导入/导出/移除账户](#导入-导出-移除账户)
+    - [导入/导出/移除账户](#导入导出移除账户)
     - [从旧版的 keystore.toml 钱包迁移](#从旧版的-keystoretoml-钱包迁移)
   - [代理（Agent）-- 开始借款](#代理agent---开始借款)
     - [创建 Agent](#创建-agent)
