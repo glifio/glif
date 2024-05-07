@@ -46,7 +46,7 @@ For English README, please click [here](https://github.com/glifio/glif/blob/main
 
 ## 安装
 
-### 使用go install
+### 使用go安装
 
 如果你已经安装了go 1.21版本，可以使用go安装程序轻松安装GLIF CLI：<br />
 `go install github.com/glifio/glif/v2@latest`
