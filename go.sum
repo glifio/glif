@@ -256,6 +256,8 @@ github.com/getsentry/sentry-go v0.18.0 h1:MtBW5H9QgdcJabtZcuJG80BMOwaBpkRDZkxRkN
 github.com/getsentry/sentry-go v0.18.0/go.mod h1:Kgon4Mby+FJ7ZWHFUAZgVaIa8sxHtnRJRLTXZr51aKQ=
 github.com/glifio/go-pools v1.0.2 h1:rmScJenDpmlL6YL2OltlJm57upPlsK0iawmHdtEqwM0=
 github.com/glifio/go-pools v1.0.2/go.mod h1:lMmZYESrwKs3VcLE/0ce3IGwekyN+H38qAOFFFTBQIc=
+github.com/glifio/go-pools v1.0.3-0.20240514044330-2c14d4f76c77 h1:ssCOF9MBACRIbS1V/2ZgrogIQrsXlcXAPTjdd3KyMR4=
+github.com/glifio/go-pools v1.0.3-0.20240514044330-2c14d4f76c77/go.mod h1:lMmZYESrwKs3VcLE/0ce3IGwekyN+H38qAOFFFTBQIc=
 github.com/glifio/go-wallet-utils v0.0.0-20230719050429-ff6c4bc75533 h1:teuqQtVb7YMyqIOg+xUNO21qZAnm8ibhpKy4lIUBpag=
 github.com/glifio/go-wallet-utils v0.0.0-20230719050429-ff6c4bc75533/go.mod h1:zJ9ksxDWIsuS80RtpjaM6swuKZ7OYdJH56I00EZRxD4=
 github.com/go-check/check v0.0.0-20180628173108-788fd7840127/go.mod h1:9ES+weclKsC9YodN5RgxqK/VD9HM9JsCSh7rNhMZE98=
