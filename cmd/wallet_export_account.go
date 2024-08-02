@@ -5,11 +5,15 @@ package cmd
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/glifio/glif/v2/util"
 	"github.com/spf13/cobra"
 )
@@ -21,6 +25,11 @@ var exportAccountCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		reallyDo, err := cmd.Flags().GetBool("really-do-it")
+		if err != nil {
+			logFatal(err)
+		}
+
+		lotus, err := cmd.Flags().GetBool("lotus")
 		if err != nil {
 			logFatal(err)
 		}
@@ -60,12 +69,29 @@ var exportAccountCmd = &cobra.Command{
 		if err != nil {
 			logFatal(err)
 		}
-
-		fmt.Println(hex.EncodeToString(keyJSON))
+		if lotus {
+			pk, err := keystore.DecryptKey(keyJSON, passphrase)
+			if err != nil {
+				logFatal(err)
+			}
+			keyBytes := crypto.FromECDSA(pk.PrivateKey)
+			ki := types.KeyInfo{
+				Type:       types.KTDelegated,
+				PrivateKey: keyBytes,
+			}
+			b, err := json.Marshal(ki)
+			if err != nil {
+				logFatal(err)
+			}
+			fmt.Println(hex.EncodeToString(b))
+		} else {
+			fmt.Println(hex.EncodeToString(keyJSON))
+		}
 	},
 }
 
 func init() {
 	walletCmd.AddCommand(exportAccountCmd)
 	exportAccountCmd.Flags().Bool("really-do-it", false, "really export the account")
+	exportAccountCmd.Flags().Bool("lotus", false, "export in format that Lotus can import")
 }
