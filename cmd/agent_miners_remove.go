@@ -10,7 +10,6 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/filecoin-project/go-address"
 	"github.com/glifio/glif/v2/events"
-	"github.com/glifio/go-pools/constants"
 	"github.com/spf13/cobra"
 )
 
@@ -24,10 +23,10 @@ var rmCmd = &cobra.Command{
 	The new owner address must be a filecoin address, not a delegated address.`,
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		if removePreview {
-			previewAction(cmd, args, constants.MethodRemoveMiner)
-			return
-		}
+		// if removePreview {
+		// 	previewAction(cmd, args, constants.MethodRemoveMiner)
+		// 	return
+		// }
 
 		agentAddr, auth, _, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {

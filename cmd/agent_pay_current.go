@@ -6,7 +6,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
@@ -30,7 +29,7 @@ var payToCurrentCmd = &cobra.Command{
 			}
 
 			args = append(args, util.ToFIL(amountOwed).String())
-			previewAction(cmd, args, constants.MethodPay)
+			// previewAction(cmd, args, constants.MethodPay)
 			return
 		}
 

@@ -12,7 +12,6 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/glifio/glif/v2/events"
-	"github.com/glifio/go-pools/constants"
 	"github.com/spf13/cobra"
 )
 
@@ -31,10 +30,10 @@ var addCmd = &cobra.Command{
 		}
 		defer closer()
 
-		if addPreview {
-			previewAction(cmd, args, constants.MethodAddMiner)
-			return
-		}
+		// if addPreview {
+		// 	previewAction(cmd, args, constants.MethodAddMiner)
+		// 	return
+		// }
 		agentAddr, auth, _, requesterKey, err := commonSetupOwnerCall()
 		if err != nil {
 			logFatal(err)

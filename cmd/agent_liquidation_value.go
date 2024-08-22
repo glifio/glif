@@ -6,11 +6,9 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/glifio/go-pools/terminate"
 	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
@@ -31,13 +29,13 @@ var liquidationValueCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		agentCollateralStats, err := PoolsSDK.Query().AgentCollateralStatsQuick(cmd.Context(), agentAddr)
-		if err != nil {
-			logFatal(err)
-		}
+		// agentCollateralStats, err := PoolsSDK.Query().AgentCollateralStatsQuick(cmd.Context(), agentAddr)
+		// if err != nil {
+		// 	logFatal(err)
+		// }
 		s.Stop()
 
-		ats := agentCollateralStats.Summarize()
+		// ats := agentCollateralStats.Summarize()
 
 		minersKeys := []string{
 			"Miner liquidation values",
@@ -47,38 +45,38 @@ var liquidationValueCmd = &cobra.Command{
 			"",
 		}
 
-		for _, minerCollateral := range agentCollateralStats.MinersTerminationStats {
-			minersKeys = append(minersKeys, fmt.Sprintf("%s", minerCollateral.Address))
-			// here we instantiate a PreviewAgentTerminationSummary type to reuse its liquidation value and recovery rate funcs
-			ts := terminate.PreviewAgentTerminationSummary{
-				TerminationPenalty: minerCollateral.TerminationPenalty,
-				InitialPledge:      minerCollateral.Pledged,
-				VestingBalance:     minerCollateral.Vesting,
-				MinersAvailableBal: minerCollateral.Available,
-				AgentAvailableBal:  big.NewInt(0),
-			}
+		// for _, minerCollateral := range agentCollateralStats.MinersTerminationStats {
+		// 	minersKeys = append(minersKeys, fmt.Sprintf("%s", minerCollateral.Address))
+		// 	// here we instantiate a PreviewAgentTerminationSummary type to reuse its liquidation value and recovery rate funcs
+		// 	ts := terminate.PreviewAgentTerminationSummary{
+		// 		TerminationPenalty: minerCollateral.TerminationPenalty,
+		// 		InitialPledge:      minerCollateral.Pledged,
+		// 		VestingBalance:     minerCollateral.Vesting,
+		// 		MinersAvailableBal: minerCollateral.Available,
+		// 		AgentAvailableBal:  big.NewInt(0),
+		// 	}
 
-			minersValues = append(minersValues, fmt.Sprintf("%0.04f FIL (%0.02f%%)", util.ToFIL(ts.LiquidationValue()), bigIntAttoToPercent(ts.RecoveryRate())))
-		}
+		// 	minersValues = append(minersValues, fmt.Sprintf("%0.04f FIL (%0.02f%%)", util.ToFIL(ts.LiquidationValue()), bigIntAttoToPercent(ts.RecoveryRate())))
+		// }
 
-		agentCollateralStatsKeys := []string{
-			"Agent liquidation value",
-		}
+		// agentCollateralStatsKeys := []string{
+		// 	"Agent liquidation value",
+		// }
 
-		agentCollateralStatsVals := []string{
-			fmt.Sprintf("%0.03f FIL (%0.02f%% recovery)", util.ToFIL(ats.LiquidationValue()), bigIntAttoToPercent(ats.RecoveryRate())),
-		}
+		// agentCollateralStatsVals := []string{
+		// 	fmt.Sprintf("%0.03f FIL (%0.02f%% recovery)", util.ToFIL(ats.LiquidationValue()), bigIntAttoToPercent(ats.RecoveryRate())),
+		// }
 
-		agentLiquidFILKey := []string{
-			"Agent's liquid FIL",
-		}
+		// agentLiquidFILKey := []string{
+		// 	"Agent's liquid FIL",
+		// }
 
-		agentLiquidFILValue := []string{
-			fmt.Sprintf("%0.04f FIL", util.ToFIL(ats.AgentAvailableBal)),
-		}
+		// agentLiquidFILValue := []string{
+		// 	fmt.Sprintf("%0.04f FIL", util.ToFIL(ats.AgentAvailableBal)),
+		// }
 
-		printTable(agentCollateralStatsKeys, agentCollateralStatsVals)
-		printTable(agentLiquidFILKey, agentLiquidFILValue)
+		// printTable(agentCollateralStatsKeys, agentCollateralStatsVals)
+		// printTable(agentLiquidFILKey, agentLiquidFILValue)
 		printTable(minersKeys, minersValues)
 		fmt.Println()
 	},

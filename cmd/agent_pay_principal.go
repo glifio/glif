@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
@@ -37,7 +36,7 @@ var payPrincipalCmd = &cobra.Command{
 
 			payAmt := new(big.Int).Add(amount, amountOwed)
 			args = append(args, util.ToFIL(payAmt).String())
-			previewAction(cmd, args, constants.MethodPay)
+			// previewAction(cmd, args, constants.MethodPay)
 			return
 		}
 		payAmt, err := pay(cmd, args, Principal)

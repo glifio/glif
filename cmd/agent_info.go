@@ -18,9 +18,7 @@ import (
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
 	"github.com/glifio/go-pools/abigen"
 	"github.com/glifio/go-pools/constants"
-	"github.com/glifio/go-pools/econ"
 	"github.com/glifio/go-pools/rpc"
-	"github.com/glifio/go-pools/sdk"
 	"github.com/glifio/go-pools/terminate"
 	"github.com/glifio/go-pools/util"
 	"github.com/glifio/go-pools/vc"
@@ -58,20 +56,20 @@ var agentInfoCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		agentID, _, _, _, err := basicInfo(cmd.Context(), agentAddr, agentAddrDel, lapi, s)
+		_, _, _, _, err = basicInfo(cmd.Context(), agentAddr, agentAddrDel, lapi, s)
 		if err != nil {
 			logFatal(err)
 		}
 
-		agentData, ats, err := econInfo(cmd.Context(), agentAddr, agentID, lapi, s)
-		if err != nil {
-			logFatal(err)
-		}
+		// agentData, ats, err := econInfo(cmd.Context(), agentAddr, agentID, lapi, s)
+		// if err != nil {
+		// 	logFatal(err)
+		// }
 
-		err = agentHealth(cmd.Context(), agentAddr, agentData, ats, s)
-		if err != nil {
-			logFatal(err)
-		}
+		// err = agentHealth(cmd.Context(), agentAddr, agentData, ats, s)
+		// if err != nil {
+		// 	logFatal(err)
+		// }
 	},
 }
 
@@ -187,10 +185,12 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 			return query.AgentLiquidAssets(ctx, agent, nil)
 		},
 		func() (interface{}, error) {
-			return PoolsSDK.Query().InfPoolAgentMaxBorrow(ctx, agent, agentData)
+			return big.NewInt(0), nil
+			// return PoolsSDK.Query().InfPoolAgentMaxBorrow(ctx, agent, agentData)
 		},
 		func() (interface{}, error) {
-			return PoolsSDK.Query().AgentPreviewTerminationQuick(ctx, agent)
+			return nil, nil
+			// return PoolsSDK.Query().AgentPreviewTerminationQuick(ctx, agent)
 		},
 		func() (interface{}, error) {
 			amountOwed, err := query.AgentInterestOwed(ctx, agent, nil)
@@ -215,34 +215,29 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 	assets := results[0].(*big.Int)
 	borrowNow := results[1].(*big.Int)
 	ats := results[2].(terminate.PreviewAgentTerminationSummary)
-	liquidationValue := ats.LiquidationValue()
-	recoveryRate := ats.RecoveryRate()
+	// liquidationValue := ats.LiquidationValue()
+	// recoveryRate := ats.RecoveryRate()
 	amountOwed := results[3].(*big.Int)
 	lvlAndCap := results[4].([]interface{})
 	lvl := lvlAndCap[0].(*big.Int)
 	cap := lvlAndCap[1].(float64)
 
 	// here borrowMax does not ignores existing principal, so we add back existing principal to compute the max borrow (that does not account for existing principal)
-	borrowMaxDTE := sdk.ComputeMaxDTECap(agentData.AgentValue, agentData.Principal)
-	borrowMaxDTE.Add(borrowMaxDTE, agentData.Principal)
+	// borrowMaxDTE := sdk.ComputeMaxDTECap(agentData.AgentValue, agentData.Principal)
+	// borrowMaxDTE.Add(borrowMaxDTE, agentData.Principal)
 
-	borrowMaxLTV := sdk.ComputeMaxLTVCap(liquidationValue, agentData.Principal, recoveryRate)
-	borrowMaxLTV.Add(borrowMaxLTV, agentData.Principal)
+	// borrowMaxLTV := sdk.ComputeMaxLTVCap(liquidationValue, agentData.Principal, recoveryRate)
+	// borrowMaxLTV.Add(borrowMaxLTV, agentData.Principal)
 
 	borrowMax := big.NewInt(0)
 	// take the minimum between DTE and LTV limits
-	if borrowMaxDTE.Cmp(borrowMaxLTV) > 0 {
-		borrowMax = borrowMaxLTV
-	} else {
-		borrowMax = borrowMaxDTE
-	}
+	// if borrowMaxDTE.Cmp(borrowMaxLTV) > 0 {
+	// 	borrowMax = borrowMaxLTV
+	// } else {
+	// 	borrowMax = borrowMaxDTE
+	// }
 
-	nullCred, err := vc.NullishVerifiableCredential(*agentData)
-	if err != nil {
-		return nil, terminate.PreviewAgentTerminationSummary{}, err
-	}
-
-	rate, err := query.InfPoolGetRate(ctx, *nullCred)
+	rate, err := query.InfPoolGetRate(ctx)
 	if err != nil {
 		return nil, terminate.PreviewAgentTerminationSummary{}, err
 	}
@@ -258,7 +253,7 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 	weeklyPmt.Quo(weeklyPmt, big.NewFloat(1e54))
 
 	equity := new(big.Int).Sub(agentData.AgentValue, agentData.Principal)
-	dte := econ.DebtToEquityRatio(agentData.Principal, equity)
+	// dte := econ.DebtToEquityRatio(agentData.Principal, equity)
 
 	dailyFees := rate.Mul(rate, big.NewInt(constants.EpochsInDay))
 	dailyFees.Mul(dailyFees, agentData.Principal)
@@ -278,13 +273,13 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 		// fmt.Sprintf("%0.09f FIL", util.ToFIL(maxWithdraw)),
 	})
 
-	printTable([]string{
-		"Liquidation value",
-		"Recovery rate",
-	}, []string{
-		fmt.Sprintf("\033[1m%0.09f FIL\033[0m", util.ToFIL(liquidationValue)),
-		fmt.Sprintf("%0.03f%%", bigIntAttoToPercent(ats.RecoveryRate())),
-	})
+	// printTable([]string{
+	// 	"Liquidation value",
+	// 	"Recovery rate",
+	// }, []string{
+	// 	fmt.Sprintf("\033[1m%0.09f FIL\033[0m", util.ToFIL(liquidationValue)),
+	// 	fmt.Sprintf("%0.03f%%", bigIntAttoToPercent(ats.RecoveryRate())),
+	// })
 
 	if lvl.Cmp(big.NewInt(0)) == 0 && chainID == constants.MainnetChainID {
 		fmt.Println()
@@ -327,9 +322,7 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 		}
 		printTable(somethingBorrowedKeys, somethingBorrowedValues)
 
-		dti := new(big.Int).Div(dailyFees, agentData.ExpectedDailyRewards)
-
-		ltv := ats.LTV(agentData.Principal)
+		// ltv := ats.LTV(agentData.Principal)
 
 		coreEconKeys := []string{
 			"Liquid FIL",
@@ -346,9 +339,9 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 			fmt.Sprintf("%0.08f FIL", util.ToFIL(agentData.AgentValue)),
 			fmt.Sprintf("%0.08f FIL", util.ToFIL(equity)),
 			fmt.Sprintf("%0.08f FIL", util.ToFIL(weeklyEarnings)),
-			fmt.Sprintf("%0.03f%% (must stay below %0.00f%%)", bigIntAttoToPercent(ltv), bigIntAttoToPercent(constants.MAX_LTV)),
-			fmt.Sprintf("%0.03f%% (must stay below %0.00f%%)", dte.Mul(dte, big.NewFloat(100)), bigIntAttoToPercent(constants.MAX_DTE)),
-			fmt.Sprintf("%0.03f%% (must stay below %0.00f%%)", bigIntAttoToPercent(dti), bigIntAttoToPercent(constants.MAX_DTI)),
+			// fmt.Sprintf("%0.03f%% (must stay below %0.00f%%)", bigIntAttoToPercent(ltv), bigIntAttoToPercent(constants.MAX_LTV)),
+			// fmt.Sprintf("%0.03f%% (must stay below %0.00f%%)", dte.Mul(dte, big.NewFloat(100)), bigIntAttoToPercent(constants.MAX_DTE)),
+			// fmt.Sprintf("%0.03f%% (must stay below %0.00f%%)", bigIntAttoToPercent(dti), bigIntAttoToPercent(constants.MAX_DTI)),
 		}
 
 		printTable(coreEconKeys, coreEconValues)
@@ -386,10 +379,12 @@ func agentHealth(ctx context.Context, agent common.Address, agentData *vc.AgentD
 			return query.AgentDefaulted(ctx, agent)
 		},
 		func() (interface{}, error) {
-			return query.AgentFaultyEpochStart(ctx, agent)
+			return big.NewInt(0), nil
+			// return query.AgentFaultyEpochStart(ctx, agent)
 		},
 		func() (interface{}, error) {
-			return query.DefaultEpoch(ctx)
+			// return query.DefaultEpoch(ctx)
+			return big.NewInt(0), nil
 		},
 		func() (interface{}, error) {
 			return query.InfPoolGetAccount(ctx, agent, nil)
@@ -403,15 +398,15 @@ func agentHealth(ctx context.Context, agent common.Address, agentData *vc.AgentD
 
 	agentAdmin := results[0].(common.Address)
 	defaulted := results[1].(bool)
-	faultySectorStart := results[2].(*big.Int)
+	// faultySectorStart := results[2].(*big.Int)
 	defaultEpoch := results[3].(*big.Int)
 	account := results[4].(abigen.Account)
 
-	overLTV := ats.LTV(agentData.Principal).Cmp(constants.MAX_LTV) > 0
+	// overLTV := ats.LTV(agentData.Principal).Cmp(constants.MAX_LTV) > 0
 
 	weekOneDeadline := new(big.Int).Add(defaultEpoch, big.NewInt(constants.EpochsInWeek*2))
 
-	weekOneDeadlineTime := util.EpochHeightToTimestamp(weekOneDeadline, query.ChainID())
+	// weekOneDeadlineTime := util.EpochHeightToTimestamp(weekOneDeadline, query.ChainID())
 	defaultEpochTime := util.EpochHeightToTimestamp(defaultEpoch, query.ChainID())
 	epochsPaidTime := util.EpochHeightToTimestamp(account.EpochsPaid, query.ChainID())
 
@@ -422,39 +417,39 @@ func agentHealth(ctx context.Context, agent common.Address, agentData *vc.AgentD
 	// check to see we're still in good standing wrt making our weekly payment
 	owesPmt := account.Principal.Cmp(big.NewInt(0)) > 0
 	badPmtStatus := owesPmt && account.EpochsPaid.Cmp(weekOneDeadline) < 1
-	badFaultStatus := faultySectorStart.Cmp(big.NewInt(0)) > 0
+	// badFaultStatus := faultySectorStart.Cmp(big.NewInt(0)) > 0
 
 	faultRatio := big.NewFloat(0)
 
 	// check to see if we have faulty sectors (regardless of the Agent's state)
-	pendingBadFaultStatus := false
-	if agentData.LiveSectors.Int64() > 0 {
-		faultRatio = new(big.Float).Quo(new(big.Float).SetInt(agentData.FaultySectors), new(big.Float).SetInt(agentData.LiveSectors))
-		// faulty sectors exist over the limit
-		if faultRatio.Cmp(constants.FAULTY_SECTOR_TOLERANCE) > 0 {
-			pendingBadFaultStatus = true
-		}
-	}
+	// pendingBadFaultStatus := false
+	// if agentData.LiveSectors.Int64() > 0 {
+	// 	faultRatio = new(big.Float).Quo(new(big.Float).SetInt(agentData.FaultySectors), new(big.Float).SetInt(agentData.LiveSectors))
+	// 	// faulty sectors exist over the limit
+	// 	if faultRatio.Cmp(constants.FAULTY_SECTOR_TOLERANCE) > 0 {
+	// 		pendingBadFaultStatus = true
+	// 	}
+	// }
 
 	// convert faults into percentage for logging
 	faultRatio = faultRatio.Mul(faultRatio, big.NewFloat(100))
 	// convert limit into percentage for logging
-	limit := new(big.Float).Mul(constants.FAULTY_SECTOR_TOLERANCE, big.NewFloat(100))
+	// limit := new(big.Float).Mul(constants.FAULTY_SECTOR_TOLERANCE, big.NewFloat(100))
 
-	if !badPmtStatus && !badFaultStatus && !pendingBadFaultStatus && !overLTV {
-		fmt.Printf("Status healthy 🟢\n")
-		if owesPmt {
-			fmt.Printf("Your account owes its weekly payment (`to-current`) within the next: %s (by epoch # %s)\n", formatSinceDuration(weekOneDeadlineTime, epochsPaidTime), weekOneDeadline)
-		}
-	} else {
-		fmt.Println(chalk.Bold.TextStyle("Status unhealthy 🔴"))
-	}
+	// if !badPmtStatus && !badFaultStatus && !pendingBadFaultStatus && !overLTV {
+	// 	fmt.Printf("Status healthy 🟢\n")
+	// 	if owesPmt {
+	// 		fmt.Printf("Your account owes its weekly payment (`to-current`) within the next: %s (by epoch # %s)\n", formatSinceDuration(weekOneDeadlineTime, epochsPaidTime), weekOneDeadline)
+	// 	}
+	// } else {
+	// 	fmt.Println(chalk.Bold.TextStyle("Status unhealthy 🔴"))
+	// }
 
-	if overLTV {
-		fmt.Printf("WARNING: Your Agent is over the LTV limit of %0.00f%%\n", bigIntAttoToPercent(constants.MAX_LTV))
-		fmt.Printf("Your Agent must pay down its debt or increase its collateral to avoid liquidation\n")
-		fmt.Printf("Contact the GLIF team as soon as possible\n")
-	}
+	// if overLTV {
+	// 	fmt.Printf("WARNING: Your Agent is over the LTV limit of %0.00f%%\n", bigIntAttoToPercent(constants.MAX_LTV))
+	// 	fmt.Printf("Your Agent must pay down its debt or increase its collateral to avoid liquidation\n")
+	// 	fmt.Printf("Contact the GLIF team as soon as possible\n")
+	// }
 
 	if badPmtStatus {
 		fmt.Println("You are late on your weekly payment")
@@ -462,34 +457,34 @@ func agentHealth(ctx context.Context, agent common.Address, agentData *vc.AgentD
 	}
 
 	// since we have to report faulty sectors when the Agent is overLTV, we only display this message if the Agent is not overLTV AND has faulty sectors
-	if badFaultStatus && !overLTV {
-		chainHeight, err := query.ChainHeight(ctx)
-		if err != nil {
-			return err
-		}
+	// if badFaultStatus && !overLTV {
+	// 	chainHeight, err := query.ChainHeight(ctx)
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-		consecutiveFaultEpochTolerance, err := query.MaxConsecutiveFaultEpochs(ctx)
-		if err != nil {
-			return err
-		}
+	// 	consecutiveFaultEpochTolerance, err := query.MaxConsecutiveFaultEpochs(ctx)
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-		consecutiveFaultEpochs := new(big.Int).Sub(chainHeight, faultySectorStart)
+	// 	consecutiveFaultEpochs := new(big.Int).Sub(chainHeight, faultySectorStart)
 
-		liableForFaultySectorDefault := consecutiveFaultEpochs.Cmp(consecutiveFaultEpochTolerance) >= 0
+	// 	liableForFaultySectorDefault := consecutiveFaultEpochs.Cmp(consecutiveFaultEpochTolerance) >= 0
 
-		if liableForFaultySectorDefault {
-			fmt.Printf("You are at risk of liquidation due to consecutive faulty sectors - recover your sectors as soon as possible\n")
-			fmt.Printf("Faulty sector start epoch: %v\n", faultySectorStart)
-		} else {
-			epochsBeforeZeroTolerance := new(big.Int).Sub(consecutiveFaultEpochTolerance, consecutiveFaultEpochs)
-			fmt.Printf("WARNING: You are approaching risk of liquidation due to consecutive faulty sectors\n")
-			fmt.Printf("With %v more consecutive epochs of faulty sectors, you will be at risk of liquidation\n", epochsBeforeZeroTolerance)
-		}
-	} else if pendingBadFaultStatus {
-		fmt.Printf("WARNING: Your Agent has one or more miners with faulty sectors - recover your sectors as soon as possible\n")
-		fmt.Printf("Faulty sector ratio: %.02f%%\n", faultRatio)
-		fmt.Printf("Faulty sector ratio limit: %v%%\n", limit.String())
-	}
+	// 	if liableForFaultySectorDefault {
+	// 		fmt.Printf("You are at risk of liquidation due to consecutive faulty sectors - recover your sectors as soon as possible\n")
+	// 		fmt.Printf("Faulty sector start epoch: %v\n", faultySectorStart)
+	// 	} else {
+	// 		epochsBeforeZeroTolerance := new(big.Int).Sub(consecutiveFaultEpochTolerance, consecutiveFaultEpochs)
+	// 		fmt.Printf("WARNING: You are approaching risk of liquidation due to consecutive faulty sectors\n")
+	// 		fmt.Printf("With %v more consecutive epochs of faulty sectors, you will be at risk of liquidation\n", epochsBeforeZeroTolerance)
+	// 	}
+	// } else if pendingBadFaultStatus {
+	// 	fmt.Printf("WARNING: Your Agent has one or more miners with faulty sectors - recover your sectors as soon as possible\n")
+	// 	fmt.Printf("Faulty sector ratio: %.02f%%\n", faultRatio)
+	// 	fmt.Printf("Faulty sector ratio limit: %v%%\n", limit.String())
+	// }
 
 	printTable([]string{
 		"Agent's administrator",
