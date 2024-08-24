@@ -18,7 +18,7 @@ import (
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
 	"github.com/glifio/go-pools/abigen"
 	"github.com/glifio/go-pools/constants"
-	"github.com/glifio/go-pools/rpc"
+	"github.com/glifio/go-pools/econ"
 	"github.com/glifio/go-pools/terminate"
 	"github.com/glifio/go-pools/util"
 	"github.com/glifio/go-pools/vc"
@@ -56,15 +56,15 @@ var agentInfoCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		_, _, _, _, err = basicInfo(cmd.Context(), agentAddr, agentAddrDel, lapi, s)
+		agentID, _, _, _, afi, err := basicInfo(cmd.Context(), agentAddr, agentAddrDel, lapi, s)
 		if err != nil {
 			logFatal(err)
 		}
 
-		// agentData, ats, err := econInfo(cmd.Context(), agentAddr, agentID, lapi, s)
-		// if err != nil {
-		// 	logFatal(err)
-		// }
+		err = econInfo(cmd.Context(), agentAddr, agentID, afi, lapi, s)
+		if err != nil {
+			logFatal(err)
+		}
 
 		// err = agentHealth(cmd.Context(), agentAddr, agentData, ats, s)
 		// if err != nil {
@@ -78,6 +78,7 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 	agentFILIDAddr address.Address,
 	agVersion uint8,
 	ntwVersion uint8,
+	afi *econ.AgentFi,
 	err error,
 ) {
 	query := PoolsSDK.Query()
@@ -109,10 +110,16 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 			}
 			return query.MinerRegistryAgentMinersList(ctx, agentID, nil)
 		},
+		func() (interface{}, error) {
+			return query.AgentLiquidAssets(ctx, agent, nil)
+		},
+		func() (interface{}, error) {
+			return fetchAgentEconFromAPI(agent)
+		},
 	}
 	results, err := util.Multiread(tasks)
 	if err != nil {
-		return common.Big0, address.Undef, 0, 0, err
+		return common.Big0, address.Undef, 0, 0, nil, err
 	}
 
 	agentID = results[0].(*big.Int)
@@ -124,6 +131,8 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 	operator := results[4].(common.Address)
 	requester := results[5].(common.Address)
 	agentMiners := results[6].([]address.Address)
+	agentLiquidFIL := results[7].(*big.Int)
+	afi = results[8].(*econ.AgentFi)
 
 	goodVersion := agVersion == ntwVersion
 
@@ -142,6 +151,8 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 		"Agent Owner",
 		"Agent Operator",
 		"Agent ADO Requester",
+		"Agent Balance",
+		"Agent Total Value",
 		"Agent Miners",
 		"Version",
 	}
@@ -154,6 +165,8 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 		owner.String(),
 		operator.String(),
 		requester.String(),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(agentLiquidFIL)),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.Balance)),
 		fmt.Sprintf("%v", len(agentMiners)),
 		versionCopy,
 	}
@@ -163,34 +176,15 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 
 	s.Start()
 
-	return agentID, agentFILIDAddr, agVersion, ntwVersion, nil
+	return agentID, agentFILIDAddr, agVersion, ntwVersion, afi, nil
 }
 
-func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi *api.FullNodeStruct, s *spinner.Spinner) (*vc.AgentData, terminate.PreviewAgentTerminationSummary, error) {
+func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, afi *econ.AgentFi, lapi *api.FullNodeStruct, s *spinner.Spinner) error {
 	query := PoolsSDK.Query()
-
-	adoCloser, err := PoolsSDK.Extern().ConnectAdoClient(ctx)
-	if err != nil {
-		return nil, terminate.PreviewAgentTerminationSummary{}, err
-	}
-	defer adoCloser()
-
-	agentData, err := rpc.ADOClient.AgentData(context.Background(), agent)
-	if err != nil {
-		return nil, terminate.PreviewAgentTerminationSummary{}, err
-	}
 
 	tasks := []util.TaskFunc{
 		func() (interface{}, error) {
-			return query.AgentLiquidAssets(ctx, agent, nil)
-		},
-		func() (interface{}, error) {
-			return big.NewInt(0), nil
-			// return PoolsSDK.Query().InfPoolAgentMaxBorrow(ctx, agent, agentData)
-		},
-		func() (interface{}, error) {
-			return nil, nil
-			// return PoolsSDK.Query().AgentPreviewTerminationQuick(ctx, agent)
+			return query.AgentPrincipal(ctx, agent, nil)
 		},
 		func() (interface{}, error) {
 			amountOwed, err := query.AgentInterestOwed(ctx, agent, nil)
@@ -200,156 +194,75 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, lapi 
 			return amountOwed, nil
 		},
 		func() (interface{}, error) {
-			lvl, cap, err := query.InfPoolGetAgentLvl(ctx, agentID)
-			if err != nil {
-				return nil, err
-			}
-			return []interface{}{lvl, cap}, nil
+			return query.InfPoolGetRate(ctx)
 		},
 	}
 
 	results, err := util.Multiread(tasks)
 	if err != nil {
-		return nil, terminate.PreviewAgentTerminationSummary{}, err
+		return err
 	}
-	assets := results[0].(*big.Int)
-	borrowNow := results[1].(*big.Int)
-	ats := results[2].(terminate.PreviewAgentTerminationSummary)
-	// liquidationValue := ats.LiquidationValue()
-	// recoveryRate := ats.RecoveryRate()
-	amountOwed := results[3].(*big.Int)
-	lvlAndCap := results[4].([]interface{})
-	lvl := lvlAndCap[0].(*big.Int)
-	cap := lvlAndCap[1].(float64)
-
-	// here borrowMax does not ignores existing principal, so we add back existing principal to compute the max borrow (that does not account for existing principal)
-	// borrowMaxDTE := sdk.ComputeMaxDTECap(agentData.AgentValue, agentData.Principal)
-	// borrowMaxDTE.Add(borrowMaxDTE, agentData.Principal)
-
-	// borrowMaxLTV := sdk.ComputeMaxLTVCap(liquidationValue, agentData.Principal, recoveryRate)
-	// borrowMaxLTV.Add(borrowMaxLTV, agentData.Principal)
-
-	borrowMax := big.NewInt(0)
-	// take the minimum between DTE and LTV limits
-	// if borrowMaxDTE.Cmp(borrowMaxLTV) > 0 {
-	// 	borrowMax = borrowMaxLTV
-	// } else {
-	// 	borrowMax = borrowMaxDTE
-	// }
-
-	rate, err := query.InfPoolGetRate(ctx)
-	if err != nil {
-		return nil, terminate.PreviewAgentTerminationSummary{}, err
-	}
-
-	wpr := new(big.Float).Mul(new(big.Float).SetInt(rate), big.NewFloat(constants.EpochsInWeek))
+	principal := results[0].(*big.Int)
+	interestOwed := results[1].(*big.Int)
+	totalDebt := new(big.Int).Add(principal, interestOwed)
+	rate := results[2].(*big.Int)
 
 	apr := new(big.Float).Mul(new(big.Float).SetInt(rate), big.NewFloat(constants.EpochsInYear))
 	apr.Quo(apr, big.NewFloat(1e34))
-
-	weeklyEarnings := new(big.Int).Mul(agentData.ExpectedDailyRewards, big.NewInt(7))
-
-	weeklyPmt := new(big.Float).Mul(new(big.Float).SetInt(agentData.Principal), wpr)
-	weeklyPmt.Quo(weeklyPmt, big.NewFloat(1e54))
-
-	equity := new(big.Int).Sub(agentData.AgentValue, agentData.Principal)
-	// dte := econ.DebtToEquityRatio(agentData.Principal, equity)
-
-	dailyFees := rate.Mul(rate, big.NewInt(constants.EpochsInDay))
-	dailyFees.Mul(dailyFees, agentData.Principal)
-	dailyFees.Div(dailyFees, constants.WAD)
 
 	s.Stop()
 
 	generateHeader("ECON INFO")
 
 	printTable([]string{
-		"Borrow now",
-		"Max borrow",
-		// "Agent's max withdraw",
+		"Liquidation Value",
+		"Total Debt",
+		"Debt to liquidation value % (DTL)",
 	}, []string{
-		fmt.Sprintf("%0.09f FIL", util.ToFIL(borrowNow)),
-		fmt.Sprintf("%0.09f FIL", util.ToFIL(borrowMax)),
-		// fmt.Sprintf("%0.09f FIL", util.ToFIL(maxWithdraw)),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.LiquidationValue())),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(totalDebt)),
+		fmt.Sprintf("%0.02f%%", afi.DTL()),
 	})
 
-	// printTable([]string{
-	// 	"Liquidation value",
-	// 	"Recovery rate",
-	// }, []string{
-	// 	fmt.Sprintf("\033[1m%0.09f FIL\033[0m", util.ToFIL(liquidationValue)),
-	// 	fmt.Sprintf("%0.03f%%", bigIntAttoToPercent(ats.RecoveryRate())),
-	// })
+	printTable([]string{
+		"Max borrow to seal",
+		"Max borrow to withdraw",
+		"Current borrow limit",
+		"Current withdraw limit",
+	}, []string{
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.MaxBorrowAndSeal())),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.MaxBorrowAndWithdraw())),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.BorrowLimit())),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.WithdrawLimit())),
+	})
 
-	if lvl.Cmp(big.NewInt(0)) == 0 && chainID == constants.MainnetChainID {
-		fmt.Println()
-		fmt.Println(chalk.Bold.TextStyle("Please open up a request for quota on GitHub: https://tinyurl.com/glif-entry-request"))
-	}
-	if agentData.Principal.Cmp(big.NewInt(0)) == 0 {
-		nothingBorrowedKeys := []string{
-			"Total borrowed",
-			"Agent's liquid FIL",
-			"Agent's total FIL",
-			"Agent's equity",
-			"Agent's expected weekly earnings",
-			"Agent's quota",
-		}
+	printTable([]string{
+		"Total borrowed",
+		"Interest owed",
+		"APR",
+	}, []string{
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(principal)),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(interestOwed)),
+		fmt.Sprintf("%.02f%%", apr),
+	})
 
-		nothingBorrowedValues := []string{
-			"0 FIL",
-			fmt.Sprintf("%0.08f FIL", util.ToFIL(assets)),
-			fmt.Sprintf("%0.08f FIL", util.ToFIL(agentData.AgentValue)),
-			fmt.Sprintf("%0.08f FIL", util.ToFIL(equity)),
-			fmt.Sprintf("%0.08f FIL", util.ToFIL(weeklyEarnings)),
-			fmt.Sprintf("%.03f FIL", cap),
-		}
-		printTable(nothingBorrowedKeys, nothingBorrowedValues)
-	} else {
-		somethingBorrowedKeys := []string{
-			"Total borrowed",
-			"You current owe",
-			"Current borrow APR",
-			"Your weekly payment",
-			"Quota",
-		}
-
-		somethingBorrowedValues := []string{
-			fmt.Sprintf("%0.09f FIL", util.ToFIL(agentData.Principal)),
-			fmt.Sprintf("%0.09f FIL", util.ToFIL(amountOwed)),
-			fmt.Sprintf("%.03f%%", apr),
-			fmt.Sprintf("%0.09f FIL", weeklyPmt),
-			fmt.Sprintf("%.03f FIL", cap),
-		}
-		printTable(somethingBorrowedKeys, somethingBorrowedValues)
-
-		// ltv := ats.LTV(agentData.Principal)
-
-		coreEconKeys := []string{
-			"Liquid FIL",
-			"Total FIL",
-			"Equity",
-			"Expected weekly earnings",
-			"Debt-to-liquidation-value (LTV)",
-			"Debt-to-equity (DTE)",
-			"Debt-to-income (DTI)",
-		}
-
-		coreEconValues := []string{
-			fmt.Sprintf("%0.08f FIL", util.ToFIL(assets)),
-			fmt.Sprintf("%0.08f FIL", util.ToFIL(agentData.AgentValue)),
-			fmt.Sprintf("%0.08f FIL", util.ToFIL(equity)),
-			fmt.Sprintf("%0.08f FIL", util.ToFIL(weeklyEarnings)),
-			// fmt.Sprintf("%0.03f%% (must stay below %0.00f%%)", bigIntAttoToPercent(ltv), bigIntAttoToPercent(constants.MAX_LTV)),
-			// fmt.Sprintf("%0.03f%% (must stay below %0.00f%%)", dte.Mul(dte, big.NewFloat(100)), bigIntAttoToPercent(constants.MAX_DTE)),
-			// fmt.Sprintf("%0.03f%% (must stay below %0.00f%%)", bigIntAttoToPercent(dti), bigIntAttoToPercent(constants.MAX_DTI)),
-		}
-
-		printTable(coreEconKeys, coreEconValues)
-	}
+	printTable([]string{
+		"Liquidation Value Breakdown",
+		"Available balance",
+		"Intial Pledge",
+		"Locked Rewards",
+		"Total Liquidation Value",
+	}, []string{
+		"",
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.AvailableBalance)),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.InitialPledge)),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.LockedRewards)),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.LiquidationValue())),
+	})
 
 	s.Start()
 
-	return agentData, ats, nil
+	return nil
 }
 
 func bigIntAttoToPercent(atto *big.Int) *big.Float {
