@@ -35,5 +35,5 @@ func init() {
 	payCmd.AddCommand(payToCurrentCmd)
 	payToCurrentCmd.Flags().String("pool-name", "infinity-pool", "name of the pool to make a payment")
 	payToCurrentCmd.Flags().String("from", "", "address to send the transaction from")
-	payToCurrentCmd.Flags().BoolVar(&payToCurrentPreview, "preview", false, "preview financial outcome of pay to-current action")
+	payToCurrentCmd.Flags().BoolVar(&payToCurrentPreview, "preview", false, "DEPRECATED: preview financial outcome of pay to-current action")
 }
