@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"strings"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -16,12 +15,9 @@ import (
 	"github.com/filecoin-project/lotus/api"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
-	"github.com/glifio/go-pools/abigen"
 	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/econ"
-	"github.com/glifio/go-pools/terminate"
 	"github.com/glifio/go-pools/util"
-	"github.com/glifio/go-pools/vc"
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
 	"github.com/ttacon/chalk"
@@ -56,20 +52,20 @@ var agentInfoCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		agentID, _, _, _, afi, err := basicInfo(cmd.Context(), agentAddr, agentAddrDel, lapi, s)
+		_, _, _, _, afi, err := basicInfo(cmd.Context(), agentAddr, agentAddrDel, lapi, s)
 		if err != nil {
 			logFatal(err)
 		}
 
-		err = econInfo(cmd.Context(), agentAddr, agentID, afi, lapi, s)
+		err = econInfo(cmd.Context(), agentAddr, afi, s)
 		if err != nil {
 			logFatal(err)
 		}
 
-		// err = agentHealth(cmd.Context(), agentAddr, agentData, ats, s)
-		// if err != nil {
-		// 	logFatal(err)
-		// }
+		err = agentHealth(cmd.Context(), agentAddr, afi, s)
+		if err != nil {
+			logFatal(err)
+		}
 	},
 }
 
@@ -114,7 +110,7 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 			return query.AgentLiquidAssets(ctx, agent, nil)
 		},
 		func() (interface{}, error) {
-			return fetchAgentEconFromAPI(agent)
+			return econ.GetAgentFiFromAPI(agent)
 		},
 	}
 	results, err := util.Multiread(tasks)
@@ -179,7 +175,7 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 	return agentID, agentFILIDAddr, agVersion, ntwVersion, afi, nil
 }
 
-func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, afi *econ.AgentFi, lapi *api.FullNodeStruct, s *spinner.Spinner) error {
+func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, s *spinner.Spinner) error {
 	query := PoolsSDK.Query()
 
 	tasks := []util.TaskFunc{
@@ -265,10 +261,6 @@ func econInfo(ctx context.Context, agent common.Address, agentID *big.Int, afi *
 	return nil
 }
 
-func bigIntAttoToPercent(atto *big.Int) *big.Float {
-	return new(big.Float).Mul(util.ToFIL(atto), big.NewFloat(100))
-}
-
 func printTable(keys []string, values []string) {
 	// here we hacky get the same width for all separate tables in the info command by making the first row have a long width
 	tbl := table.New("                                    ", "")
@@ -280,7 +272,7 @@ func printTable(keys []string, values []string) {
 	tbl.Print()
 }
 
-func agentHealth(ctx context.Context, agent common.Address, agentData *vc.AgentData, ats terminate.PreviewAgentTerminationSummary, s *spinner.Spinner) error {
+func agentHealth(ctx context.Context, agent common.Address, afi *econ.AgentFi, s *spinner.Spinner) error {
 	query := PoolsSDK.Query()
 
 	tasks := []util.TaskFunc{
@@ -291,17 +283,6 @@ func agentHealth(ctx context.Context, agent common.Address, agentData *vc.AgentD
 		func() (interface{}, error) {
 			return query.AgentDefaulted(ctx, agent)
 		},
-		func() (interface{}, error) {
-			return big.NewInt(0), nil
-			// return query.AgentFaultyEpochStart(ctx, agent)
-		},
-		func() (interface{}, error) {
-			// return query.DefaultEpoch(ctx)
-			return big.NewInt(0), nil
-		},
-		func() (interface{}, error) {
-			return query.InfPoolGetAccount(ctx, agent, nil)
-		},
 	}
 
 	results, err := util.Multiread(tasks)
@@ -311,93 +292,35 @@ func agentHealth(ctx context.Context, agent common.Address, agentData *vc.AgentD
 
 	agentAdmin := results[0].(common.Address)
 	defaulted := results[1].(bool)
-	// faultySectorStart := results[2].(*big.Int)
-	defaultEpoch := results[3].(*big.Int)
-	account := results[4].(abigen.Account)
-
-	// overLTV := ats.LTV(agentData.Principal).Cmp(constants.MAX_LTV) > 0
-
-	weekOneDeadline := new(big.Int).Add(defaultEpoch, big.NewInt(constants.EpochsInWeek*2))
-
-	// weekOneDeadlineTime := util.EpochHeightToTimestamp(weekOneDeadline, query.ChainID())
-	defaultEpochTime := util.EpochHeightToTimestamp(defaultEpoch, query.ChainID())
-	epochsPaidTime := util.EpochHeightToTimestamp(account.EpochsPaid, query.ChainID())
 
 	s.Stop()
 
 	generateHeader("HEALTH")
 	fmt.Println()
-	// check to see we're still in good standing wrt making our weekly payment
-	owesPmt := account.Principal.Cmp(big.NewInt(0)) > 0
-	badPmtStatus := owesPmt && account.EpochsPaid.Cmp(weekOneDeadline) < 1
-	// badFaultStatus := faultySectorStart.Cmp(big.NewInt(0)) > 0
 
-	faultRatio := big.NewFloat(0)
-
-	// check to see if we have faulty sectors (regardless of the Agent's state)
-	// pendingBadFaultStatus := false
-	// if agentData.LiveSectors.Int64() > 0 {
-	// 	faultRatio = new(big.Float).Quo(new(big.Float).SetInt(agentData.FaultySectors), new(big.Float).SetInt(agentData.LiveSectors))
-	// 	// faulty sectors exist over the limit
-	// 	if faultRatio.Cmp(constants.FAULTY_SECTOR_TOLERANCE) > 0 {
-	// 		pendingBadFaultStatus = true
-	// 	}
-	// }
-
-	// convert faults into percentage for logging
-	faultRatio = faultRatio.Mul(faultRatio, big.NewFloat(100))
-	// convert limit into percentage for logging
-	// limit := new(big.Float).Mul(constants.FAULTY_SECTOR_TOLERANCE, big.NewFloat(100))
-
-	// if !badPmtStatus && !badFaultStatus && !pendingBadFaultStatus && !overLTV {
-	// 	fmt.Printf("Status healthy 🟢\n")
-	// 	if owesPmt {
-	// 		fmt.Printf("Your account owes its weekly payment (`to-current`) within the next: %s (by epoch # %s)\n", formatSinceDuration(weekOneDeadlineTime, epochsPaidTime), weekOneDeadline)
-	// 	}
-	// } else {
-	// 	fmt.Println(chalk.Bold.TextStyle("Status unhealthy 🔴"))
-	// }
-
-	// if overLTV {
-	// 	fmt.Printf("WARNING: Your Agent is over the LTV limit of %0.00f%%\n", bigIntAttoToPercent(constants.MAX_LTV))
-	// 	fmt.Printf("Your Agent must pay down its debt or increase its collateral to avoid liquidation\n")
-	// 	fmt.Printf("Contact the GLIF team as soon as possible\n")
-	// }
-
-	if badPmtStatus {
-		fmt.Println("You are late on your weekly payment")
-		fmt.Printf("Your account *must* make a payment to-current within the next: %s (by epoch # %s)\n", formatSinceDuration(defaultEpochTime, epochsPaidTime), defaultEpoch)
+	if defaulted {
+		fmt.Println("Agent is in default")
+		return nil
 	}
 
-	// since we have to report faulty sectors when the Agent is overLTV, we only display this message if the Agent is not overLTV AND has faulty sectors
-	// if badFaultStatus && !overLTV {
-	// 	chainHeight, err := query.ChainHeight(ctx)
-	// 	if err != nil {
-	// 		return err
-	// 	}
+	if agentAdmin != common.HexToAddress("") {
+		fmt.Println("Agent is on administration")
+	}
 
-	// 	consecutiveFaultEpochTolerance, err := query.MaxConsecutiveFaultEpochs(ctx)
-	// 	if err != nil {
-	// 		return err
-	// 	}
+	if afi.LiquidationValue().Sign() == 0 {
+		fmt.Println("Agent is inactive")
+		return nil
+	}
 
-	// 	consecutiveFaultEpochs := new(big.Int).Sub(chainHeight, faultySectorStart)
+	overLTV := util.DivWad(afi.Debt(), afi.LiquidationValue()).Cmp(constants.MAX_BORROW_DTL) > 0
 
-	// 	liableForFaultySectorDefault := consecutiveFaultEpochs.Cmp(consecutiveFaultEpochTolerance) >= 0
-
-	// 	if liableForFaultySectorDefault {
-	// 		fmt.Printf("You are at risk of liquidation due to consecutive faulty sectors - recover your sectors as soon as possible\n")
-	// 		fmt.Printf("Faulty sector start epoch: %v\n", faultySectorStart)
-	// 	} else {
-	// 		epochsBeforeZeroTolerance := new(big.Int).Sub(consecutiveFaultEpochTolerance, consecutiveFaultEpochs)
-	// 		fmt.Printf("WARNING: You are approaching risk of liquidation due to consecutive faulty sectors\n")
-	// 		fmt.Printf("With %v more consecutive epochs of faulty sectors, you will be at risk of liquidation\n", epochsBeforeZeroTolerance)
-	// 	}
-	// } else if pendingBadFaultStatus {
-	// 	fmt.Printf("WARNING: Your Agent has one or more miners with faulty sectors - recover your sectors as soon as possible\n")
-	// 	fmt.Printf("Faulty sector ratio: %.02f%%\n", faultRatio)
-	// 	fmt.Printf("Faulty sector ratio limit: %v%%\n", limit.String())
-	// }
+	if overLTV {
+		fmt.Println(chalk.Bold.TextStyle("Status unhealthy 🔴"))
+		fmt.Println("Agent is over the debt to liquidation value borrowing limit. Pay down principal or increase your collateral to avoid liquidation.")
+		fmt.Println()
+	} else {
+		fmt.Printf("Status healthy 🟢\n")
+	}
 
 	printTable([]string{
 		"Agent's administrator",
@@ -409,37 +332,6 @@ func agentHealth(ctx context.Context, agent common.Address, agentData *vc.AgentD
 	fmt.Println()
 
 	return nil
-}
-
-func formatSinceDuration(t1 time.Time, t2 time.Time) string {
-	d := t2.Sub(t1).Round(time.Minute)
-
-	var parts []string
-
-	weeks := int(d.Hours()) / (24 * 7)
-	d -= time.Duration(weeks) * 7 * 24 * time.Hour
-	if weeks > 1 {
-		parts = append(parts, fmt.Sprintf("%d weeks", weeks))
-	} else if weeks == 1 {
-		parts = append(parts, fmt.Sprintf("%d week", weeks))
-	}
-
-	days := int(d.Hours()) / 24
-	d -= time.Duration(days) * 24 * time.Hour
-	if days > 1 {
-		parts = append(parts, fmt.Sprintf("%d days", days))
-	} else if days == 1 {
-		parts = append(parts, fmt.Sprintf("%d day", days))
-	}
-
-	h := d / time.Hour
-	d -= h * time.Hour
-	parts = append(parts, fmt.Sprintf("%02d hours", h))
-
-	m := d / time.Minute
-	parts = append(parts, fmt.Sprintf("and %02d minutes", m))
-
-	return strings.Join(parts, " ")
 }
 
 func generateHeader(title string) {
