@@ -107,9 +107,6 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 			return query.MinerRegistryAgentMinersList(ctx, agentID, nil)
 		},
 		func() (interface{}, error) {
-			return query.AgentLiquidAssets(ctx, agent, nil)
-		},
-		func() (interface{}, error) {
 			return econ.GetAgentFiFromAPI(agent)
 		},
 	}
@@ -127,8 +124,7 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 	operator := results[4].(common.Address)
 	requester := results[5].(common.Address)
 	agentMiners := results[6].([]address.Address)
-	agentLiquidFIL := results[7].(*big.Int)
-	afi = results[8].(*econ.AgentFi)
+	afi = results[7].(*econ.AgentFi)
 
 	goodVersion := agVersion == ntwVersion
 
@@ -147,8 +143,6 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 		"Agent Owner",
 		"Agent Operator",
 		"Agent ADO Requester",
-		"Agent Balance",
-		"Agent Total Value",
 		"Agent Miners",
 		"Version",
 	}
@@ -161,8 +155,6 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 		owner.String(),
 		operator.String(),
 		requester.String(),
-		fmt.Sprintf("%0.09f FIL", util.ToFIL(agentLiquidFIL)),
-		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.Balance)),
 		fmt.Sprintf("%v", len(agentMiners)),
 		versionCopy,
 	}
@@ -192,6 +184,9 @@ func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, s *s
 		func() (interface{}, error) {
 			return query.InfPoolGetRate(ctx)
 		},
+		func() (interface{}, error) {
+			return query.AgentLiquidAssets(ctx, agent, nil)
+		},
 	}
 
 	results, err := util.Multiread(tasks)
@@ -202,6 +197,7 @@ func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, s *s
 	interestOwed := results[1].(*big.Int)
 	totalDebt := new(big.Int).Add(principal, interestOwed)
 	rate := results[2].(*big.Int)
+	agentLiquidAssets := results[3].(*big.Int)
 
 	apr := new(big.Float).Mul(new(big.Float).SetInt(rate), big.NewFloat(constants.EpochsInYear))
 	apr.Quo(apr, big.NewFloat(1e34))
@@ -211,13 +207,13 @@ func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, s *s
 	generateHeader("ECON INFO")
 
 	printTable([]string{
-		"Liquidation Value",
-		"Total Debt",
+		"Liquidation value",
+		"Total debt",
 		"Debt to liquidation value % (DTL)",
 	}, []string{
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.LiquidationValue())),
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(totalDebt)),
-		fmt.Sprintf("%0.02f%%", afi.DTL()),
+		fmt.Sprintf("%0.02f%%", afi.DTL()*100),
 	})
 
 	printTable([]string{
@@ -233,10 +229,24 @@ func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, s *s
 	})
 
 	printTable([]string{
+		"Assets Breakdown",
+		"Total assets",
+		"Liquid assets",
+		"Agent balance",
+	}, []string{
+		"",
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.Balance)),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.AvailableBalance)),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(agentLiquidAssets)),
+	})
+
+	printTable([]string{
+		"Liabilities Breakdown",
 		"Total borrowed",
 		"Interest owed",
 		"APR",
 	}, []string{
+		"",
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(principal)),
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(interestOwed)),
 		fmt.Sprintf("%.02f%%", apr),
@@ -245,14 +255,16 @@ func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, s *s
 	printTable([]string{
 		"Liquidation Value Breakdown",
 		"Available balance",
-		"Intial Pledge",
-		"Locked Rewards",
-		"Total Liquidation Value",
+		"Intial pledge",
+		"Locked rewards",
+		"Termination fee",
+		"Total liquidation value",
 	}, []string{
 		"",
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.AvailableBalance)),
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.InitialPledge)),
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.LockedRewards)),
+		fmt.Sprintf("-%0.09f FIL", util.ToFIL(afi.TerminationFee)),
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.LiquidationValue())),
 	})
 
