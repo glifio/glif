@@ -172,16 +172,6 @@ func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, s *s
 
 	tasks := []util.TaskFunc{
 		func() (interface{}, error) {
-			return query.AgentPrincipal(ctx, agent, nil)
-		},
-		func() (interface{}, error) {
-			amountOwed, err := query.AgentInterestOwed(ctx, agent, nil)
-			if err != nil {
-				return nil, err
-			}
-			return amountOwed, nil
-		},
-		func() (interface{}, error) {
 			return query.InfPoolGetRate(ctx)
 		},
 		func() (interface{}, error) {
@@ -193,11 +183,8 @@ func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, s *s
 	if err != nil {
 		return err
 	}
-	principal := results[0].(*big.Int)
-	interestOwed := results[1].(*big.Int)
-	totalDebt := new(big.Int).Add(principal, interestOwed)
-	rate := results[2].(*big.Int)
-	agentLiquidAssets := results[3].(*big.Int)
+	rate := results[0].(*big.Int)
+	agentLiquidAssets := results[1].(*big.Int)
 
 	apr := new(big.Float).Mul(new(big.Float).SetInt(rate), big.NewFloat(constants.EpochsInYear))
 	apr.Quo(apr, big.NewFloat(1e34))
@@ -212,7 +199,7 @@ func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, s *s
 		"Debt to liquidation value % (DTL)",
 	}, []string{
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.LiquidationValue())),
-		fmt.Sprintf("%0.09f FIL", util.ToFIL(totalDebt)),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.Debt())),
 		fmt.Sprintf("%0.02f%%", afi.DTL()*100),
 	})
 
@@ -247,8 +234,8 @@ func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, s *s
 		"APR",
 	}, []string{
 		"",
-		fmt.Sprintf("%0.09f FIL", util.ToFIL(principal)),
-		fmt.Sprintf("%0.09f FIL", util.ToFIL(interestOwed)),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.Principal)),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.Interest)),
 		fmt.Sprintf("%.02f%%", apr),
 	})
 
