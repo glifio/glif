@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
@@ -19,7 +20,7 @@ var payCustomCmd = &cobra.Command{
 	Long:  "",
 	Run: func(cmd *cobra.Command, args []string) {
 		if payCustomPreview {
-			// previewAction(cmd, args, constants.MethodPay)
+			previewAction(cmd, args, constants.MethodPay)
 			return
 		}
 		payAmt, err := pay(cmd, args, Custom)

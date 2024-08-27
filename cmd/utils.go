@@ -29,6 +29,7 @@ import (
 	ltypes "github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
 	"github.com/glifio/glif/v2/util"
+	"github.com/glifio/go-pools/constants"
 	denoms "github.com/glifio/go-pools/util"
 	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
@@ -624,4 +625,8 @@ func confirmBackupExists() error {
 	}
 
 	return nil
+}
+
+func previewAction(_ *cobra.Command, _ []string, _ constants.Method) {
+	logFatal("Action previews have been deprecated in GLIF V2. If you would like to preview an action, please let us know, and we will re-implement this functionality")
 }

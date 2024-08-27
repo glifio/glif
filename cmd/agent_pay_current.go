@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
@@ -18,18 +19,7 @@ var payToCurrentCmd = &cobra.Command{
 	Long:  "Pays off all fees owed",
 	Run: func(cmd *cobra.Command, args []string) {
 		if payToCurrentPreview {
-			agentAddr, err := getAgentAddressWithFlags(cmd)
-			if err != nil {
-				logFatal(err)
-			}
-
-			amountOwed, err := PoolsSDK.Query().AgentInterestOwed(cmd.Context(), agentAddr, nil)
-			if err != nil {
-				logFatal(err)
-			}
-
-			args = append(args, util.ToFIL(amountOwed).String())
-			// previewAction(cmd, args, constants.MethodPay)
+			previewAction(cmd, args, constants.MethodPay)
 			return
 		}
 
