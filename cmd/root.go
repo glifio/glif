@@ -174,10 +174,11 @@ func initConfig() {
 	daemonToken := viper.GetString("daemon.token")
 	adoURL := viper.GetString("ado.address")
 
-	if chainID == constants.LocalnetChainID || chainID == constants.AnvilChainID {
+	override := viper.GetBool("routes.override")
+	if override || chainID == constants.LocalnetChainID || chainID == constants.AnvilChainID {
 		routerAddr := viper.GetString("routes.router")
 		router := common.HexToAddress(routerAddr)
-		err := sdk.LazyInit(context.Background(), &PoolsSDK, router, adoURL, "Mock", daemonURL, daemonToken)
+		err := sdk.LazyInit(context.Background(), &PoolsSDK, router, adoURL, "ADO", daemonURL, daemonToken)
 		if err != nil {
 			logFatal(err)
 		}
