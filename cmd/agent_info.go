@@ -196,7 +196,7 @@ func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, s *s
 	printTable([]string{
 		"Liquidation value",
 		"Total debt",
-		"Debt to liquidation value % (DTL)",
+		"Debt-to-liquidation ratio (DTL)",
 	}, []string{
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.LiquidationValue())),
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.Debt())),
@@ -206,12 +206,10 @@ func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, s *s
 	printTable([]string{
 		"Max borrow to seal",
 		"Max borrow to withdraw",
-		"Current borrow limit",
-		"Current withdraw limit",
+		"Available to withdraw",
 	}, []string{
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.MaxBorrowAndSeal())),
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.MaxBorrowAndWithdraw())),
-		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.BorrowLimit())),
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.WithdrawLimit())),
 	})
 
