@@ -31,7 +31,7 @@ var liquidationValueCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		miners, baseFis, err := econ.GetBaseFisFromAPI(agentAddr)
+		miners, baseFis, err := econ.GetBaseFisFromAPI(agentAddr, PoolsSDK.Extern().GetEventsURL())
 		if err != nil {
 			logFatal(err)
 		}
@@ -60,7 +60,7 @@ var liquidationValueCmd = &cobra.Command{
 			"Total",
 		}
 
-		afi, err := econ.GetAgentFiFromAPI(agentAddr)
+		afi, err := econ.GetAgentFiFromAPI(agentAddr, PoolsSDK.Extern().GetEventsURL())
 		if err != nil {
 			logFatal(err)
 		}

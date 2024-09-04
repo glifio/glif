@@ -107,7 +107,7 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 			return query.MinerRegistryAgentMinersList(ctx, agentID, nil)
 		},
 		func() (interface{}, error) {
-			return econ.GetAgentFiFromAPI(agent)
+			return econ.GetAgentFiFromAPI(agent, PoolsSDK.Extern().GetEventsURL())
 		},
 	}
 	results, err := util.Multiread(tasks)
