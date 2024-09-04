@@ -208,7 +208,7 @@ func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, s *s
 		"Max borrow to withdraw",
 		"Available to withdraw",
 	}, []string{
-		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.MaxBorrowAndSeal())),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.BorrowLimit())),
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.MaxBorrowAndWithdraw())),
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.WithdrawLimit())),
 	})
