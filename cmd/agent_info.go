@@ -200,7 +200,7 @@ func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, s *s
 	}, []string{
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.LiquidationValue())),
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.Debt())),
-		fmt.Sprintf("%0.02f%%", afi.DTL()*100),
+		fmt.Sprintf("%0.02f%%", new(big.Float).Mul(afi.DTL(), big.NewFloat(100))),
 	})
 
 	printTable([]string{

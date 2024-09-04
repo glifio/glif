@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -48,7 +49,7 @@ var liquidationValueCmd = &cobra.Command{
 		for i, miner := range miners {
 			baseFi := baseFis[i]
 			minersKeys = append(minersKeys, miner.String())
-			minersValues = append(minersValues, fmt.Sprintf("%0.04f FIL (%0.02f%%)", util.ToFIL(baseFi.LiquidationValue()), baseFi.RecoveryRate()*100))
+			minersValues = append(minersValues, fmt.Sprintf("%0.04f FIL (%0.02f%%)", util.ToFIL(baseFi.LiquidationValue()), new(big.Float).Mul(baseFi.RecoveryRate(), big.NewFloat(100))))
 		}
 
 		agentCollateralStatsKeys := []string{
@@ -71,7 +72,7 @@ var liquidationValueCmd = &cobra.Command{
 			fmt.Sprintf("%0.04f FIL", util.ToFIL(afi.InitialPledge)),
 			fmt.Sprintf("%0.04f FIL", util.ToFIL(afi.LockedRewards)),
 			fmt.Sprintf("-%0.04f FIL", util.ToFIL(afi.TerminationFee)),
-			fmt.Sprintf(chalk.Bold.TextStyle("%0.03f FIL (%0.02f%% recovery rate)"), util.ToFIL(afi.LiquidationValue()), afi.RecoveryRate()*100),
+			fmt.Sprintf(chalk.Bold.TextStyle("%0.03f FIL (%0.02f%% recovery rate)"), util.ToFIL(afi.LiquidationValue()), new(big.Float).Mul(afi.RecoveryRate(), big.NewFloat(100))),
 		}
 
 		printTable(agentCollateralStatsKeys, agentCollateralStatsVals)
