@@ -240,7 +240,7 @@ func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, s *s
 	printTable([]string{
 		"Liquidation Value Breakdown",
 		"Available balance",
-		"Intial pledge",
+		"Initial pledge",
 		"Locked rewards",
 		"Termination fee",
 		"Total liquidation value",
