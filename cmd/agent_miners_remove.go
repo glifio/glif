@@ -85,5 +85,5 @@ var rmCmd = &cobra.Command{
 
 func init() {
 	minersCmd.AddCommand(rmCmd)
-	rmCmd.Flags().BoolVar(&removePreview, "preview", false, "preview the financial outcome of a remove miner action")
+	rmCmd.Flags().BoolVar(&removePreview, "preview", false, "DEPRECATED: preview the financial outcome of a remove miner action")
 }

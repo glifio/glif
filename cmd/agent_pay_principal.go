@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"math/big"
 
 	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/util"
@@ -21,22 +20,6 @@ var payPrincipalCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if payPrincipalPreview {
-			agentAddr, err := getAgentAddressWithFlags(cmd)
-			if err != nil {
-				logFatal(err)
-			}
-			amount, err := parseFILAmount(args[0])
-			if err != nil {
-				logFatal(err)
-			}
-
-			amountOwed, err := PoolsSDK.Query().AgentInterestOwed(cmd.Context(), agentAddr, nil)
-			if err != nil {
-				logFatal(err)
-			}
-
-			payAmt := new(big.Int).Add(amount, amountOwed)
-			args = append(args, util.ToFIL(payAmt).String())
 			previewAction(cmd, args, constants.MethodPay)
 			return
 		}
@@ -53,5 +36,5 @@ func init() {
 	payCmd.AddCommand(payPrincipalCmd)
 	payPrincipalCmd.Flags().String("pool-name", "infinity-pool", "name of the pool to make a payment")
 	payPrincipalCmd.Flags().String("from", "", "address to send the transaction from")
-	payPrincipalCmd.Flags().BoolVar(&payPrincipalPreview, "preview", false, "preview financial outcome of pay principal action")
+	payPrincipalCmd.Flags().BoolVar(&payPrincipalPreview, "preview", false, "DEPRECATED: preview financial outcome of pay principal action")
 }

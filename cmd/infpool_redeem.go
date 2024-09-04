@@ -41,7 +41,7 @@ var redeemFILCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().RampRedeem(cmd.Context(), auth, amount, senderAccount.Address, receiver)
+		tx, err := PoolsSDK.Act().InfPoolRedeem(cmd.Context(), auth, amount, senderAccount.Address, receiver)
 		if err != nil {
 			logFatal(err)
 		}

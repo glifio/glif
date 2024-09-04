@@ -6,13 +6,13 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/glifio/go-pools/terminate"
+	"github.com/glifio/go-pools/econ"
 	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
+	"github.com/ttacon/chalk"
 )
 
 var liquidationValueCmd = &cobra.Command{
@@ -31,13 +31,11 @@ var liquidationValueCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		agentCollateralStats, err := PoolsSDK.Query().AgentCollateralStatsQuick(cmd.Context(), agentAddr)
+		miners, baseFis, err := econ.GetBaseFisFromAPI(agentAddr, PoolsSDK.Extern().GetEventsURL())
 		if err != nil {
 			logFatal(err)
 		}
 		s.Stop()
-
-		ats := agentCollateralStats.Summarize()
 
 		minersKeys := []string{
 			"Miner liquidation values",
@@ -47,38 +45,36 @@ var liquidationValueCmd = &cobra.Command{
 			"",
 		}
 
-		for _, minerCollateral := range agentCollateralStats.MinersTerminationStats {
-			minersKeys = append(minersKeys, fmt.Sprintf("%s", minerCollateral.Address))
-			// here we instantiate a PreviewAgentTerminationSummary type to reuse its liquidation value and recovery rate funcs
-			ts := terminate.PreviewAgentTerminationSummary{
-				TerminationPenalty: minerCollateral.TerminationPenalty,
-				InitialPledge:      minerCollateral.Pledged,
-				VestingBalance:     minerCollateral.Vesting,
-				MinersAvailableBal: minerCollateral.Available,
-				AgentAvailableBal:  big.NewInt(0),
-			}
-
-			minersValues = append(minersValues, fmt.Sprintf("%0.04f FIL (%0.02f%%)", util.ToFIL(ts.LiquidationValue()), bigIntAttoToPercent(ts.RecoveryRate())))
+		for i, miner := range miners {
+			baseFi := baseFis[i]
+			minersKeys = append(minersKeys, miner.String())
+			minersValues = append(minersValues, fmt.Sprintf("%0.04f FIL (%0.02f%%)", util.ToFIL(baseFi.LiquidationValue()), baseFi.RecoveryRate()*100))
 		}
 
 		agentCollateralStatsKeys := []string{
-			"Agent liquidation value",
+			"Agent liquidation value breakdown",
+			"Liquid FIL",
+			"Pledged",
+			"Vesting",
+			"Termination penalty",
+			"Total",
+		}
+
+		afi, err := econ.GetAgentFiFromAPI(agentAddr, PoolsSDK.Extern().GetEventsURL())
+		if err != nil {
+			logFatal(err)
 		}
 
 		agentCollateralStatsVals := []string{
-			fmt.Sprintf("%0.03f FIL (%0.02f%% recovery)", util.ToFIL(ats.LiquidationValue()), bigIntAttoToPercent(ats.RecoveryRate())),
-		}
-
-		agentLiquidFILKey := []string{
-			"Agent's liquid FIL",
-		}
-
-		agentLiquidFILValue := []string{
-			fmt.Sprintf("%0.04f FIL", util.ToFIL(ats.AgentAvailableBal)),
+			"",
+			fmt.Sprintf("%0.04f FIL", util.ToFIL(afi.AvailableBalance)),
+			fmt.Sprintf("%0.04f FIL", util.ToFIL(afi.InitialPledge)),
+			fmt.Sprintf("%0.04f FIL", util.ToFIL(afi.LockedRewards)),
+			fmt.Sprintf("-%0.04f FIL", util.ToFIL(afi.TerminationFee)),
+			fmt.Sprintf(chalk.Bold.TextStyle("%0.03f FIL (%0.02f%% recovery rate)"), util.ToFIL(afi.LiquidationValue()), afi.RecoveryRate()*100),
 		}
 
 		printTable(agentCollateralStatsKeys, agentCollateralStatsVals)
-		printTable(agentLiquidFILKey, agentLiquidFILValue)
 		printTable(minersKeys, minersValues)
 		fmt.Println()
 	},

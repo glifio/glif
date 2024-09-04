@@ -173,11 +173,13 @@ func initConfig() {
 	daemonURL := viper.GetString("daemon.rpc-url")
 	daemonToken := viper.GetString("daemon.token")
 	adoURL := viper.GetString("ado.address")
+	eventsURL := viper.GetString("routes.events-url")
 
-	if chainID == constants.LocalnetChainID || chainID == constants.AnvilChainID {
+	override := viper.GetBool("routes.override")
+	if override || chainID == constants.LocalnetChainID || chainID == constants.AnvilChainID {
 		routerAddr := viper.GetString("routes.router")
 		router := common.HexToAddress(routerAddr)
-		err := sdk.LazyInit(context.Background(), &PoolsSDK, router, adoURL, "Mock", daemonURL, daemonToken)
+		err := sdk.LazyInit(context.Background(), &PoolsSDK, router, adoURL, "ADO", daemonURL, daemonToken, eventsURL)
 		if err != nil {
 			logFatal(err)
 		}
@@ -198,7 +200,9 @@ func initConfig() {
 		if daemonToken != "" {
 			extern.LotusToken = daemonToken
 		}
-
+		if eventsURL != "" {
+			extern.EventsURL = eventsURL
+		}
 		if adoURL != "" {
 			extern.AdoAddr = adoURL
 		}

@@ -41,7 +41,7 @@ var withdrawFILCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().RampWithdraw(cmd.Context(), auth, amount, senderAccount.Address, receiver)
+		tx, err := PoolsSDK.Act().InfPoolWithdraw(cmd.Context(), auth, amount, senderAccount.Address, receiver)
 		if err != nil {
 			logFatal(err)
 		}
