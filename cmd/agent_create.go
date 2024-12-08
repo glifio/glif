@@ -75,7 +75,12 @@ var createCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		auth, err := walletutils.NewEthWalletTransactor(wallet, &account, passphrase, big.NewInt(chainID))
+		ethClient, err := PoolsSDK.Extern().ConnectEthClient()
+		if err != nil {
+			logFatal(err)
+		}
+
+		_, auth, err := walletutils.NewEthWalletTransactor(wallet, &account, passphrase, big.NewInt(chainID), ethClient)
 		if err != nil {
 			logFatal(err)
 		}

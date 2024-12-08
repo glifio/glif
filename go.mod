@@ -11,7 +11,7 @@ require (
 	github.com/filecoin-project/go-state-types v0.14.0
 	github.com/filecoin-project/lotus v1.28.1
 	github.com/glifio/go-pools v1.1.3
-	github.com/glifio/go-wallet-utils v0.0.0-20230719050429-ff6c4bc75533
+	github.com/glifio/go-wallet-utils v0.0.0-20241208165650-6ce2b38a31d2
 	github.com/golang/mock v1.6.0
 	github.com/ipfs/go-cid v0.4.1
 	github.com/pelletier/go-toml/v2 v2.0.6

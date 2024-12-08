@@ -300,7 +300,12 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 		return common.Address{}, nil, accounts.Account{}, nil, err
 	}
 
-	auth, err = walletutils.NewEthWalletTransactor(wallet, &account, passphrase, big.NewInt(chainID))
+	ethClient, err := PoolsSDK.Extern().ConnectEthClient()
+	if err != nil {
+		return common.Address{}, nil, accounts.Account{}, nil, err
+	}
+
+	_, auth, err = walletutils.NewEthWalletTransactor(wallet, &account, passphrase, big.NewInt(chainID), ethClient)
 	if err != nil {
 		logFatal(err)
 	}
@@ -356,7 +361,12 @@ func commonGenericAccountSetup(ctx context.Context, from string) (auth *bind.Tra
 		}
 	}
 
-	auth, err = walletutils.NewEthWalletTransactor(wallet, &account, passphrase, big.NewInt(chainID))
+	ethClient, err := PoolsSDK.Extern().ConnectEthClient()
+	if err != nil {
+		return nil, accounts.Account{}, err
+	}
+
+	_, auth, err = walletutils.NewEthWalletTransactor(wallet, &account, passphrase, big.NewInt(chainID), ethClient)
 	if err != nil {
 		logFatal(err)
 	}
