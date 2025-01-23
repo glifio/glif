@@ -35,7 +35,7 @@ var addCmd = &cobra.Command{
 			previewAction(cmd, args, constants.MethodAddMiner)
 			return
 		}
-		agentAddr, auth, _, requesterKey, err := commonSetupOwnerCall()
+		agentAddr, auth, _, requesterKey, err := commonSetupOwnerCall(cmd)
 		if err != nil {
 			logFatal(err)
 		}

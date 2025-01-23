@@ -57,7 +57,7 @@ func init() {
 func pay(cmd *cobra.Command, args []string, paymentType PaymentType) (*big.Int, error) {
 	ctx := cmd.Context()
 	from := cmd.Flag("from").Value.String()
-	agentAddr, auth, _, requesterKey, err := commonOwnerOrOperatorSetup(ctx, from)
+	agentAddr, auth, _, requesterKey, err := commonOwnerOrOperatorSetup(cmd, from)
 	if err != nil {
 		return nil, err
 	}

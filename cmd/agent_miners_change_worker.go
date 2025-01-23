@@ -21,7 +21,7 @@ var changeWorkerCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.RangeArgs(2, 5),
 	Run: func(cmd *cobra.Command, args []string) {
-		agentAddr, auth, _, _, err := commonSetupOwnerCall()
+		agentAddr, auth, _, _, err := commonSetupOwnerCall(cmd)
 		if err != nil {
 			logFatal(err)
 		}

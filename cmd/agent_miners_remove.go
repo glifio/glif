@@ -29,7 +29,7 @@ var rmCmd = &cobra.Command{
 			return
 		}
 
-		agentAddr, auth, _, requesterKey, err := commonSetupOwnerCall()
+		agentAddr, auth, _, requesterKey, err := commonSetupOwnerCall(cmd)
 		if err != nil {
 			logFatal(err)
 		}

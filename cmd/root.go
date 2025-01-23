@@ -79,7 +79,8 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgDir, "config-dir", "", "config directory")
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().Float64("gas-multiply", 1.0, "Multiply the default gas premium by this amount")
+	rootCmd.PersistentFlags().Uint64("nonce", 0, "Specify nonce (for replacing transactions)")
 }
 
 // initConfig reads in config file and ENV variables if set.

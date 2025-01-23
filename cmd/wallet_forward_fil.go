@@ -24,9 +24,8 @@ var forwardFIL = &cobra.Command{
 	Short: "Transfers balances from an account to another address through the FilForwarder smart contract",
 	Args:  cobra.ExactArgs(3),
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := cmd.Context()
 		from := args[0]
-		auth, senderAccount, err := commonGenericAccountSetup(ctx, from)
+		auth, senderAccount, err := commonGenericAccountSetup(cmd, from)
 		if err != nil {
 			logFatal(err)
 		}

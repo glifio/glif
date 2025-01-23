@@ -204,9 +204,8 @@ func needToPullFunds(cmd *cobra.Command, payAmt *big.Int) (bool, error) {
 }
 
 func pullFundsFromMiner(cmd *cobra.Command, miner address.Address, amount *big.Int) error {
-	ctx := cmd.Context()
 	from := cmd.Flag("from").Value.String()
-	agentAddr, auth, _, requesterKey, err := commonOwnerOrOperatorSetup(ctx, from)
+	agentAddr, auth, _, requesterKey, err := commonOwnerOrOperatorSetup(cmd, from)
 	if err != nil {
 		return err
 	}

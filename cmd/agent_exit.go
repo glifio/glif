@@ -20,7 +20,7 @@ var exitCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 		from := cmd.Flag("from").Value.String()
-		agentAddr, auth, _, requesterKey, err := commonOwnerOrOperatorSetup(ctx, from)
+		agentAddr, auth, _, requesterKey, err := commonOwnerOrOperatorSetup(cmd, from)
 		if err != nil {
 			logFatal(err)
 		}

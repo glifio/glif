@@ -18,9 +18,8 @@ var redeemFILCmd = &cobra.Command{
 	Long:  "Redeem iFIL for WFIL from the Infinity Pool. The address of the SimpleRamp must be approved for the appropriate amount of iFIL in order for this call to go execute.",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := cmd.Context()
 		from := cmd.Flag("from").Value.String()
-		auth, senderAccount, err := commonGenericAccountSetup(ctx, from)
+		auth, senderAccount, err := commonGenericAccountSetup(cmd, from)
 		if err != nil {
 			logFatal(err)
 		}
