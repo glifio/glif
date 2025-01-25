@@ -369,12 +369,17 @@ func commonGenericAccountSetup(cmd *cobra.Command, from string) (auth *bind.Tran
 
 func setGasTipCapAndNonce(cmd *cobra.Command, auth *bind.TransactOpts) {
 	ctx := cmd.Context()
-	gasMultiply, err := cmd.Flags().GetFloat64("gas-multiply")
+	gasMultiply, err := cmd.Flags().GetFloat64("gas-premium-multiply")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	nonce, err := cmd.Flags().GetUint64("nonce")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	gasPremium, err := cmd.Flags().GetInt64("gas-premium")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -385,13 +390,34 @@ func setGasTipCapAndNonce(cmd *cobra.Command, auth *bind.TransactOpts) {
 	}
 	defer ethClient.Close()
 
-	tipCap, err := ethClient.SuggestGasTipCap(ctx)
-	if err != nil {
-		logFatal(err)
+	var tipCap *big.Int
+	if gasPremium >= 0 {
+		tipCap = big.NewInt(gasPremium)
+	} else {
+		tipCap, err = ethClient.SuggestGasTipCap(ctx)
+		if err != nil {
+			logFatal(err)
+		}
 	}
 	tipCapFloat, _ := tipCap.Float64()
 	scaledTipCap := tipCapFloat * gasMultiply
 	auth.GasTipCap = big.NewInt(int64(scaledTipCap))
+
+	gasLimit, err := cmd.Flags().GetUint64("gas-limit")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if gasLimit > 0 {
+		auth.GasLimit = gasLimit
+	}
+
+	gasFeeCap, err := cmd.Flags().GetUint64("gas-fee-cap")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if gasFeeCap > 0 {
+		auth.GasFeeCap = big.NewInt(int64(gasFeeCap))
+	}
 
 	if nonce > 0 {
 		auth.Nonce = big.NewInt(int64(nonce))
