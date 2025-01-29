@@ -203,11 +203,12 @@ func parseAddress(ctx context.Context, addr string, lapi lotusapi.FullNode) (com
 	return common.HexToAddress(ethAddr.String()), nil
 }
 
-func commonSetupOwnerCall() (agentAddr common.Address, auth *bind.TransactOpts, ownerAccount accounts.Account, requesterKey *ecdsa.PrivateKey, err error) {
-	return commonOwnerOrOperatorSetup(context.Background(), string(util.OwnerKey))
+func commonSetupOwnerCall(cmd *cobra.Command) (agentAddr common.Address, auth *bind.TransactOpts, ownerAccount accounts.Account, requesterKey *ecdsa.PrivateKey, err error) {
+	return commonOwnerOrOperatorSetup(cmd, string(util.OwnerKey))
 }
 
-func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr common.Address, auth *bind.TransactOpts, account accounts.Account, requesterKey *ecdsa.PrivateKey, err error) {
+func commonOwnerOrOperatorSetup(cmd *cobra.Command, from string) (agentAddr common.Address, auth *bind.TransactOpts, account accounts.Account, requesterKey *ecdsa.PrivateKey, err error) {
+	ctx := cmd.Context()
 	err = checkWalletMigrated()
 	if err != nil {
 		return common.Address{}, nil, accounts.Account{}, nil, err
@@ -304,11 +305,12 @@ func commonOwnerOrOperatorSetup(ctx context.Context, from string) (agentAddr com
 	if err != nil {
 		logFatal(err)
 	}
+	setGasTipCapAndNonce(cmd, auth)
 
 	return agentAddr, auth, account, requesterKey, nil
 }
 
-func commonGenericAccountSetup(ctx context.Context, from string) (auth *bind.TransactOpts, account accounts.Account, err error) {
+func commonGenericAccountSetup(cmd *cobra.Command, from string) (auth *bind.TransactOpts, account accounts.Account, err error) {
 	err = checkWalletMigrated()
 	if err != nil {
 		return nil, accounts.Account{}, err
@@ -360,8 +362,66 @@ func commonGenericAccountSetup(ctx context.Context, from string) (auth *bind.Tra
 	if err != nil {
 		logFatal(err)
 	}
+	setGasTipCapAndNonce(cmd, auth)
 
 	return auth, account, nil
+}
+
+func setGasTipCapAndNonce(cmd *cobra.Command, auth *bind.TransactOpts) {
+	ctx := cmd.Context()
+	gasMultiply, err := cmd.Flags().GetFloat64("gas-premium-multiply")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	nonce, err := cmd.Flags().GetUint64("nonce")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	gasPremium, err := cmd.Flags().GetInt64("gas-premium")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ethClient, err := PoolsSDK.Extern().ConnectEthClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer ethClient.Close()
+
+	var tipCap *big.Int
+	if gasPremium >= 0 {
+		tipCap = big.NewInt(gasPremium)
+	} else {
+		tipCap, err = ethClient.SuggestGasTipCap(ctx)
+		if err != nil {
+			logFatal(err)
+		}
+	}
+	tipCapFloat, _ := tipCap.Float64()
+	scaledTipCap := tipCapFloat * gasMultiply
+	auth.GasTipCap = big.NewInt(int64(scaledTipCap))
+
+	gasLimit, err := cmd.Flags().GetUint64("gas-limit")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if gasLimit > 0 {
+		auth.GasLimit = gasLimit
+	}
+
+	gasFeeCap, err := cmd.Flags().GetUint64("gas-fee-cap")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if gasFeeCap > 0 {
+		auth.GasFeeCap = big.NewInt(int64(gasFeeCap))
+	}
+
+	if nonce > 0 {
+		auth.Nonce = big.NewInt(int64(nonce))
+	}
 }
 
 func getRequesterKey(as *util.AccountsStorage, ks *keystore.KeyStore) (*ecdsa.PrivateKey, error) {

@@ -20,7 +20,7 @@ var setRecoveredCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 
-		agentAddr, auth, _, requesterKey, err := commonSetupOwnerCall()
+		agentAddr, auth, _, requesterKey, err := commonSetupOwnerCall(cmd)
 		if err != nil {
 			logFatal(err)
 		}

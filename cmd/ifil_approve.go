@@ -15,7 +15,7 @@ var iFILApproveCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 		from := cmd.Flag("from").Value.String()
-		auth, _, err := commonGenericAccountSetup(ctx, from)
+		auth, _, err := commonGenericAccountSetup(cmd, from)
 		if err != nil {
 			logFatal(err)
 		}
