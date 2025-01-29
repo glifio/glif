@@ -9,9 +9,9 @@ require (
 	github.com/briandowns/spinner v1.23.0
 	github.com/ethereum/go-ethereum v1.12.0
 	github.com/fatih/color v1.15.0
-	github.com/filecoin-project/go-address v1.2.0
-	github.com/filecoin-project/go-state-types v0.15.0
-	github.com/filecoin-project/lotus v1.30.0
+	github.com/filecoin-project/go-address v1.1.0
+	github.com/filecoin-project/go-state-types v0.14.0
+	github.com/filecoin-project/lotus v1.28.1
 	github.com/glifio/go-pools v1.1.3
 	github.com/glifio/go-wallet-utils v0.0.0-20230719050429-ff6c4bc75533
 	github.com/golang/mock v1.6.0
@@ -44,7 +44,6 @@ require (
 	github.com/filecoin-project/go-amt-ipld/v3 v3.1.0 // indirect
 	github.com/filecoin-project/go-amt-ipld/v4 v4.4.0 // indirect
 	github.com/filecoin-project/go-bitfield v0.2.4 // indirect
-	github.com/filecoin-project/go-clock v0.1.0 // indirect
 	github.com/filecoin-project/go-crypto v0.1.0 // indirect
 	github.com/filecoin-project/go-f3 v0.7.2 // indirect
 	github.com/filecoin-project/go-hamt-ipld v0.1.5 // indirect
@@ -114,6 +113,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/miekg/dns v1.1.59 // indirect
+	github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1 // indirect
 	github.com/minio/sha256-simd v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
