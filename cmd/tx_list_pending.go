@@ -17,12 +17,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var listPendingCmd = &cobra.Command{
+var txListPendingCmd = &cobra.Command{
 	Use:   "list-pending <account or address>",
 	Short: "Lists pending transactions in the mempool",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
+
 		var addr common.Address
 		var err error
 		if strings.HasPrefix(args[0], "0x") {
@@ -98,5 +99,5 @@ var listPendingCmd = &cobra.Command{
 }
 
 func init() {
-	txCmd.AddCommand(listPendingCmd)
+	txCmd.AddCommand(txListPendingCmd)
 }
