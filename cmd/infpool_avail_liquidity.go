@@ -13,7 +13,7 @@ import (
 
 var availLiquidityCmd = &cobra.Command{
 	Use:   "avail-liquidity",
-	Short: "Get the total FIL locked in the Infinity Pool",
+	Short: "Get the total FIL available for borrowing from the Infinity Pool",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Querying the available liquidity from the Infinity Pool...")
