@@ -35,4 +35,5 @@ var iFILPriceCmd = &cobra.Command{
 
 func init() {
 	iFILCmd.AddCommand(iFILPriceCmd)
+	iFILNewCmd.AddCommand(iFILPriceCmd)
 }
