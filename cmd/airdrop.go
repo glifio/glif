@@ -2,10 +2,13 @@ package cmd
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/glifio/go-pools/abigen"
+	"github.com/glifio/go-pools/constants"
+
 	"github.com/glifio/go-pools/token"
 	"github.com/spf13/cobra"
 )
@@ -28,14 +31,14 @@ var checkEligibilityCmd = &cobra.Command{
 			logFatalf("Failed to parse address %s", err)
 		}
 
-		amount, claimer, err := token.CheckAirdropEligibility(addr)
+		isTestDrop := PoolsSDK.Query().ChainID().Int64() != constants.MainnetChainID
+		amount, claimer, err := token.CheckAirdropEligibility(addr, isTestDrop)
 		if err != nil {
 			logFatalf("Failed to check airdrop eligibility %s", err)
 		}
 
-		// if the claimer is the same as the address, then this is an agent, its claimer is its owner
-		isAgent := claimer == addr
-
+		// if the claimer is not the same as the address, then this is an agent, its claimer is its owner
+		isAgent := claimer != addr
 		if isAgent {
 			fmt.Println("This address is an agent, its claimer is its owner")
 		}
@@ -49,6 +52,25 @@ var claimCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		strAddr := args[0]
+		addr, err := AddressOrAccountNameToEVM(cmd.Context(), strAddr)
+		if err != nil {
+			logFatalf("Failed to parse address %s", err)
+		}
+
+		addressToClaimOnBehalf := addr
+
+		// first check if this is an agent address
+		isTestDrop := PoolsSDK.Query().ChainID().Int64() != constants.MainnetChainID
+		agentToOwnerMap, err := token.ReadAgentOwnerMap(isTestDrop)
+		if err != nil {
+			logFatalf("Failed to read agent owner map %s", err)
+		}
+
+		owner, ok := agentToOwnerMap[addr]
+		if ok {
+			addressToClaimOnBehalf = owner
+			fmt.Println("This is an Agent address - you are claiming with your Agent's Owner wallet: ", addressToClaimOnBehalf.Hex())
+		}
 
 		// generic account setup
 		from := cmd.Flag("from").Value.String()
@@ -56,16 +78,23 @@ var claimCmd = &cobra.Command{
 		if err != nil {
 			logFatal(err)
 		}
-		fmt.Printf("Claiming airdrop for %s from %s...", strAddr, from)
+
+		if addressToClaimOnBehalf != auth.From {
+			logFatal("Invalid 'from' address - you cannot claim on behalf of someone else")
+		}
+
+		fmt.Printf("Claiming airdrop for %s from %s...\n", strAddr, auth.From.Hex())
+
+		delegatee, err := getDelegateeAddress(cmd.Context(), auth.From)
+		if err != nil {
+			logFatal(err)
+		}
+
+		fmt.Printf("You have selected to delegate your vote to: %s\n", delegatee.Hex())
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 		defer s.Stop()
-
-		addr, err := AddressOrAccountNameToEVM(cmd.Context(), strAddr)
-		if err != nil {
-			logFatalf("Failed to parse address %s", err)
-		}
 
 		ethClient, err := PoolsSDK.Extern().ConnectEthClient()
 		if err != nil {
@@ -78,25 +107,32 @@ var claimCmd = &cobra.Command{
 		}
 
 		mt := &token.MerkleTree{}
-		mt, err = mt.ReadFromJSON()
+		mt, err = mt.ReadFromJSON(isTestDrop)
 		if err != nil {
 			logFatal(err)
 		}
 
-		proof, err := mt.GetProofForAddr(addr)
+		proof, err := mt.GetProofForAddr(addressToClaimOnBehalf)
 		if err != nil {
 			logFatal(err)
 		}
 
-		value, err := mt.GetLeafValueForAddr(addr)
+		value, err := mt.GetLeafValueForAddr(addressToClaimOnBehalf)
 		if err != nil {
 			logFatal(err)
 		}
 
-		tx, err := airdropInstance.Claim(auth, mt.ID(), proof, value)
+		tx, err := airdropInstance.ClaimAndDelegate(auth, mt.ID(), proof, value, delegatee, abigen.IHedgeyAirdropSignatureParams{
+			V:      0,
+			R:      [32]byte{},
+			S:      [32]byte{},
+			Nonce:  big.NewInt(0),
+			Expiry: big.NewInt(0),
+		})
 		if err != nil {
 			logFatalf("Failed to claim airdrop %s", err)
 		}
+
 		s.Stop()
 
 		fmt.Printf("Claim transaction submitted: %s\n", tx.Hash().Hex())
@@ -117,5 +153,4 @@ func init() {
 	airdropCmd.AddCommand(checkEligibilityCmd)
 	airdropCmd.AddCommand(claimCmd)
 	claimCmd.Flags().String("from", "", "address of the owner or operator of the agent")
-	// airdropCmd.AddCommand(redeemCmd)
 }

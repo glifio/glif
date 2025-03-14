@@ -36,7 +36,7 @@ var getPlanCmd = &cobra.Command{
 			logFatalf("Failed to parse plan ID %s", planID)
 		}
 
-		caller, err := abigen.NewIHedgeyVoteTokenVestingPlanCaller(PoolsSDK.Query().TokenNFTWrapper(), ethClient)
+		caller, err := abigen.NewIHedgeyVoteTokenLockupPlanCaller(PoolsSDK.Query().TokenNFTWrapper(), ethClient)
 		if err != nil {
 			logFatal(err)
 		}
@@ -53,9 +53,9 @@ var getPlanCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		fmt.Printf("available to claim: %s\n", util.ToFIL(balance.Balance))
+		fmt.Printf("available to claim: %0.04f GLF\n", util.ToFIL(balance.Balance))
 
-		printVestingSchedule(planIDBig, &plan)
+		printVestingSchedule(planIDBig, &plan, false)
 	},
 }
 
@@ -76,7 +76,7 @@ var listPlansCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		caller, err := abigen.NewIHedgeyVoteTokenVestingPlanCaller(PoolsSDK.Query().TokenNFTWrapper(), ethClient)
+		caller, err := abigen.NewIHedgeyVoteTokenLockupPlanCaller(PoolsSDK.Query().TokenNFTWrapper(), ethClient)
 		if err != nil {
 			logFatal(err)
 		}
@@ -85,6 +85,8 @@ var listPlansCmd = &cobra.Command{
 		if err != nil {
 			logFatal(err)
 		}
+
+		fmt.Printf("Found %d vesting plans for %s\n", balance, ethAddr.Hex())
 
 		for i := big.NewInt(0); i.Cmp(balance) == -1; i.Add(i, big.NewInt(1)) {
 			tokenId, err := caller.TokenOfOwnerByIndex(&bind.CallOpts{Context: cmd.Context()}, ethAddr, i)
@@ -97,7 +99,7 @@ var listPlansCmd = &cobra.Command{
 				logFatal(err)
 			}
 
-			printVestingSchedule(tokenId, &plan)
+			printVestingSchedule(tokenId, &plan, true)
 		}
 	},
 }
@@ -157,9 +159,11 @@ var redeemPlanCmd = &cobra.Command{
 	},
 }
 
-func printVestingSchedule(tokenID *big.Int, plan *abigen.IHedgeyVoteTokenVestingPlanPlan) {
+func printVestingSchedule(tokenID *big.Int, plan *abigen.IHedgeyVoteTokenLockupPlanPlan, newLine bool) {
 	amountFIL := util.ToFIL(plan.Amount)
-	fmt.Println("")
+	if newLine {
+		fmt.Println("")
+	}
 	fmt.Printf("plan ID: %s\n", tokenID.String())
 	fmt.Printf("amount: %0.04f GLF\n", amountFIL)
 
