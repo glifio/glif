@@ -117,7 +117,7 @@ var redeemPlanCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		fmt.Printf("Redeeming GLF tokens from airdrop plan %s...", planID)
+		fmt.Println("Fetching the amount of GLF tokens available to redeem...")
 
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
@@ -133,12 +133,33 @@ var redeemPlanCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		delegatedClaimsTx, err := abigen.NewIHedgeyVoteTokenVestingPlanTransactor(PoolsSDK.Query().TokenNFTWrapper(), ethClient)
+		votingTokenLockupPlanCaller, err := abigen.NewIHedgeyVoteTokenLockupPlanCaller(PoolsSDK.Query().TokenNFTWrapper(), ethClient)
+		if err != nil {
+			logFatal(err)
+		}
+		unixNow := big.NewInt(time.Now().Unix())
+
+		balance, err := votingTokenLockupPlanCaller.PlanBalanceOf(&bind.CallOpts{Context: cmd.Context()}, planIDBig, unixNow, unixNow)
 		if err != nil {
 			logFatal(err)
 		}
 
-		tx, err := delegatedClaimsTx.RedeemPlans(auth, []*big.Int{planIDBig})
+		s.Stop()
+
+		if balance.Balance.Cmp(big.NewInt(0)) == 0 {
+			logFatalf("No tokens available to redeem")
+		}
+
+		fmt.Printf("Available to redeem: %0.06f GLF\n", util.ToFIL(balance.Balance))
+
+		s.Start()
+
+		votingTokenLockupPlanTxor, err := abigen.NewIHedgeyVoteTokenLockupPlanTransactor(PoolsSDK.Query().TokenNFTWrapper(), ethClient)
+		if err != nil {
+			logFatal(err)
+		}
+
+		tx, err := votingTokenLockupPlanTxor.RedeemPlans(auth, []*big.Int{planIDBig})
 		if err != nil {
 			logFatalf("Failed to redeem airdrop %s", err)
 		}
@@ -155,7 +176,7 @@ var redeemPlanCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("GLF tokens redeemed successfully\n")
+		fmt.Printf("%0.06f GLF tokens redeemed successfully\n", util.ToFIL(balance.Balance))
 	},
 }
 
@@ -168,7 +189,7 @@ func printVestingSchedule(tokenID *big.Int, plan *abigen.IHedgeyVoteTokenLockupP
 	fmt.Printf("amount: %0.04f GLF\n", amountFIL)
 
 	vestPerDay := big.NewInt(0).Mul(plan.Rate, big.NewInt(builtin.EpochsInDay))
-	fmt.Printf("vesting rate: %0.04f GLF per day\n", util.ToFIL(vestPerDay))
+	fmt.Printf("vesting rate: %0.06f GLF per day\n", util.ToFIL(vestPerDay))
 
 	periods := big.NewInt(0).Div(plan.Amount, plan.Rate)
 	elapsedSecondsUntilEnd := big.NewInt(0).Mul(periods, plan.Period)

@@ -17,33 +17,21 @@ import (
 var tokensCmd = &cobra.Command{
 	Use:   "tokens",
 	Short: "Commands for interacting with tokens",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("token command executed")
-	},
 }
 
 var iFILNewCmd = &cobra.Command{
 	Use:   "ifil",
 	Short: "Commands for interacting with the Infinity Pool Liquid Staking Token (iFIL)",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("ifil new")
-	},
 }
 
 var glifCmd = &cobra.Command{
 	Use:   "glf",
 	Short: "Commands for interacting with the GLIF token",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("glif new")
-	},
 }
 
 var wFILNewCmd = &cobra.Command{
 	Use:   "wfil",
 	Short: "Commands for interacting with the Wrapped Filecoin token",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("wfil new")
-	},
 }
 
 // generic methods for ERC20 tokens
@@ -154,7 +142,7 @@ var transferFunc = func(cmd *cobra.Command, args []string) {
 
 	strAddr := args[0]
 	strAmt := args[1]
-	fmt.Printf("Transferring %s %s to %s...\n", token, strAmt, strAddr)
+	fmt.Printf("Transferring %s %s to %s...\n", strAmt, token, strAddr)
 
 	addr, err := AddressOrAccountNameToEVM(ctx, strAddr)
 	if err != nil {
@@ -186,6 +174,12 @@ var transferFunc = func(cmd *cobra.Command, args []string) {
 		logFatalf("Failed to transfer %s %s", token, err)
 	}
 
+	s.Stop()
+
+	fmt.Printf("Confirming transfer transaction: %s...\n", tx.Hash().Hex())
+
+	s.Start()
+
 	_, err = PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
 	if err != nil {
 		logFatalf("Failed to transfer %s %s", token, err)
@@ -196,13 +190,76 @@ var transferFunc = func(cmd *cobra.Command, args []string) {
 	fmt.Printf("Successfully transferred %0.03f %s from %s to %s!\n", util.ToFIL(amount), token, from, strAddr)
 }
 
+var transferFromFunc = func(cmd *cobra.Command, args []string) {
+	ctx := cmd.Context()
+	holder := args[0]
+	to := args[1]
+	strAmt := args[2]
+	token, tokenAddress := parseToken(cmd)
+	from := cmd.Flag("from").Value.String()
+	auth, _, err := commonGenericAccountSetup(ctx, from)
+	if err != nil {
+		logFatal(err)
+	}
+
+	fmt.Printf("Transferring %s %s from %s to %s...\n", token, strAmt, from, to)
+
+	fromAddr, err := AddressOrAccountNameToEVM(ctx, holder)
+	if err != nil {
+		logFatalf("Failed to parse from address %s", err)
+	}
+
+	toAddr, err := AddressOrAccountNameToEVM(ctx, to)
+	if err != nil {
+		logFatalf("Failed to parse to address %s", err)
+	}
+
+	amount, err := parseFILAmount(strAmt)
+	if err != nil {
+		logFatalf("Failed to parse amount %s", err)
+	}
+
+	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+	s.Start()
+	defer s.Stop()
+
+	client, err := PoolsSDK.Extern().ConnectEthClient()
+	if err != nil {
+		logFatalf("Failed to get %s transactor %s", token, err)
+	}
+	defer client.Close()
+
+	poolTokenTransactor, err := abigen.NewPoolTokenTransactor(tokenAddress, client)
+	if err != nil {
+		logFatalf("Failed to get %s transactor %s", token, err)
+	}
+
+	tx, err := poolTokenTransactor.TransferFrom(auth, fromAddr, toAddr, amount)
+	if err != nil {
+		logFatalf("Failed to transfer %s %s", token, err)
+	}
+
+	s.Stop()
+
+	fmt.Printf("Confirming transfer from transaction: %s...\n", tx.Hash().Hex())
+
+	s.Start()
+
+	_, err = PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
+	if err != nil {
+		logFatalf("Failed to transfer from %s %s", token, err)
+	}
+
+	s.Stop()
+
+	fmt.Printf("Successfully transferred %0.03f %s from %s to %s!\n", util.ToFIL(amount), token, from, to)
+}
+
 var balanceOfFunc = func(cmd *cobra.Command, args []string) {
 	strAddr := args[0]
 	token, tokenAddress := parseToken(cmd)
-	fmt.Println("token", token)
-	fmt.Println("tokenAddress", tokenAddress)
 
-	fmt.Printf("Checking %s balance of %s...", token, strAddr)
+	fmt.Printf("Checking %s balance of %s...\n", strAddr, token)
 
 	addr, err := AddressOrAccountNameToEVM(cmd.Context(), strAddr)
 	if err != nil {
@@ -280,14 +337,21 @@ var approveCmd = cobra.Command{
 
 var transferCmd = cobra.Command{
 	Use:   "transfer <recipient> <amount>",
-	Short: "Transfer a token",
+	Short: "Transfer `amount` of tokens to the recipient address",
 	Args:  cobra.ExactArgs(2),
 	Run:   transferFunc,
 }
 
+var transferFromCmd = cobra.Command{
+	Use:   "transfer-from <from> <to> <amount>",
+	Short: "Transfer `amount` of tokens from the `from` address to the `to` address for the token",
+	Args:  cobra.ExactArgs(3),
+	Run:   transferFromFunc,
+}
+
 var balanceOfCmd = cobra.Command{
 	Use:   "balance-of <address>",
-	Short: "Get the balance of an address for a token",
+	Short: "Get the token balance of an address",
 	Args:  cobra.ExactArgs(1),
 	Run:   balanceOfFunc,
 }
@@ -300,7 +364,7 @@ var supplyCmd = cobra.Command{
 }
 
 // this allows us to effectively create the same methods for each ERC20 token but have the 'parent' be different so we can identify the correct token to use
-func cloneCommand(cmd *cobra.Command) *cobra.Command {
+func createCommand(cmd *cobra.Command) *cobra.Command {
 	return &cobra.Command{
 		Use:   cmd.Use,
 		Short: cmd.Short,
@@ -327,23 +391,29 @@ func init() {
 	tokensCmd.AddCommand(glifCmd)
 	tokensCmd.AddCommand(wFILNewCmd)
 
-	wFILNewCmd.AddCommand(cloneCommand(&allowanceCmd))
-	iFILNewCmd.AddCommand(cloneCommand(&allowanceCmd))
-	glifCmd.AddCommand(cloneCommand(&allowanceCmd))
+	tokensCmd.PersistentFlags().String("from", "", "address to send the transaction from")
 
-	wFILNewCmd.AddCommand(cloneCommand(&approveCmd))
-	iFILNewCmd.AddCommand(cloneCommand(&approveCmd))
-	glifCmd.AddCommand(cloneCommand(&approveCmd))
+	wFILNewCmd.AddCommand(createCommand(&allowanceCmd))
+	iFILNewCmd.AddCommand(createCommand(&allowanceCmd))
+	glifCmd.AddCommand(createCommand(&allowanceCmd))
 
-	wFILNewCmd.AddCommand(cloneCommand(&transferCmd))
-	iFILNewCmd.AddCommand(cloneCommand(&transferCmd))
-	glifCmd.AddCommand(cloneCommand(&transferCmd))
+	wFILNewCmd.AddCommand(createCommand(&approveCmd))
+	iFILNewCmd.AddCommand(createCommand(&approveCmd))
+	glifCmd.AddCommand(createCommand(&approveCmd))
 
-	wFILNewCmd.AddCommand(cloneCommand(&balanceOfCmd))
-	iFILNewCmd.AddCommand(cloneCommand(&balanceOfCmd))
-	glifCmd.AddCommand(cloneCommand(&balanceOfCmd))
+	wFILNewCmd.AddCommand(createCommand(&transferCmd))
+	iFILNewCmd.AddCommand(createCommand(&transferCmd))
+	glifCmd.AddCommand(createCommand(&transferCmd))
 
-	wFILNewCmd.AddCommand(cloneCommand(&supplyCmd))
-	iFILNewCmd.AddCommand(cloneCommand(&supplyCmd))
-	glifCmd.AddCommand(cloneCommand(&supplyCmd))
+	wFILNewCmd.AddCommand(createCommand(&balanceOfCmd))
+	iFILNewCmd.AddCommand(createCommand(&balanceOfCmd))
+	glifCmd.AddCommand(createCommand(&balanceOfCmd))
+
+	wFILNewCmd.AddCommand(createCommand(&supplyCmd))
+	iFILNewCmd.AddCommand(createCommand(&supplyCmd))
+	glifCmd.AddCommand(createCommand(&supplyCmd))
+
+	wFILNewCmd.AddCommand(createCommand(&transferFromCmd))
+	iFILNewCmd.AddCommand(createCommand(&transferFromCmd))
+	glifCmd.AddCommand(createCommand(&transferFromCmd))
 }
