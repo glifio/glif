@@ -322,9 +322,9 @@ var supplyFunc = func(cmd *cobra.Command, args []string) {
 }
 
 var allowanceCmd = cobra.Command{
-	Use:   "allowance <spender>",
-	Short: "Get the allowance of a spender for a token",
-	Args:  cobra.ExactArgs(1),
+	Use:   "allowance <owner> <spender>",
+	Short: "Get the amount of tokens that `spender` is allowed to spend on behalf of `owner`",
+	Args:  cobra.ExactArgs(2),
 	Run:   allowanceFunc,
 }
 
