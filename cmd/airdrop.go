@@ -74,7 +74,7 @@ var claimCmd = &cobra.Command{
 
 		// generic account setup
 		from := cmd.Flag("from").Value.String()
-		auth, _, err := commonGenericAccountSetup(cmd.Context(), from)
+		auth, _, err := commonGenericAccountSetup(cmd, from)
 		if err != nil {
 			logFatal(err)
 		}

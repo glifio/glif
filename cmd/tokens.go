@@ -88,7 +88,7 @@ var approveFunc = func(cmd *cobra.Command, args []string) {
 	}
 	defer client.Close()
 
-	auth, _, err := commonGenericAccountSetup(ctx, from)
+	auth, _, err := commonGenericAccountSetup(cmd, from)
 	if err != nil {
 		logFatal(err)
 	}
@@ -135,7 +135,7 @@ var transferFunc = func(cmd *cobra.Command, args []string) {
 	ctx := cmd.Context()
 	token, tokenAddress := parseToken(cmd)
 	from := cmd.Flag("from").Value.String()
-	auth, _, err := commonGenericAccountSetup(ctx, from)
+	auth, _, err := commonGenericAccountSetup(cmd, from)
 	if err != nil {
 		logFatal(err)
 	}
@@ -197,7 +197,7 @@ var transferFromFunc = func(cmd *cobra.Command, args []string) {
 	strAmt := args[2]
 	token, tokenAddress := parseToken(cmd)
 	from := cmd.Flag("from").Value.String()
-	auth, _, err := commonGenericAccountSetup(ctx, from)
+	auth, _, err := commonGenericAccountSetup(cmd, from)
 	if err != nil {
 		logFatal(err)
 	}
