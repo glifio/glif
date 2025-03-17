@@ -41,6 +41,15 @@
     - [Reset your Agent's owner key](#reset-your-agents-owner-key)
     - [Reset your Agent's operator key](#reset-your-agents-operator-key)
     - [Reset your Agent's requester key](#reset-your-agents-requester-key)
+  - [Transactions](#transactions)
+    - [Cancel a transaction](#cancel-a-transaction)
+    - [Speed up a transaction](#speed-up-a-transaction)
+    - [List transactions in the mempool](#list-transactions-in-the-mempool)
+  - [Airdrop plans](#airdrop-plans)
+    - [Claim a GLF Token airdrop](#claim-a-glf-token-airdrop)
+    - [List existing airdrop plans that are already claimed and held by an address:](#list-existing-airdrop-plans-that-are-already-claimed-and-held-by-an-address)
+    - [Redeem $GLF Tokens from an airdrop plan](#redeem-glf-tokens-from-an-airdrop-plan)
+    - [Get information about an airdrop plan](#get-information-about-an-airdrop-plan)
 
 <hr />
 
@@ -48,7 +57,7 @@
 
 ### Use go install
 
-If you already have go version 1.21 installed, you can install the GLIF CLI simply by using the go installer:<br />
+If you already have go version 1.22 installed, you can install the GLIF CLI simply by using the go installer:<br />
 `go install github.com/glifio/glif/v2@latest`
 
 ### Linux (Coming soon)
@@ -57,7 +66,7 @@ If you already have go version 1.21 installed, you can install the GLIF CLI simp
 
 ### Build from source
 
-In order to build from source, you must have go version 1.21 or higher installed.
+In order to build from source, you must have go version 1.22 or higher installed.
 
 First, clone the repo from GitHub:<br />
 `git clone git@github.com:glifio/glif.git`<br />
@@ -125,7 +134,7 @@ Wallet accounts can each be protected with a unique passphrase for additional se
 You can easily import, export, and remove accounts from your wallet. When importing and/or exporting accounts, raw private key formats and passphrase encrypted key formats are both supported. See below for more info.
 
 - Export a private key, encrypted with your passphrase: `glif wallet export-account <account-name> --really-do-it`<br />
-Note that you will need your password in order to import the account back into your wallet.
+  Note that you will need your password in order to import the account back into your wallet.
 - Export a raw private key, unencrypted (dangerous): `glif wallet export-account-raw <account-name> --really-do-it`<br />
 - Import a passphrase encrypted private key: `glif wallet import-account <account-name> <hex-encrypted-keyfile>` <br />
 - Import a raw, hex encoded private key: `glif wallet import-account-raw <account-name> <hex-raw-key>`<br />
@@ -379,3 +388,53 @@ When resetting your Agent's requester key, we will not be removing any old keys 
 Once the second transaction confirms on-chain, you should be good to go!
 
 If all goes successfully, you should see the new requester address when you run `glif agent info`
+
+## Transactions
+
+Sometimes transactions fail to land on chain. You can cancel or speed-up a pending transaction by running:
+
+### Cancel a transaction
+
+`glif tx cancel <tx-hash or cid>`
+
+### Speed up a transaction
+
+`glif tx speed-up <tx-hash or cid>`
+
+### List transactions in the mempool
+
+`glif tx list-pending`
+
+## Airdrop plans
+
+The GLIF CLI can be used to claim your GLF Token airdrop. Note that GLF Tokens claimed in an airdrop are encapsulated in an NFT called an "Airdrop Plan". Airdrop plans each have a unique ID.<br />
+
+### Claim a GLF Token airdrop
+
+First, you should check to see if you're eligible to claim an airdrop:
+
+`glif airdrop check-eligibility <address>`
+
+If you are eligible, you can claim your airdrop by running:
+
+`glif airdrop claim <plan-id> <amount>`
+
+Please make sure that you pass a `--from` flag with the wallet address of the token claimer. Note that for Agent airdrops, your Agent owner address is the address will be able to claim your airdrop.
+
+### List existing airdrop plans that are already claimed and held by an address:
+
+`glif airdrop plans list <address>`
+
+Note that if you pass your agent address, it will list the airdrop plans that are already claimed and held by your agent's owner address.
+
+### Redeem $GLF Tokens from an airdrop plan
+
+`glif airdrop plans redeem <plan-id>`
+
+Please make sure that you pass a `--from` flag with the wallet address of airdrop plan owner.
+
+### Get information about an airdrop plan
+
+`glif airdrop plans get <plan-id>`
+
+This will print out the airdrop plan details, including the amount of $GLF tokens that are available to redeem.

@@ -13,8 +13,8 @@ For English README, please click [here](https://github.com/glifio/glif/blob/main
 
 - [GLIF CLI](#glif-cli)
   - [安装](#安装)
-    - [使用go安装](#使用go安装)
-    - [Linux（即将推出）](#Linux即将推出)
+    - [使用 go 安装](#使用go安装)
+    - [Linux（即将推出）](#linux即将推出)
     - [MacOS（即将推出）](#macos即将推出)
     - [从源码构建](#从源码构建)
   - [命名的钱包账户和地址](#命名的钱包账户和地址)
@@ -46,9 +46,9 @@ For English README, please click [here](https://github.com/glifio/glif/blob/main
 
 ## 安装
 
-### 使用go安装
+### 使用 go 安装
 
-如果你已经安装了go 1.21版本，可以使用go安装程序轻松安装GLIF CLI：<br />
+如果你已经安装了 go 1.22 版本，可以使用 go 安装程序轻松安装 GLIF CLI：<br />
 `go install github.com/glifio/glif/v2@latest`
 
 ### Linux（即将推出）
@@ -57,7 +57,7 @@ For English README, please click [here](https://github.com/glifio/glif/blob/main
 
 ### 从源码构建
 
-如用从源码构建，你需要安装go 1.21或更高版本。
+如用从源码构建，你需要安装 go 1.22 或更高版本。
 
 首先，从 GitHub 克隆仓库: <br />
 `git clone git@github.com:glifio/glif.git`<br />
@@ -126,9 +126,9 @@ GLIF CLI 内嵌了一个用于向 Filecoin 写入交易的钱包。该钱包基�
 
 - 导出私钥，加密你的密码短语：`glif wallet export-account <account-name> --really-do-it`  
   请注意，你需要密码才能将账户重新导入钱包中。
-- 导出未加密的原始私钥（危险）：`glif wallet export-account-raw <account-name> --really-do-it`  
-- 导入密码短语加密的私钥：`glif wallet import-account <account-name> <hex-encrypted-keyfile>`  
-- 导入原始的、十六进制编码的私钥：`glif wallet import-account-raw <account-name> <hex-raw-key>`  
+- 导出未加密的原始私钥（危险）：`glif wallet export-account-raw <account-name> --really-do-it`
+- 导入密码短语加密的私钥：`glif wallet import-account <account-name> <hex-encrypted-keyfile>`
+- 导入原始的、十六进制编码的私钥：`glif wallet import-account-raw <account-name> <hex-raw-key>`
 - 从密钥存储中移除账户：`glif wallet remove-account <account-name> --reall-do-it`
 
 **请注意，如果您忘记了密码短语，您的私钥将无法恢复。把您的密码短语写在一个安全的地方，避免被盗或丢失是非常重要的。**
