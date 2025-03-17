@@ -85,7 +85,7 @@ var claimCmd = &cobra.Command{
 
 		fmt.Printf("Claiming airdrop for %s from %s...\n", strAddr, auth.From.Hex())
 
-		delegatee, err := getDelegateeAddress(cmd.Context(), auth.From)
+		delegatee, err := interactiveClaimExp(cmd.Context(), auth.From)
 		if err != nil {
 			logFatal(err)
 		}
