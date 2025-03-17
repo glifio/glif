@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/filecoin-project/lotus/chain/actors/builtin"
 	"github.com/glifio/go-pools/abigen"
+	"github.com/glifio/go-pools/token"
 	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
@@ -70,6 +71,17 @@ var listPlansCmd = &cobra.Command{
 		}
 
 		fmt.Printf("Getting vesting plans for %s...\n", ethAddr.Hex())
+
+		agentOwnerMap, err := token.ReadAgentOwnerMap(false)
+		if err != nil {
+			logFatal(err)
+		}
+
+		addr, ok := agentOwnerMap[ethAddr]
+		if ok {
+			fmt.Printf("This address is an agent, its claimer is its owner: %s\n", addr.Hex())
+			ethAddr = addr
+		}
 
 		ethClient, err := PoolsSDK.Extern().ConnectEthClient()
 		if err != nil {
