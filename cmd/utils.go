@@ -20,6 +20,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/fatih/color"
 	"github.com/filecoin-project/go-address"
+	"github.com/filecoin-project/go-state-types/abi"
 	actorstypes "github.com/filecoin-project/go-state-types/actors"
 	"github.com/filecoin-project/go-state-types/manifest"
 	"github.com/filecoin-project/lotus/api"
@@ -689,4 +690,13 @@ func confirmBackupExists() error {
 
 func previewAction(_ *cobra.Command, _ []string, _ constants.Method) {
 	logFatal("Action previews have been deprecated in GLIF V2. If you would like to preview an action, please let us know, and we will re-implement this functionality")
+}
+
+// from lotus chain/messagepool/messagepool.go
+var rbfDenomBig = types.NewInt(100)
+
+func computeRBF(curPrem abi.TokenAmount, replaceByFeeRatio types.Percent) abi.TokenAmount {
+	rbfNumBig := types.NewInt(uint64(replaceByFeeRatio))
+	minPrice := types.BigDiv(types.BigMul(curPrem, rbfNumBig), rbfDenomBig)
+	return types.BigAdd(minPrice, types.NewInt(1))
 }
