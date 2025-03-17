@@ -20,7 +20,7 @@ var plansCmd = &cobra.Command{
 }
 
 var getPlanCmd = &cobra.Command{
-	Use:   "get [plan-id]",
+	Use:   "get <plan-id>",
 	Short: "Get the airdrop plan for an address",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -61,7 +61,7 @@ var getPlanCmd = &cobra.Command{
 }
 
 var listPlansCmd = &cobra.Command{
-	Use:   "list [address]",
+	Use:   "list <address>",
 	Short: "List all vesting plans for a given address",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -117,7 +117,7 @@ var listPlansCmd = &cobra.Command{
 }
 
 var redeemPlanCmd = &cobra.Command{
-	Use:   "redeem [plan-id]",
+	Use:   "redeem <plan-id>",
 	Short: "Redeem tokens from an airdrop plan",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -192,6 +192,118 @@ var redeemPlanCmd = &cobra.Command{
 	},
 }
 
+var getDelegateCmd = &cobra.Command{
+	Use:   "get-delegate <plan-id>",
+	Short: "Get the delegate address for GLF tokens locked in an airdrop plan",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		planID := args[0]
+		planIDBig, ok := big.NewInt(0).SetString(planID, 10)
+		if !ok {
+			logFatalf("Failed to parse plan ID %s", planID)
+		}
+
+		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+		s.Start()
+
+		client, err := PoolsSDK.Extern().ConnectEthClient()
+		if err != nil {
+			logFatalf("Failed to connect to Ethereum client: %s", err)
+		}
+		defer client.Close()
+
+		// Connect to the Hedgey NFT contract
+		votingTokenLockupPlanCaller, err := abigen.NewIHedgeyVoteTokenLockupPlanCaller(PoolsSDK.Query().TokenNFTWrapper(), client)
+		if err != nil {
+			logFatalf("Failed to instantiate Hedgey NFT contract: %s", err)
+		}
+
+		// Get the vault address
+		vaultAddr, err := votingTokenLockupPlanCaller.VotingVaults(&bind.CallOpts{Context: cmd.Context()}, planIDBig)
+		if err != nil {
+			logFatalf("Failed to get vault address: %s", err)
+		}
+
+		// Connect to the token ERC20 contract
+		tokenContract, err := abigen.NewTokenCaller(PoolsSDK.Query().GLF(), client)
+		if err != nil {
+			logFatalf("Failed to instantiate token ERC20 contract: %s", err)
+		}
+
+		// Get the delegatee address
+		delegatee, err := tokenContract.Delegates(&bind.CallOpts{Context: cmd.Context()}, vaultAddr)
+		if err != nil {
+			logFatalf("Failed to get delegatee address: %s", err)
+		}
+
+		s.Stop()
+
+		fmt.Println(delegatee.Hex())
+	},
+}
+
+var delegateCmd = &cobra.Command{
+	Use:   "set-delegate <plan-id> <delegatee>",
+	Short: "Delegate GLF tokens locked in an airdrop plan to a delegatee address",
+	Args:  cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		planID := args[0]
+		delegatee := args[1]
+
+		planIDBig, ok := big.NewInt(0).SetString(planID, 10)
+		if !ok {
+			logFatalf("Failed to parse plan ID %s", planID)
+		}
+
+		delegateeAddr, err := AddressOrAccountNameToEVM(cmd.Context(), delegatee)
+		if err != nil {
+			logFatalf("Failed to parse delegatee address %s", err)
+		}
+
+		// generic account setup
+		from := cmd.Flag("from").Value.String()
+		auth, _, err := commonGenericAccountSetup(cmd.Context(), from)
+		if err != nil {
+			logFatal(err)
+		}
+
+		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+		s.Start()
+
+		ethClient, err := PoolsSDK.Extern().ConnectEthClient()
+		if err != nil {
+			logFatalf("Failed to connect to Ethereum ethClient: %s", err)
+		}
+		defer ethClient.Close()
+
+		// Connect to the Hedgey NFT contract
+		votingTokenLockupPlanTxor, err := abigen.NewIHedgeyVoteTokenLockupPlanTransactor(PoolsSDK.Query().TokenNFTWrapper(), ethClient)
+		if err != nil {
+			logFatalf("Failed to instantiate Hedgey NFT contract: %s", err)
+		}
+
+		tx, err := votingTokenLockupPlanTxor.Delegate(auth, planIDBig, delegateeAddr)
+		if err != nil {
+			logFatalf("Failed to delegate tokens: %s", err)
+		}
+
+		s.Stop()
+
+		fmt.Printf("Confirming delegate transaction: %s...\n", tx.Hash().Hex())
+
+		s.Start()
+
+		_, err = PoolsSDK.Query().StateWaitReceipt(cmd.Context(), tx.Hash())
+		if err != nil {
+			logFatalf("Failed to wait for transaction receipt: %s", err)
+		}
+
+		s.Stop()
+
+		fmt.Printf("Airdrop plan %s delegated to %s\n", planID, delegateeAddr.Hex())
+	},
+}
+
 func printVestingSchedule(tokenID *big.Int, plan *abigen.IHedgeyVoteTokenLockupPlanPlan, newLine bool) {
 	amountFIL := util.ToFIL(plan.Amount)
 	if newLine {
@@ -217,5 +329,8 @@ func init() {
 	plansCmd.AddCommand(getPlanCmd)
 	plansCmd.AddCommand(listPlansCmd)
 	plansCmd.AddCommand(redeemPlanCmd)
+	plansCmd.AddCommand(getDelegateCmd)
+	plansCmd.AddCommand(delegateCmd)
 	redeemPlanCmd.Flags().String("from", "", "address to redeem the tokens from")
+	delegateCmd.Flags().String("from", "", "address to delegate the tokens from")
 }
