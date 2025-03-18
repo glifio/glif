@@ -70,7 +70,7 @@ func replaceTx(cmd *cobra.Command, args []string, cancel bool) {
 		if msg.Cid() == cid {
 			fromFilAddr := msg.Message.From
 
-			fromEthAddr, err := lapi.FilecoinAddressToEthAddress(ctx, fromFilAddr)
+			fromEthAddr, err := AddressOrAccountNameToEVM(ctx, fromFilAddr.String())
 			if err != nil {
 				logFatal(err)
 			}
