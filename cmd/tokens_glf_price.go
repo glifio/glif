@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
+	"net/http"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -18,6 +20,35 @@ import (
 	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
+
+// CoinGecko API response structure
+type CoinGeckoResponse struct {
+	Filecoin struct {
+		USD float64 `json:"usd"`
+	} `json:"filecoin"`
+}
+
+// Function to fetch the current USD price of Filecoin
+func GetFilecoinPriceUSD() (float64, error) {
+	// CoinGecko API URL for Filecoin price in USD
+	url := "https://api.coingecko.com/api/v3/simple/price?ids=filecoin&vs_currencies=usd"
+
+	// Perform HTTP GET request
+	resp, err := http.Get(url)
+	if err != nil {
+		return 0, fmt.Errorf("failed to fetch data: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// Decode JSON response
+	var result CoinGeckoResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return 0, fmt.Errorf("failed to decode JSON response: %v", err)
+	}
+
+	// Return the USD price of Filecoin
+	return result.Filecoin.USD, nil
+}
 
 var getPriceCmd = &cobra.Command{
 	Use:   "price",
@@ -38,6 +69,12 @@ var getPriceCmd = &cobra.Command{
 		}
 		defer client.Close()
 
+		// Get the current price of Filecoin in USD
+		filecoinPriceUSD, filecoinUSDPriceErr := GetFilecoinPriceUSD()
+		if err != filecoinUSDPriceErr {
+			log.Printf("Failed to get Filecoin price, skipping GLF/USD price calculation: %s", filecoinUSDPriceErr)
+		}
+
 		// Connect to the Uniswap V3 Pool contract
 		pool, err := abigen.NewUniswapV3PoolCaller(deploy.SushiGLFWFILPool, client)
 		if err != nil {
@@ -52,8 +89,16 @@ var getPriceCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("Current price of GLF/FIL: 1 GLIF ≈ %0.08f FIL\n", token.GLFToFIL(slot0.SqrtPriceX96))
-		fmt.Printf("Current price of FIL/GLF: 1 FIL ≈ %0.08f GLIF\n", token.FILToGLF(slot0.SqrtPriceX96))
+		priceGLF := token.GLFToFIL(slot0.SqrtPriceX96)
+		priceGLFUSD := new(big.Float).Mul(priceGLF, big.NewFloat(filecoinPriceUSD))
+
+		if filecoinUSDPriceErr == nil {
+			fmt.Printf("Current price of GLF/FIL: 1 GLF ≈ %0.08f FIL ($%0.02f USD)\n", token.GLFToFIL(slot0.SqrtPriceX96), priceGLFUSD)
+		} else {
+			fmt.Printf("Current price of GLF/FIL: 1 GLF ≈ %0.08f FIL\n", token.GLFToFIL(slot0.SqrtPriceX96))
+		}
+
+		fmt.Printf("Current price of FIL/GLF: 1 FIL ≈ %0.08f GLF\n", token.FILToGLF(slot0.SqrtPriceX96))
 	},
 }
 
