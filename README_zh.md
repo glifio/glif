@@ -41,6 +41,15 @@ For English README, please click [here](https://github.com/glifio/glif/blob/main
     - [重置 Agent 的所有者（owner）密钥](#重置-agent-的所有者owner密钥)
     - [重置 Agent 的操作员（operator）密钥](#重置-agent-的操作员operator密钥)
     - [重置 Agent 的请求者（requester）密钥](#重置-agent-的请求者requester密钥)
+  - [交易](#交易)
+    - [取消交易](#取消交易)
+    - [加速交易](#加速交易)
+    - [列出 Mempool（内存池）中的交易](#列出-mempool内存池中的交易)
+  - [Airdrop Plans（空投计划）](#airdrop-plans空投计划)
+    - [领取 GLF 代币空投](#领取-glf-代币空投)
+    - [列出某地址已领取并持有的 Airdrop Plans](#列出某地址已领取并持有的-airdrop-plans)
+    - [从 Airdrop Plan 中兑换 $GLF 代币](#从-airdrop-plan-中兑换-glf-代币)
+    - [获取 Airdrop Plan 详情](#获取-airdrop-plan-详情)
 
 <hr />
 
@@ -406,9 +415,13 @@ GLIF CLI 可以用于领取您的 GLF 代币空投。请注意，领取的 GLF �
 
 `glif airdrop check-eligibility <address>`
 
-如果符合资格，可以运行以下命令领取空投：
+如果您符合空投领取条件，可以通过运行以下命令来领取您的空投：
 
-`glif airdrop claim <plan-id> <amount>`
+`glif airdrop claim <address> --from=<address>`
+
+如果您是代表 Agent 来领取：
+
+`glif airdrop claim <agent-address> --from=owner`
 
 请确保输入一个带有代币领取者钱包地址的 --from flag。请注意，对于 Agent 空投，Agent 拥有者地址 才是领取空投的地址。
 

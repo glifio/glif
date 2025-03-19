@@ -417,7 +417,11 @@ First, you should check to see if you're eligible to claim an airdrop:
 
 If you are eligible, you can claim your airdrop by running:
 
-`glif airdrop claim <plan-id> <amount>`
+`glif airdrop claim <address> --from=<address>`
+
+If you are claiming on behalf of an agent:
+
+`glif airdrop claim <agent-address> --from=owner`
 
 Please make sure that you pass a `--from` flag with the wallet address of the token claimer. Note that for Agent airdrops, your Agent owner address is the address will be able to claim your airdrop.
 
