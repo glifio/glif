@@ -70,9 +70,9 @@ var getPriceCmd = &cobra.Command{
 		defer client.Close()
 
 		// Get the current price of Filecoin in USD
-		filecoinPriceUSD, err := GetFilecoinPriceUSD()
-		if err != nil {
-			logFatalf("Failed to get Filecoin price: %s", err)
+		filecoinPriceUSD, filecoinUSDPriceErr := GetFilecoinPriceUSD()
+		if err != filecoinUSDPriceErr {
+			log.Printf("Failed to get Filecoin price, skipping GLF/USD price calculation: %s", filecoinUSDPriceErr)
 		}
 
 		// Connect to the Uniswap V3 Pool contract
@@ -92,8 +92,13 @@ var getPriceCmd = &cobra.Command{
 		priceGLF := token.GLFToFIL(slot0.SqrtPriceX96)
 		priceGLFUSD := new(big.Float).Mul(priceGLF, big.NewFloat(filecoinPriceUSD))
 
-		fmt.Printf("Current price of GLF/FIL: 1 GLIF ≈ %0.08f FIL ($%0.02f USD)\n", token.GLFToFIL(slot0.SqrtPriceX96), priceGLFUSD)
-		fmt.Printf("Current price of FIL/GLF: 1 FIL ≈ %0.08f GLIF\n", token.FILToGLF(slot0.SqrtPriceX96))
+		if filecoinUSDPriceErr == nil {
+			fmt.Printf("Current price of GLF/FIL: 1 GLF ≈ %0.08f FIL ($%0.02f USD)\n", token.GLFToFIL(slot0.SqrtPriceX96), priceGLFUSD)
+		} else {
+			fmt.Printf("Current price of GLF/FIL: 1 GLF ≈ %0.08f FIL\n", token.GLFToFIL(slot0.SqrtPriceX96))
+		}
+
+		fmt.Printf("Current price of FIL/GLF: 1 FIL ≈ %0.08f GLF\n", token.FILToGLF(slot0.SqrtPriceX96))
 	},
 }
 
