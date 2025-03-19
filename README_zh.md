@@ -41,15 +41,6 @@ For English README, please click [here](https://github.com/glifio/glif/blob/main
     - [重置 Agent 的所有者（owner）密钥](#重置-agent-的所有者owner密钥)
     - [重置 Agent 的操作员（operator）密钥](#重置-agent-的操作员operator密钥)
     - [重置 Agent 的请求者（requester）密钥](#重置-agent-的请求者requester密钥)
-    - [交易](#交易)
-  - [取消交易](#取消交易)
-  - [加速交易](#加速交易)
-  - [列出 Mempool（内存池）中的交易](#列出-mempool内存池中的交易)
-    - [Airdrop Plans（空投计划）](#airdrop-plans空投计划)
-  - [领取 GLF 代币空投](#领取-glf-代币空投)
-  - [列出某地址已领取并持有的 Airdrop Plans](#列出某地址已领取并持有的-airdrop-plans)
-  - [从 Airdrop Plan 中兑换 $GLF 代币](#从-airdrop-plan-中兑换-glf-代币)
-  - [获取 Airdrop Plan 详情](#获取-airdrop-plan-详情)
 
 <hr />
 
@@ -389,49 +380,51 @@ owner = '0x5b49f3548592282A1f84c1b2C2c9FA40AF263aCA'
 
 如果一切顺利，当您运行 `glif agent info` 时，您应该能看到新的 requester 地址。
 
-### 交易
+## 交易
 
 有时候交易可能无法成功上链。您可以通过以下命令取消或加速待处理的交易：
 
-## 取消交易
+### 取消交易
 
 `glif tx cancel <tx-hash or cid>`
 
-## 加速交易
+### 加速交易
 
 `glif tx speed-up <tx-hash or cid>`
 
-## 列出 Mempool（内存池）中的交易
+### 列出 Mempool（内存池）中的交易
 
 `glif tx list-pending`
 
-### Airdrop Plans（空投计划）
+## Airdrop Plans（空投计划）
 
 GLIF CLI 可以用于领取您的 GLF 代币空投。请注意，领取的 GLF 代币会被封装在一个名为 "Airdrop Plan"（空投计划）的 NFT 中，每个 Airdrop Plan 都有独一无二的 ID。
 
-## 领取 GLF 代币空投
+### 领取 GLF 代币空投
 
 首先，您需要检查自己是否符合空投领取资格：
+
 `glif airdrop check-eligibility <address>`
 
 如果符合资格，可以运行以下命令领取空投：
+
 `glif airdrop claim <plan-id> <amount>`
 
 请确保输入一个带有代币领取者钱包地址的 --from flag。请注意，对于 Agent 空投，Agent 拥有者地址 才是领取空投的地址。
 
-## 列出某地址已领取并持有的 Airdrop Plans
+### 列出某地址已领取并持有的 Airdrop Plans
 
 `glif airdrop plans list <address>`
 
-如果输入的是您的 Agent 地址，该命令将列出已被领取并存放在 Agent 拥有者地址 下的 Airdrop plan。
+如果输入的是您的 Agent 地址，该命令将列出已被领取并存放在 Agent 拥有者地址 下的Airdrop plan。
 
-## 从 Airdrop Plan 中兑换 $GLF 代币
+### 从 Airdrop Plan 中兑换 $GLF 代币
 
 `glif airdrop plans redeem <plan-id>`
 
 请确保输入一个带有 Airdrop Plan 拥有者 钱包地址的 --from flag。
 
-## 获取 Airdrop Plan 详情
+### 获取 Airdrop Plan 详情
 
 `glif airdrop plans get <plan-id>`
 
