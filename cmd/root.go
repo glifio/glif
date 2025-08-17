@@ -40,7 +40,9 @@ import (
 
 var cfgDir string
 var useCalibnet bool // only set in root_calibnet.go
-var chainID int64 = constants.MainnetChainID
+// var chainID int64 = constants.MainnetChainID
+
+var chainID int64 = constants.AnvilChainID
 var PoolsSDK types.PoolsSDK
 var journal jnal.Journal
 
@@ -180,7 +182,8 @@ func initConfig() {
 	eventsURL := viper.GetString("routes.events-url")
 
 	override := viper.GetBool("routes.override")
-	if override || chainID == constants.LocalnetChainID || chainID == constants.AnvilChainID {
+	// if override || chainID == constants.LocalnetChainID || chainID == constants.AnvilChainID {
+	if override || chainID == constants.LocalnetChainID {
 		routerAddr := viper.GetString("routes.router")
 		router := common.HexToAddress(routerAddr)
 		err := sdk.LazyInit(context.Background(), &PoolsSDK, router, adoURL, "ADO", daemonURL, daemonToken, eventsURL)
@@ -194,6 +197,8 @@ func initConfig() {
 			extern = deploy.Extern
 		case constants.CalibnetChainID:
 			extern = deploy.TestExtern
+		case constants.AnvilChainID:
+			extern = deploy.Extern
 		default:
 			logFatalf("Unknown chain id %d", chainID)
 		}
@@ -211,6 +216,7 @@ func initConfig() {
 			extern.AdoAddr = adoURL
 		}
 
+		fmt.Printf("Jim chainID %v\n", chainID)
 		sdk, err := sdk.New(context.Background(), big.NewInt(chainID), extern)
 		if err != nil {
 			logFatalf("Failed to initialize pools sdk %s", err)
