@@ -36,7 +36,7 @@ var plusMintCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Printf("iFIL approved!\n")
+		fmt.Printf("GLIF Plus NFT minted!\n")
 	},
 }
 
