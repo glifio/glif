@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -24,7 +25,8 @@ var plusMintCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().PlusMint(ctx, auth)
+		personalCashBackPercent := big.NewInt(0)
+		tx, err := PoolsSDK.Act().PlusMint(ctx, auth, personalCashBackPercent)
 		if err != nil {
 			logFatalf("Failed to mint GLIF Plus NFT %s", err)
 		}
