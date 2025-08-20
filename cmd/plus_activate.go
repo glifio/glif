@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"math/big"
+	"strconv"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -9,21 +11,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var plusMintAndActivateCmd = &cobra.Command{
-	Use:   "mint-and-activate",
-	Short: "Mints a GLIF Card and activates it with an agent",
+var plusActivateCmd = &cobra.Command{
+	Use:   "activate",
+	Short: "Activates an already minted GLIF Card with an agent",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 		agentStore := util.AgentStore()
 
-		oldTokenID, err := agentStore.Get("plus-token-id")
+		tokenIDStr, err := agentStore.Get("plus-token-id")
 		if err != nil && err.Error() != "key not found: plus-token-id" {
 			logFatal(err)
 		}
 
-		if oldTokenID != "" {
-			logFatal("GLIF Card already minted.")
+		if tokenIDStr == "" {
+			logFatal("GLIF Card not minted yet.")
+		}
+
+		tokenID, err := strconv.ParseInt(tokenIDStr, 10, 64)
+		if err != nil {
+			logFatal(err)
 		}
 
 		from := cmd.Flag("from").Value.String()
@@ -60,31 +67,23 @@ var plusMintAndActivateCmd = &cobra.Command{
 		// beneficiary := common.Address{}
 		beneficiary := agentAddr
 		fmt.Printf("beneficiary %v\n", beneficiary)
-		tx, err := PoolsSDK.Act().PlusMintAndActivate(ctx, auth, beneficiary, tier)
+		tx, err := PoolsSDK.Act().PlusActivate(ctx, auth, beneficiary, big.NewInt(tokenID), tier)
 		if err != nil {
-			logFatalf("Failed to mint GLIF Plus NFT %s", err)
+			logFatalf("Failed to activate GLIF Plus NFT %s", err)
 		}
 
-		receipt, err := PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
+		_, err = PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
 		if err != nil {
-			logFatalf("Failed to mint GLIF Plus NFT %s", err)
-		}
-
-		// grab the token ID from the receipt's logs
-		tokenID, err := PoolsSDK.Query().PlusTokenIDFromRcpt(cmd.Context(), receipt)
-		if err != nil {
-			logFatalf("pools sdk: query: token id from receipt: %s", err)
+			logFatalf("Failed to activate GLIF Plus NFT %s", err)
 		}
 
 		s.Stop()
 
-		agentStore.Set("plus-token-id", tokenID.String())
-
-		fmt.Printf("GLIF Plus NFT minted: %s\n", tokenID.String())
+		fmt.Println("GLIF Plus NFT activated.")
 	},
 }
 
 func init() {
-	plusCmd.AddCommand(plusMintAndActivateCmd)
-	plusMintAndActivateCmd.Flags().String("from", "owner", "account to mint GLIF Card from")
+	plusCmd.AddCommand(plusActivateCmd)
+	plusActivateCmd.Flags().String("from", "owner", "account to activate GLIF Card from")
 }
