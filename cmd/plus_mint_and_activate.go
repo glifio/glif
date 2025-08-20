@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/glifio/glif/v2/util"
 	"github.com/spf13/cobra"
 )
 
@@ -14,6 +15,18 @@ var plusMintAndActivateCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
+		agentStore := util.AgentStore()
+
+		oldTokenID, err := agentStore.Get("plus-token-id")
+		if err != nil && err.Error() != "key not found: plus-token-id" {
+
+			logFatal(err)
+		}
+
+		if oldTokenID != "" {
+			logFatal("GLIF Card already minted.")
+		}
+
 		from := cmd.Flag("from").Value.String()
 
 		auth, _, err := commonGenericAccountSetup(cmd, from)
@@ -65,6 +78,8 @@ var plusMintAndActivateCmd = &cobra.Command{
 		}
 
 		s.Stop()
+
+		agentStore.Set("plus-token-id", tokenID.String())
 
 		fmt.Printf("GLIF Plus NFT minted: %s\n", tokenID.String())
 	},
