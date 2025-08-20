@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -25,24 +24,29 @@ var plusMintCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		personalCashBackPercent := big.NewInt(0)
-		tx, err := PoolsSDK.Act().PlusMint(ctx, auth, personalCashBackPercent)
+		tx, err := PoolsSDK.Act().PlusMint(ctx, auth)
 		if err != nil {
 			logFatalf("Failed to mint GLIF Plus NFT %s", err)
 		}
 
-		_, err = PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
+		receipt, err := PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
 		if err != nil {
 			logFatalf("Failed to mint GLIF Plus NFT %s", err)
+		}
+
+		// grab the token ID from the receipt's logs
+		tokenID, err := PoolsSDK.Query().PlusTokenIDFromRcpt(cmd.Context(), receipt)
+		if err != nil {
+			logFatalf("pools sdk: query: token id from receipt: %s", err)
 		}
 
 		s.Stop()
 
-		fmt.Printf("GLIF Plus NFT minted!\n")
+		fmt.Printf("GLIF Plus NFT minted: %s\n", tokenID.String())
 	},
 }
 
 func init() {
 	plusCmd.AddCommand(plusMintCmd)
-	plusMintCmd.Flags().String("from", "default", "account to mint GLIF Card from")
+	plusMintCmd.Flags().String("from", "owner", "account to mint GLIF Card from")
 }

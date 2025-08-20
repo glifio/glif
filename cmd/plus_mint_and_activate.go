@@ -2,11 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 )
 
@@ -17,6 +15,7 @@ var plusMintAndActivateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 		from := cmd.Flag("from").Value.String()
+
 		auth, _, err := commonGenericAccountSetup(cmd, from)
 		if err != nil {
 			logFatal(err)
@@ -30,8 +29,6 @@ var plusMintAndActivateCmd = &cobra.Command{
 		if err != nil {
 			logFatal(err)
 		}
-
-		personalCashBackPercent := big.NewInt(0)
 
 		/*
 			enum Tier {
@@ -48,25 +45,32 @@ var plusMintAndActivateCmd = &cobra.Command{
 		fmt.Printf("auth.From %v\n", auth.From)
 		fmt.Printf("agentAddr %v\n", agentAddr)
 		fmt.Printf("tier %v\n", tier)
-		beneficiary := common.Address{}
+		// beneficiary := common.Address{}
+		beneficiary := agentAddr
 		fmt.Printf("beneficiary %v\n", beneficiary)
-		tx, err := PoolsSDK.Act().PlusMintAndActivate(ctx, auth, personalCashBackPercent, beneficiary, tier)
+		tx, err := PoolsSDK.Act().PlusMintAndActivate(ctx, auth, beneficiary, tier)
 		if err != nil {
 			logFatalf("Failed to mint GLIF Plus NFT %s", err)
 		}
 
-		_, err = PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
+		receipt, err := PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
 		if err != nil {
 			logFatalf("Failed to mint GLIF Plus NFT %s", err)
+		}
+
+		// grab the token ID from the receipt's logs
+		tokenID, err := PoolsSDK.Query().PlusTokenIDFromRcpt(cmd.Context(), receipt)
+		if err != nil {
+			logFatalf("pools sdk: query: token id from receipt: %s", err)
 		}
 
 		s.Stop()
 
-		fmt.Printf("GLIF Plus NFT minted!\n")
+		fmt.Printf("GLIF Plus NFT minted: %s\n", tokenID.String())
 	},
 }
 
 func init() {
 	plusCmd.AddCommand(plusMintAndActivateCmd)
-	plusMintAndActivateCmd.Flags().String("from", "default", "account to mint GLIF Card from")
+	plusMintAndActivateCmd.Flags().String("from", "owner", "account to mint GLIF Card from")
 }
