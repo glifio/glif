@@ -700,3 +700,24 @@ func computeRBF(curPrem abi.TokenAmount, replaceByFeeRatio types.Percent) abi.To
 	minPrice := types.BigDiv(types.BigMul(curPrem, rbfNumBig), rbfDenomBig)
 	return types.BigAdd(minPrice, types.NewInt(1))
 }
+
+func parseTierName(tierName string) (uint8, error) {
+	switch strings.ToLower(tierName) {
+	case "inactive":
+		return 0, nil
+	case "bronze":
+		return 1, nil
+	case "silver":
+		return 2, nil
+	case "gold":
+		return 3, nil
+	default:
+		return 0, fmt.Errorf("unknown tier name")
+	}
+}
+
+var tiers = []string{"Inactive", "Bronze", "Silver", "Gold"}
+
+func tierName(tier uint8) string {
+	return tiers[tier]
+}

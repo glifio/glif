@@ -10,9 +10,9 @@ import (
 )
 
 var plusMintAndActivateCmd = &cobra.Command{
-	Use:   "mint-and-activate",
+	Use:   "mint-and-activate <tier: bronze, silver or gold>",
 	Short: "Mints a GLIF Card and activates it with an agent",
-	Args:  cobra.NoArgs,
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 		agentStore := util.AgentStore()
@@ -24,6 +24,11 @@ var plusMintAndActivateCmd = &cobra.Command{
 
 		if oldTokenID != "" {
 			logFatal("GLIF Card already minted.")
+		}
+
+		tier, err := parseTierName(args[0])
+		if err != nil {
+			logFatal(err)
 		}
 
 		from := cmd.Flag("from").Value.String()
@@ -42,32 +47,14 @@ var plusMintAndActivateCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		/*
-			enum Tier {
-					Inactive,
-					Bronze,
-					Silver,
-					Gold
-			}
-		*/
-
-		// var tier uint8 = 0 // Inactive
-		var tier uint8 = 1 // Bronze
-
-		fmt.Printf("auth.From %v\n", auth.From)
-		fmt.Printf("agentAddr %v\n", agentAddr)
-		fmt.Printf("tier %v\n", tier)
-		// beneficiary := common.Address{}
-		beneficiary := agentAddr
-		fmt.Printf("beneficiary %v\n", beneficiary)
-		tx, err := PoolsSDK.Act().PlusMintAndActivate(ctx, auth, beneficiary, tier)
+		tx, err := PoolsSDK.Act().PlusMintAndActivate(ctx, auth, agentAddr, tier)
 		if err != nil {
-			logFatalf("Failed to mint GLIF Plus NFT %s", err)
+			logFatalf("Failed to mint and activate GLIF Plus NFT %s", err)
 		}
 
 		receipt, err := PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
 		if err != nil {
-			logFatalf("Failed to mint GLIF Plus NFT %s", err)
+			logFatalf("Failed to mint and activate GLIF Plus NFT %s", err)
 		}
 
 		// grab the token ID from the receipt's logs
@@ -80,7 +67,7 @@ var plusMintAndActivateCmd = &cobra.Command{
 
 		agentStore.Set("plus-token-id", tokenID.String())
 
-		fmt.Printf("GLIF Plus NFT minted: %s\n", tokenID.String())
+		fmt.Printf("GLIF Plus NFT minted and activated: %s\n", tokenID.String())
 	},
 }
 

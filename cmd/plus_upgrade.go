@@ -11,9 +11,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var plusActivateCmd = &cobra.Command{
-	Use:   "activate <tier: bronze, silver or gold>",
-	Short: "Activates an already minted GLIF Card with an agent.",
+var plusUpgradeCmd = &cobra.Command{
+	Use:   "upgrade <new tier: bronze, silver or gold>",
+	Short: "Upgrade to a higher tier",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
@@ -38,8 +38,17 @@ var plusActivateCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		from := cmd.Flag("from").Value.String()
+		info, err := PoolsSDK.Query().PlusInfo(ctx, big.NewInt(tokenID))
+		if err != nil {
+			logFatal(err)
+		}
 
+		if tier <= info.Tier {
+			err := fmt.Errorf("new tier must be higher than current tier: %s", tierName(info.Tier))
+			logFatal(err)
+		}
+
+		from := cmd.Flag("from").Value.String()
 		auth, _, err := commonGenericAccountSetup(cmd, from)
 		if err != nil {
 			logFatal(err)
@@ -49,28 +58,23 @@ var plusActivateCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		agentAddr, err := getAgentAddressWithFlags(cmd)
+		tx, err := PoolsSDK.Act().PlusUpgrade(ctx, auth, big.NewInt(tokenID), tier)
 		if err != nil {
-			logFatal(err)
-		}
-
-		tx, err := PoolsSDK.Act().PlusActivate(ctx, auth, agentAddr, big.NewInt(tokenID), tier)
-		if err != nil {
-			logFatalf("Failed to activate GLIF Plus NFT %s", err)
+			logFatalf("Failed to upgrade tier %s", err)
 		}
 
 		_, err = PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
 		if err != nil {
-			logFatalf("Failed to activate GLIF Plus NFT %s", err)
+			logFatalf("Failed to upgrade tier %s", err)
 		}
 
 		s.Stop()
 
-		fmt.Println("GLIF Plus NFT activated.")
+		fmt.Println("Tier successfully upgraded.")
 	},
 }
 
 func init() {
-	plusCmd.AddCommand(plusActivateCmd)
-	plusActivateCmd.Flags().String("from", "owner", "account to activate GLIF Card from")
+	plusCmd.AddCommand(plusUpgradeCmd)
+	plusUpgradeCmd.Flags().String("from", "owner", "account to use")
 }

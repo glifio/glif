@@ -38,6 +38,7 @@ var plusInfoCmd = &cobra.Command{
 		}
 
 		fmt.Printf("GLIF Card Token ID: %d\n", tokenID)
+		fmt.Printf("Tier: %s\n", tierName(info.Tier))
 		fmt.Printf("Info: %+v\n", info)
 	},
 }
