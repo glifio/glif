@@ -32,7 +32,7 @@ var plusInfoCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		info, err := PoolsSDK.Query().PlusInfo(ctx, big.NewInt(tokenID))
+		info, err := PoolsSDK.Query().PlusInfo(ctx, big.NewInt(tokenID), nil)
 		if err != nil {
 			logFatal(err)
 		}
