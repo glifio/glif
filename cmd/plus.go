@@ -9,8 +9,7 @@ import (
 
 var plusCmd = &cobra.Command{
 	Use:   "plus",
-	Short: "Manage Glif Plus",
-	Long:  ``,
+	Short: "Manage GLIF Plus loyalty rewards operations",
 }
 
 func init() {
