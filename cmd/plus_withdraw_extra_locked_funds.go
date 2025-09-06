@@ -33,8 +33,7 @@ var plusWithdrawExtraLockedFundsCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		from := cmd.Flag("from").Value.String()
-		auth, _, err := commonGenericAccountSetup(cmd, from)
+		_, auth, _, _, err := commonSetupOwnerCall(cmd)
 		if err != nil {
 			logFatal(err)
 		}
@@ -61,5 +60,4 @@ var plusWithdrawExtraLockedFundsCmd = &cobra.Command{
 
 func init() {
 	plusCmd.AddCommand(plusWithdrawExtraLockedFundsCmd)
-	plusWithdrawExtraLockedFundsCmd.Flags().String("from", "owner", "account to use")
 }

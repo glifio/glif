@@ -26,8 +26,7 @@ var plusMintCmd = &cobra.Command{
 			logFatal("GLIF Card already minted.")
 		}
 
-		from := cmd.Flag("from").Value.String()
-		auth, _, err := commonGenericAccountSetup(cmd, from)
+		_, auth, _, _, err := commonSetupOwnerCall(cmd)
 		if err != nil {
 			logFatal(err)
 		}
@@ -62,5 +61,4 @@ var plusMintCmd = &cobra.Command{
 
 func init() {
 	plusCmd.AddCommand(plusMintCmd)
-	plusMintCmd.Flags().String("from", "owner", "account to mint GLIF Card from")
 }

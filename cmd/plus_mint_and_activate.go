@@ -31,9 +31,7 @@ var plusMintAndActivateCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		from := cmd.Flag("from").Value.String()
-
-		auth, _, err := commonGenericAccountSetup(cmd, from)
+		agentAddr, auth, _, _, err := commonSetupOwnerCall(cmd)
 		if err != nil {
 			logFatal(err)
 		}
@@ -41,11 +39,6 @@ var plusMintAndActivateCmd = &cobra.Command{
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 		defer s.Stop()
-
-		agentAddr, err := getAgentAddressWithFlags(cmd)
-		if err != nil {
-			logFatal(err)
-		}
 
 		tx, err := PoolsSDK.Act().PlusMintAndActivate(ctx, auth, agentAddr, tier)
 		if err != nil {
@@ -73,5 +66,4 @@ var plusMintAndActivateCmd = &cobra.Command{
 
 func init() {
 	plusCmd.AddCommand(plusMintAndActivateCmd)
-	plusMintAndActivateCmd.Flags().String("from", "owner", "account to mint GLIF Card from")
 }

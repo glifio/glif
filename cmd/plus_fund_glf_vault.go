@@ -33,8 +33,7 @@ var plusFundGLFVaultCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		from := cmd.Flag("from").Value.String()
-		auth, _, err := commonGenericAccountSetup(cmd, from)
+		_, auth, _, _, err := commonSetupOwnerCall(cmd)
 		if err != nil {
 			logFatal(err)
 		}
@@ -66,5 +65,4 @@ var plusFundGLFVaultCmd = &cobra.Command{
 
 func init() {
 	plusCmd.AddCommand(plusFundGLFVaultCmd)
-	plusFundGLFVaultCmd.Flags().String("from", "owner", "account to use")
 }

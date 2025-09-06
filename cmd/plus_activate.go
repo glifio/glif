@@ -38,9 +38,7 @@ var plusActivateCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		from := cmd.Flag("from").Value.String()
-
-		auth, _, err := commonGenericAccountSetup(cmd, from)
+		agentAddr, auth, _, _, err := commonSetupOwnerCall(cmd)
 		if err != nil {
 			logFatal(err)
 		}
@@ -48,11 +46,6 @@ var plusActivateCmd = &cobra.Command{
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 		defer s.Stop()
-
-		agentAddr, err := getAgentAddressWithFlags(cmd)
-		if err != nil {
-			logFatal(err)
-		}
 
 		tx, err := PoolsSDK.Act().PlusActivate(ctx, auth, agentAddr, big.NewInt(tokenID), tier)
 		if err != nil {
@@ -72,5 +65,4 @@ var plusActivateCmd = &cobra.Command{
 
 func init() {
 	plusCmd.AddCommand(plusActivateCmd)
-	plusActivateCmd.Flags().String("from", "owner", "account to activate GLIF Card from")
 }
