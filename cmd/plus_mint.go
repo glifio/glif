@@ -38,7 +38,6 @@ var plusMintCmd = &cobra.Command{
 		if err != nil {
 			logFatal(err)
 		}
-		logFatal("Jim abort")
 
 		_, auth, _, _, err := commonSetupOwnerCall(cmd)
 		if err != nil {
