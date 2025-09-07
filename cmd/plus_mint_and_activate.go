@@ -2,10 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/glifio/glif/v2/util"
+	poolsutil "github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
@@ -27,6 +29,29 @@ var plusMintAndActivateCmd = &cobra.Command{
 		}
 
 		tier, err := parseTierName(args[0])
+		if err != nil {
+			logFatal(err)
+		}
+
+		mintPrice, err := PoolsSDK.Query().PlusMintPrice(ctx, nil)
+		if err != nil {
+			logFatal(err)
+		}
+
+		fmt.Printf("Mint Price: %.0f GLF\n", poolsutil.ToFIL(mintPrice))
+
+		tierInfos, err := PoolsSDK.Query().PlusTierInfo(ctx, nil)
+		if err != nil {
+			logFatal(err)
+		}
+		lockAmount := tierInfos[tier].TokenLockAmount
+
+		fmt.Printf("GLF lock amount for tier: %.0f GLF\n", poolsutil.ToFIL(lockAmount))
+
+		combinedAmount := new(big.Int).Add(mintPrice, lockAmount)
+		fmt.Printf("Mint + Lock Amount: %.0f GLF\n", poolsutil.ToFIL(combinedAmount))
+
+		err = checkGlfPlusBalanceAndAllowance(combinedAmount)
 		if err != nil {
 			logFatal(err)
 		}
