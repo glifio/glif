@@ -8,6 +8,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/glifio/glif/v2/util"
+	poolsutil "github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
@@ -45,6 +46,23 @@ var plusUpgradeCmd = &cobra.Command{
 
 		if tier <= info.Tier {
 			err := fmt.Errorf("new tier must be higher than current tier: %s", tierName(info.Tier))
+			logFatal(err)
+		}
+
+		tierInfos, err := PoolsSDK.Query().PlusTierInfo(ctx, nil)
+		if err != nil {
+			logFatal(err)
+		}
+		oldLockAmount := tierInfos[info.Tier].TokenLockAmount
+		newLockAmount := tierInfos[tier].TokenLockAmount
+
+		fmt.Printf("GLF lock amount for %s tier: %.0f GLF\n", tierName(info.Tier), poolsutil.ToFIL(oldLockAmount))
+		fmt.Printf("GLF lock amount for %s tier: %.0f GLF\n", tierName(tier), poolsutil.ToFIL(newLockAmount))
+		upgradeAmount := new(big.Int).Sub(newLockAmount, oldLockAmount)
+		fmt.Printf("GLF required to upgrade: %.0f GLF\n", poolsutil.ToFIL(upgradeAmount))
+
+		err = checkGlfPlusBalanceAndAllowance(upgradeAmount)
+		if err != nil {
 			logFatal(err)
 		}
 
