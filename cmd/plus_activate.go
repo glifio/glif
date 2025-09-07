@@ -8,6 +8,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/glifio/glif/v2/util"
+	poolsutil "github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
@@ -34,6 +35,19 @@ var plusActivateCmd = &cobra.Command{
 		}
 
 		tier, err := parseTierName(args[0])
+		if err != nil {
+			logFatal(err)
+		}
+
+		tierInfos, err := PoolsSDK.Query().PlusTierInfo(ctx, nil)
+		if err != nil {
+			logFatal(err)
+		}
+		lockAmount := tierInfos[tier].TokenLockAmount
+
+		fmt.Printf("GLF lock amount for tier: %.0f GLF\n", poolsutil.ToFIL(lockAmount))
+
+		err = checkGlfPlusBalanceAndAllowance(lockAmount)
 		if err != nil {
 			logFatal(err)
 		}
