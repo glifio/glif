@@ -30,6 +30,7 @@ import (
 	ltypes "github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
 	"github.com/glifio/glif/v2/util"
+	"github.com/glifio/go-pools/abigen"
 	"github.com/glifio/go-pools/constants"
 	denoms "github.com/glifio/go-pools/util"
 	walletutils "github.com/glifio/go-wallet-utils"
@@ -720,4 +721,43 @@ var tiers = []string{"Inactive", "Bronze", "Silver", "Gold"}
 
 func tierName(tier uint8) string {
 	return tiers[tier]
+}
+
+func checkGlfPlusBalanceAndAllowance(requiredAmount *big.Int) error {
+	as := util.AccountsStore()
+	owner, _, err := as.GetAddrs(string(util.OwnerKey))
+	if err != nil {
+		var e *util.ErrKeyNotFound
+		if errors.As(err, &e) {
+			return fmt.Errorf("agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
+		}
+		return err
+	}
+	fmt.Printf("Jim %v %v\n", owner, requiredAmount)
+
+	token := "glf"
+	tokenAddress := PoolsSDK.Query().GLF()
+
+	client, err := PoolsSDK.Extern().ConnectEthClient()
+	if err != nil {
+		return fmt.Errorf("failed to get %s caller %s", token, err)
+	}
+	defer client.Close()
+
+	poolTokenCaller, err := abigen.NewPoolTokenCaller(tokenAddress, client)
+	if err != nil {
+		return fmt.Errorf("failed to get %s caller %s", token, err)
+	}
+
+	bal, err := poolTokenCaller.BalanceOf(&bind.CallOpts{}, owner)
+	if err != nil {
+		return fmt.Errorf("failed to get %s balance %s", token, err)
+	}
+	fmt.Printf("GLF balance of owner is %.9f\n", denoms.ToFIL(bal))
+
+	if bal.Cmp(requiredAmount) < 0 {
+		return fmt.Errorf("insufficient GLF balance")
+	}
+
+	return nil
 }

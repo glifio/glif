@@ -6,6 +6,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/glifio/glif/v2/util"
+	poolsutil "github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
@@ -25,6 +26,19 @@ var plusMintCmd = &cobra.Command{
 		if oldTokenID != "" {
 			logFatal("GLIF Card already minted.")
 		}
+
+		mintPrice, err := PoolsSDK.Query().PlusMintPrice(ctx, nil)
+		if err != nil {
+			logFatal(err)
+		}
+
+		fmt.Printf("Mint Price: %.0f GLF\n", poolsutil.ToFIL(mintPrice))
+
+		err = checkGlfPlusBalanceAndAllowance(mintPrice)
+		if err != nil {
+			logFatal(err)
+		}
+		logFatal("Jim abort")
 
 		_, auth, _, _, err := commonSetupOwnerCall(cmd)
 		if err != nil {
