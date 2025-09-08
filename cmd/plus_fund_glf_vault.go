@@ -33,6 +33,16 @@ var plusFundGLFVaultCmd = &cobra.Command{
 			logFatal(err)
 		}
 
+		amount, err := parseFILAmount(args[0])
+		if err != nil {
+			logFatalf("Failed to parse amount %s", err)
+		}
+
+		err = checkGlfPlusBalanceAndAllowance(amount)
+		if err != nil {
+			logFatal(err)
+		}
+
 		_, auth, _, _, err := commonSetupOwnerCall(cmd)
 		if err != nil {
 			logFatal(err)
@@ -41,11 +51,6 @@ var plusFundGLFVaultCmd = &cobra.Command{
 		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 		s.Start()
 		defer s.Stop()
-
-		amount, err := parseFILAmount(args[0])
-		if err != nil {
-			logFatalf("Failed to parse amount %s", err)
-		}
 
 		tx, err := PoolsSDK.Act().PlusFundGLFVault(ctx, auth, big.NewInt(tokenID), amount)
 		if err != nil {
