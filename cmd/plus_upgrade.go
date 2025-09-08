@@ -53,7 +53,7 @@ var plusUpgradeCmd = &cobra.Command{
 		if err != nil {
 			logFatal(err)
 		}
-		oldLockAmount := tierInfos[info.Tier].TokenLockAmount
+		oldLockAmount := info.TierLockAmount
 		newLockAmount := tierInfos[tier].TokenLockAmount
 
 		fmt.Printf("GLF lock amount for %s tier: %.0f GLF\n", tierName(info.Tier), poolsutil.ToFIL(oldLockAmount))

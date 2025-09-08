@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var acceptPenalty bool
+
 var plusDowngradeCmd = &cobra.Command{
 	Use:   "downgrade <new tier: bronze, silver or gold>",
 	Short: "Downgrade to a lower tier",
@@ -53,7 +55,7 @@ var plusDowngradeCmd = &cobra.Command{
 		if err != nil {
 			logFatal(err)
 		}
-		oldLockAmount := tierInfos[info.Tier].TokenLockAmount
+		oldLockAmount := info.TierLockAmount
 		newLockAmount := tierInfos[tier].TokenLockAmount
 
 		err = printGlfOwnerBalance("GLF balance of owner before downgrade")
@@ -80,20 +82,19 @@ var plusDowngradeCmd = &cobra.Command{
 		days := int(hoursLeft) / 24
 		hours := int(hoursLeft) % 24
 
-		if windowEnd.After(time.Now()) {
+		if refundGlf.Sign() == 1 && windowEnd.After(time.Now()) {
 			fmt.Printf("Last tier switch timestamp: %v\n", windowStart.UTC())
-			fmt.Printf("penaltyWindow: %v\n", penaltyWindow)
-			fmt.Printf("penaltyFee: %v\n", penaltyFee)
 			fmt.Printf("Free downgrade after %v (%d days, %d hours)\n", windowEnd.UTC(), days, hours)
 			rate := new(big.Int).Mul(penaltyFee, big.NewInt(1e14))
-			fmt.Printf("rate %v\n", rate)
-			fmt.Printf("refundGlf %v\n", refundGlf)
 			penaltyAmount := new(big.Int).Div(
 				new(big.Int).Mul(refundGlf, rate),
 				big.NewInt(1e18))
 			fmt.Printf("Penalty fee: %.09f GLF\n", poolsutil.ToFIL(penaltyAmount))
 			expectedRefund := new(big.Int).Sub(refundGlf, penaltyAmount)
 			fmt.Printf("Refund with penalty: %.09f GLF\n", poolsutil.ToFIL(expectedRefund))
+			if !acceptPenalty {
+				logFatal("Re-run with --accept-penalty flag to pay penalty and proceed with downgrade")
+			}
 		} else {
 			downgradeAmount := new(big.Int).Sub(oldLockAmount, newLockAmount)
 			fmt.Printf("GLF returned to owner after downgrade: %.0f GLF\n", poolsutil.ToFIL(downgradeAmount))
@@ -132,4 +133,5 @@ var plusDowngradeCmd = &cobra.Command{
 
 func init() {
 	plusCmd.AddCommand(plusDowngradeCmd)
+	plusDowngradeCmd.Flags().BoolVar(&acceptPenalty, "accept-penalty", false, "Pay penalty for early downgrade")
 }
