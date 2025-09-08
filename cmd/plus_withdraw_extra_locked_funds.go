@@ -13,7 +13,7 @@ import (
 
 var plusWithdrawExtraLockedFundsCmd = &cobra.Command{
 	Use:   "withdraw-extra-locked-funds",
-	Short: "Withdraw extra locked funds when price of tier decreases",
+	Short: "Withdraw extra locked GLF when price of tier decreases",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
