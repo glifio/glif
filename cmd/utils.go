@@ -733,7 +733,6 @@ func checkGlfPlusBalanceAndAllowance(requiredAmount *big.Int) error {
 		}
 		return err
 	}
-	// fmt.Printf("Jim %v %v\n", owner, requiredAmount)
 
 	glfAddr := PoolsSDK.Query().GLF()
 	plusAddr := PoolsSDK.Query().Plus()
@@ -769,5 +768,37 @@ func checkGlfPlusBalanceAndAllowance(requiredAmount *big.Int) error {
 		return fmt.Errorf("insufficient GLF allowance, run: \"glif tokens glf approve %s %.9f --from owner\"", plusAddr.String(), denoms.ToFIL(requiredAmount))
 	}
 
+	return nil
+}
+
+func printGlfOwnerBalance(outputPrefix string) error {
+	as := util.AccountsStore()
+	owner, _, err := as.GetAddrs(string(util.OwnerKey))
+	if err != nil {
+		var e *util.ErrKeyNotFound
+		if errors.As(err, &e) {
+			return fmt.Errorf("agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
+		}
+		return err
+	}
+
+	glfAddr := PoolsSDK.Query().GLF()
+
+	client, err := PoolsSDK.Extern().ConnectEthClient()
+	if err != nil {
+		return fmt.Errorf("failed to get glf caller %s", err)
+	}
+	defer client.Close()
+
+	glfToken, err := abigen.NewPoolTokenCaller(glfAddr, client)
+	if err != nil {
+		return fmt.Errorf("failed to get glf caller %s", err)
+	}
+
+	bal, err := glfToken.BalanceOf(&bind.CallOpts{}, owner)
+	if err != nil {
+		return fmt.Errorf("failed to get glf balance %s", err)
+	}
+	fmt.Printf("%s is %.9f\n", outputPrefix, denoms.ToFIL(bal))
 	return nil
 }

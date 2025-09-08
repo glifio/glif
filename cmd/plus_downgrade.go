@@ -8,6 +8,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/glifio/glif/v2/util"
+	poolsutil "github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
@@ -48,6 +49,58 @@ var plusDowngradeCmd = &cobra.Command{
 			logFatal(err)
 		}
 
+		tierInfos, err := PoolsSDK.Query().PlusTierInfo(ctx, nil)
+		if err != nil {
+			logFatal(err)
+		}
+		oldLockAmount := tierInfos[info.Tier].TokenLockAmount
+		newLockAmount := tierInfos[tier].TokenLockAmount
+
+		err = printGlfOwnerBalance("GLF balance of owner before downgrade")
+		if err != nil {
+			logFatal(err)
+		}
+		fmt.Printf("GLF lock amount for %s tier: %.0f GLF\n", tierName(info.Tier), poolsutil.ToFIL(oldLockAmount))
+		fmt.Printf("GLF lock amount for %s tier: %.0f GLF\n", tierName(tier), poolsutil.ToFIL(newLockAmount))
+		refundGlf := new(big.Int).Sub(oldLockAmount, newLockAmount)
+
+		penaltyWindow, penaltyFee, err := PoolsSDK.Query().PlusTierSwitchPenaltyInfo(ctx, nil)
+		if err != nil {
+			logFatal(err)
+		}
+
+		windowStartSecs, err := strconv.ParseInt(info.LastTierSwitchTimestamp.String(), 10, 64)
+		if err != nil {
+			logFatal(err)
+		}
+		windowStart := time.Unix(windowStartSecs, 0)
+
+		windowEnd := windowStart.Add(time.Duration(time.Duration(penaltyWindow.Int64()) * time.Second))
+		hoursLeft := time.Until(windowEnd) / time.Hour
+		days := int(hoursLeft) / 24
+		hours := int(hoursLeft) % 24
+
+		if windowEnd.After(time.Now()) {
+			fmt.Printf("Last tier switch timestamp: %v\n", windowStart.UTC())
+			fmt.Printf("penaltyWindow: %v\n", penaltyWindow)
+			fmt.Printf("penaltyFee: %v\n", penaltyFee)
+			fmt.Printf("Free downgrade after %v (%d days, %d hours)\n", windowEnd.UTC(), days, hours)
+			rate := new(big.Int).Mul(penaltyFee, big.NewInt(1e14))
+			fmt.Printf("rate %v\n", rate)
+			fmt.Printf("refundGlf %v\n", refundGlf)
+			penaltyAmount := new(big.Int).Div(
+				new(big.Int).Mul(refundGlf, rate),
+				big.NewInt(1e18))
+			fmt.Printf("Penalty fee: %.09f GLF\n", poolsutil.ToFIL(penaltyAmount))
+			expectedRefund := new(big.Int).Sub(refundGlf, penaltyAmount)
+			fmt.Printf("Refund with penalty: %.09f GLF\n", poolsutil.ToFIL(expectedRefund))
+		} else {
+			downgradeAmount := new(big.Int).Sub(oldLockAmount, newLockAmount)
+			fmt.Printf("GLF returned to owner after downgrade: %.0f GLF\n", poolsutil.ToFIL(downgradeAmount))
+		}
+
+		// logFatal("jim abort")
+
 		agentAddr, auth, _, requesterKey, err := commonSetupOwnerCall(cmd)
 		if err != nil {
 			logFatal(err)
@@ -70,6 +123,10 @@ var plusDowngradeCmd = &cobra.Command{
 		s.Stop()
 
 		fmt.Println("Tier successfully downgraded.")
+		err = printGlfOwnerBalance("GLF balance of owner after downgrade")
+		if err != nil {
+			logFatal(err)
+		}
 	},
 }
 
