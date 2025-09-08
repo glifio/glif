@@ -14,7 +14,7 @@ import (
 
 var plusActivateCmd = &cobra.Command{
 	Use:   "activate <tier: bronze, silver or gold>",
-	Short: "Activates an already minted GLIF Card with an agent.",
+	Short: "Activates an already minted GLIF Card with an agent",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
