@@ -76,6 +76,7 @@ var plusInfoCmd = &cobra.Command{
 		fmt.Printf("\nPersonal Cashback Percentage: %.02f%%\n", cashbackBasis/100.00)
 		fmt.Printf("Cashback earned: %.09f FIL\n", poolsutil.ToFIL(info.FilCashbackEarned))
 		fmt.Printf("Vault balance: %.09f GLF\n", poolsutil.ToFIL(info.GLFVaultBalance))
+		fmt.Printf("Base Conversion Rate: 1 FIL = %.9f GLF\n", poolsutil.ToFIL(info.BaseConversionRateFILtoGLF))
 	},
 }
 
