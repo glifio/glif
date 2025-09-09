@@ -63,13 +63,16 @@ var plusInfoCmd = &cobra.Command{
 		days := int(hoursLeft) / 24
 		hours := int(hoursLeft) % 24
 
-		fmt.Printf("Last tier switch timestamp: %v\n", windowStart.UTC())
-		if windowEnd.After(time.Now()) {
-			fmt.Printf("Free downgrade after %v (%d days, %d hours)\n", windowEnd.UTC(), days, hours)
-			penaltyBasis, _ := penaltyFee.Float64()
-			fmt.Printf("Early downgrade penalty fee: %.02f%%\n", penaltyBasis/100.00)
-		} else {
-			fmt.Println("Free downgrade available.")
+		if info.Tier > 0 {
+			fmt.Printf("Last tier switch timestamp: %v\n", windowStart.UTC())
+			if windowEnd.After(time.Now()) {
+				fmt.Printf("Free downgrade after %v (%d days, %d hours)\n", windowEnd.UTC(), days, hours)
+				penaltyBasis, _ := penaltyFee.Float64()
+				fmt.Printf("Early downgrade penalty fee: %.02f%%\n", penaltyBasis/100.00)
+			} else {
+				fmt.Println("Free downgrade available.")
+			}
+
 		}
 
 		cashbackBasis, _ := info.PersonalCashBackPercent.Float64()
