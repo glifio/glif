@@ -52,7 +52,7 @@ var plusFundGLFVaultCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().PlusFundGLFVault(ctx, auth, big.NewInt(tokenID), amount)
+		tx, err := PoolsSDK.Act().SPPlusFundGLFVault(ctx, auth, big.NewInt(tokenID), amount)
 		if err != nil {
 			logFatalf("Failed to fund GLF vault %s", err)
 		}

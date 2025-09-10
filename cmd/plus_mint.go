@@ -27,7 +27,7 @@ var plusMintCmd = &cobra.Command{
 			logFatal("GLIF Card already minted.")
 		}
 
-		mintPrice, err := PoolsSDK.Query().PlusMintPrice(ctx, nil)
+		mintPrice, err := PoolsSDK.Query().SPPlusMintPrice(ctx, nil)
 		if err != nil {
 			logFatal(err)
 		}
@@ -48,7 +48,7 @@ var plusMintCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().PlusMint(ctx, auth)
+		tx, err := PoolsSDK.Act().SPPlusMint(ctx, auth)
 		if err != nil {
 			logFatalf("Failed to mint GLIF Plus NFT %s", err)
 		}
@@ -59,7 +59,7 @@ var plusMintCmd = &cobra.Command{
 		}
 
 		// grab the token ID from the receipt's logs
-		tokenID, err := PoolsSDK.Query().PlusTokenIDFromRcpt(cmd.Context(), receipt)
+		tokenID, err := PoolsSDK.Query().SPPlusTokenIDFromRcpt(cmd.Context(), receipt)
 		if err != nil {
 			logFatalf("pools sdk: query: token id from receipt: %s", err)
 		}

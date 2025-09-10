@@ -33,14 +33,14 @@ var plusMintAndActivateCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		mintPrice, err := PoolsSDK.Query().PlusMintPrice(ctx, nil)
+		mintPrice, err := PoolsSDK.Query().SPPlusMintPrice(ctx, nil)
 		if err != nil {
 			logFatal(err)
 		}
 
 		fmt.Printf("Mint Price: %.0f GLF\n", poolsutil.ToFIL(mintPrice))
 
-		tierInfos, err := PoolsSDK.Query().PlusTierInfo(ctx, nil)
+		tierInfos, err := PoolsSDK.Query().SPPlusTierInfo(ctx, nil)
 		if err != nil {
 			logFatal(err)
 		}
@@ -65,7 +65,7 @@ var plusMintAndActivateCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().PlusMintAndActivate(ctx, auth, agentAddr, tier)
+		tx, err := PoolsSDK.Act().SPPlusMintAndActivate(ctx, auth, agentAddr, tier)
 		if err != nil {
 			logFatalf("Failed to mint and activate GLIF Plus NFT %s", err)
 		}
@@ -76,7 +76,7 @@ var plusMintAndActivateCmd = &cobra.Command{
 		}
 
 		// grab the token ID from the receipt's logs
-		tokenID, err := PoolsSDK.Query().PlusTokenIDFromRcpt(cmd.Context(), receipt)
+		tokenID, err := PoolsSDK.Query().SPPlusTokenIDFromRcpt(cmd.Context(), receipt)
 		if err != nil {
 			logFatalf("pools sdk: query: token id from receipt: %s", err)
 		}

@@ -47,7 +47,7 @@ var plusClaimCashBackCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		tx, err := PoolsSDK.Act().PlusClaimCashBack(ctx, auth, big.NewInt(tokenID), receiver)
+		tx, err := PoolsSDK.Act().SPPlusClaimCashBack(ctx, auth, big.NewInt(tokenID), receiver)
 		if err != nil {
 			logFatalf("Failed to claim cashback %s", err)
 		}

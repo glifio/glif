@@ -39,7 +39,7 @@ var plusUpgradeCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		info, err := PoolsSDK.Query().PlusInfo(ctx, big.NewInt(tokenID), nil)
+		info, err := PoolsSDK.Query().SPPlusInfo(ctx, big.NewInt(tokenID), nil)
 		if err != nil {
 			logFatal(err)
 		}
@@ -49,7 +49,7 @@ var plusUpgradeCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		tierInfos, err := PoolsSDK.Query().PlusTierInfo(ctx, nil)
+		tierInfos, err := PoolsSDK.Query().SPPlusTierInfo(ctx, nil)
 		if err != nil {
 			logFatal(err)
 		}
@@ -75,7 +75,7 @@ var plusUpgradeCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().PlusUpgrade(ctx, auth, big.NewInt(tokenID), tier)
+		tx, err := PoolsSDK.Act().SPPlusUpgrade(ctx, auth, big.NewInt(tokenID), tier)
 		if err != nil {
 			logFatalf("Failed to upgrade tier %s", err)
 		}

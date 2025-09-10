@@ -48,7 +48,7 @@ var plusSetPersonalCashBackPercentCmd = &cobra.Command{
 		}
 		cashBackPercent := int64(cashBackPercentFloat * 100.00)
 
-		tx, err := PoolsSDK.Act().PlusSetPersonalCashBackPercent(ctx, auth, big.NewInt(tokenID), big.NewInt(cashBackPercent))
+		tx, err := PoolsSDK.Act().SPPlusSetPersonalCashBackPercent(ctx, auth, big.NewInt(tokenID), big.NewInt(cashBackPercent))
 		if err != nil {
 			logFatalf("Failed to set personal cashback percent %s", err)
 		}

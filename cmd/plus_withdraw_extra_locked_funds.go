@@ -42,7 +42,7 @@ var plusWithdrawExtraLockedFundsCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().PlusWithdrawExtraLockedFunds(ctx, auth, big.NewInt(tokenID))
+		tx, err := PoolsSDK.Act().SPPlusWithdrawExtraLockedFunds(ctx, auth, big.NewInt(tokenID))
 		if err != nil {
 			logFatalf("Failed to withdraw extra locked funds %s", err)
 		}

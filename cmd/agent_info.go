@@ -111,12 +111,12 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 			return econ.GetAgentFiFromAPI(agent, PoolsSDK.Extern().GetEventsURL())
 		},
 		func() (interface{}, error) {
-			tier, err := query.PlusTierFromAgentAddress(ctx, agent, nil)
+			tier, err := query.SPPlusTierFromAgentAddress(ctx, agent, nil)
 			if err != nil {
 				return nil, err
 			}
 
-			maxDTL, exists := constants.TierDTL[tier]
+			maxDTL, exists := constants.SPTierDTL[tier]
 			if !exists {
 				// Default to MAX_BORROW_DTL if tier is not recognized
 				maxDTL = constants.MAX_BORROW_DTL

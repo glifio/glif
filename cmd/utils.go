@@ -735,7 +735,7 @@ func checkGlfPlusBalanceAndAllowance(requiredAmount *big.Int) error {
 	}
 
 	glfAddr := PoolsSDK.Query().GLF()
-	plusAddr := PoolsSDK.Query().Plus()
+	plusAddr := PoolsSDK.Query().SPPlus()
 
 	client, err := PoolsSDK.Extern().ConnectEthClient()
 	if err != nil {
