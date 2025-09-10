@@ -34,7 +34,7 @@ var plusInfoCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		info, err := PoolsSDK.Query().PlusInfo(ctx, big.NewInt(tokenID), nil)
+		info, err := PoolsSDK.Query().SPPlusInfo(ctx, big.NewInt(tokenID), nil)
 		if err != nil {
 			logFatal(err)
 		}
@@ -47,7 +47,7 @@ var plusInfoCmd = &cobra.Command{
 			fmt.Printf("Withdrawable Extra Locked Funds: %.9f GLF\n", poolsutil.ToFIL(info.WithdrawableExtraLockedFunds))
 		}
 
-		penaltyWindow, penaltyFee, err := PoolsSDK.Query().PlusTierSwitchPenaltyInfo(ctx, nil)
+		penaltyWindow, penaltyFee, err := PoolsSDK.Query().SPPlusTierSwitchPenaltyInfo(ctx, nil)
 		if err != nil {
 			logFatal(err)
 		}

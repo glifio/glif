@@ -39,7 +39,7 @@ var plusActivateCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		tierInfos, err := PoolsSDK.Query().PlusTierInfo(ctx, nil)
+		tierInfos, err := PoolsSDK.Query().SPPlusTierInfo(ctx, nil)
 		if err != nil {
 			logFatal(err)
 		}
@@ -61,7 +61,7 @@ var plusActivateCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().PlusActivate(ctx, auth, agentAddr, big.NewInt(tokenID), tier)
+		tx, err := PoolsSDK.Act().SPPlusActivate(ctx, auth, agentAddr, big.NewInt(tokenID), tier)
 		if err != nil {
 			logFatalf("Failed to activate GLIF Plus NFT %s", err)
 		}

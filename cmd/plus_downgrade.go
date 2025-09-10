@@ -41,7 +41,7 @@ var plusDowngradeCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		info, err := PoolsSDK.Query().PlusInfo(ctx, big.NewInt(tokenID), nil)
+		info, err := PoolsSDK.Query().SPPlusInfo(ctx, big.NewInt(tokenID), nil)
 		if err != nil {
 			logFatal(err)
 		}
@@ -51,7 +51,7 @@ var plusDowngradeCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		tierInfos, err := PoolsSDK.Query().PlusTierInfo(ctx, nil)
+		tierInfos, err := PoolsSDK.Query().SPPlusTierInfo(ctx, nil)
 		if err != nil {
 			logFatal(err)
 		}
@@ -66,7 +66,7 @@ var plusDowngradeCmd = &cobra.Command{
 		fmt.Printf("GLF lock amount for %s tier: %.0f GLF\n", tierName(tier), poolsutil.ToFIL(newLockAmount))
 		refundGlf := new(big.Int).Sub(oldLockAmount, newLockAmount)
 
-		penaltyWindow, penaltyFee, err := PoolsSDK.Query().PlusTierSwitchPenaltyInfo(ctx, nil)
+		penaltyWindow, penaltyFee, err := PoolsSDK.Query().SPPlusTierSwitchPenaltyInfo(ctx, nil)
 		if err != nil {
 			logFatal(err)
 		}
@@ -111,7 +111,7 @@ var plusDowngradeCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().PlusDowngrade(ctx, auth, big.NewInt(tokenID), tier, agentAddr, requesterKey)
+		tx, err := PoolsSDK.Act().SPPlusDowngrade(ctx, auth, big.NewInt(tokenID), tier, agentAddr, requesterKey)
 		if err != nil {
 			logFatalf("Failed to downgrade tier %s", err)
 		}
