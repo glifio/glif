@@ -2,17 +2,19 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"math/big"
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/glifio/glif/v2/util"
 	poolsutil "github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
 var plusMintAndActivateCmd = &cobra.Command{
-	Use:   "mint-and-activate <tier: bronze, silver or gold>",
+	Use:   "mint-and-activate <tier: bronze, silver or gold> [--fund-glf-vault <amount>] [--personal-cashback-percent <percent>]",
 	Short: "Mints a GLIF Card and activates it with an agent",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -39,7 +41,23 @@ var plusMintAndActivateCmd = &cobra.Command{
 		}
 		lockAmount := tierInfos[tier].TokenLockAmount
 
+		fundAmountStr, err := cmd.Flags().GetString("fund-glf-vault")
+		if err != nil {
+			log.Fatal(err)
+		}
+		fundAmount, err := parseFILAmount(fundAmountStr)
+		if err != nil {
+			logFatalf("Failed to parse amount %s", err)
+		}
+
+		cashBackPercentFloat, err := cmd.Flags().GetFloat64("personal-cashback-percent")
+		if err != nil {
+			logFatal(err)
+		}
+		cashBackPercent := int64(cashBackPercentFloat * 100.00)
+
 		combinedAmount := new(big.Int).Add(mintPrice, lockAmount)
+		combinedAmount = new(big.Int).Add(combinedAmount, fundAmount)
 
 		if dueNow {
 			fmt.Printf("%.09f\n", poolsutil.ToFIL(combinedAmount))
@@ -48,6 +66,7 @@ var plusMintAndActivateCmd = &cobra.Command{
 
 		fmt.Printf("Mint Price: %.09f GLF\n", poolsutil.ToFIL(mintPrice))
 		fmt.Printf("GLF lock amount for tier: %.09f GLF\n", poolsutil.ToFIL(lockAmount))
+		fmt.Printf("GLF vault fund amount: %.09f GLF\n", poolsutil.ToFIL(fundAmount))
 		fmt.Printf("Mint + Lock Amount: %.09f GLF\n", poolsutil.ToFIL(combinedAmount))
 
 		err = checkGlfPlusBalanceAndAllowance(combinedAmount)
@@ -64,9 +83,20 @@ var plusMintAndActivateCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().SPPlusMintAndActivate(ctx, auth, agentAddr, tier)
-		if err != nil {
-			logFatalf("Failed to mint and activate GLIF Plus NFT %s", err)
+		var tx *types.Transaction
+		if fundAmount.Sign() == 0 {
+			tx, err = PoolsSDK.Act().SPPlusMintAndActivate(ctx, auth, agentAddr, tier)
+			if err != nil {
+				logFatalf("Failed to mint and activate GLIF Plus NFT %s", err)
+			}
+			if cashBackPercentFloat > 0.0 {
+				fmt.Printf("Cannot set personal cashback percent in same transaction, please run: glif plus set-personal-cashback-percent %f\n", cashBackPercentFloat)
+			}
+		} else {
+			tx, err = PoolsSDK.Act().SPPlusMintActivateAndFund(ctx, auth, big.NewInt(cashBackPercent), agentAddr, tier, fundAmount)
+			if err != nil {
+				logFatalf("Failed to mint and activate GLIF Plus NFT %s", err)
+			}
 		}
 
 		receipt, err := PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
@@ -91,4 +121,6 @@ var plusMintAndActivateCmd = &cobra.Command{
 func init() {
 	plusCmd.AddCommand(plusMintAndActivateCmd)
 	plusMintAndActivateCmd.Flags().BoolVar(&dueNow, "due-now", false, "Print amount of GLF tokens required to mint and activate")
+	plusMintAndActivateCmd.PersistentFlags().String("fund-glf-vault", "0", "Amount of GLF to fund vault with")
+	plusMintAndActivateCmd.PersistentFlags().Float64("personal-cashback-percent", 5.0, "Set personal cashback percent")
 }
