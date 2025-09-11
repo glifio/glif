@@ -32,6 +32,7 @@ import (
 	"github.com/glifio/glif/v2/util"
 	"github.com/glifio/go-pools/abigen"
 	"github.com/glifio/go-pools/constants"
+	poolstypes "github.com/glifio/go-pools/types"
 	denoms "github.com/glifio/go-pools/util"
 	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
@@ -801,4 +802,19 @@ func printGlfOwnerBalance(outputPrefix string) error {
 	}
 	fmt.Printf("%s is %.9f\n", outputPrefix, denoms.ToFIL(bal))
 	return nil
+}
+
+func getTierSwitchWindow(info *poolstypes.SPPlusInfo, penaltyWindow *big.Int) (
+	windowStart time.Time,
+	windowEnd time.Time,
+	days int,
+	hours int,
+) {
+	windowStart = time.Unix(info.LastTierSwitchTimestamp.Int64(), 0)
+	windowEnd = windowStart.Add(time.Duration(time.Duration(penaltyWindow.Int64()) * time.Second))
+	hoursLeft := time.Until(windowEnd) / time.Hour
+	days = int(hoursLeft) / 24
+	hours = int(hoursLeft) % 24
+
+	return windowStart, windowEnd, days, hours
 }
