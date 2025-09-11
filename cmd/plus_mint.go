@@ -32,6 +32,11 @@ var plusMintCmd = &cobra.Command{
 			logFatal(err)
 		}
 
+		if dueNow {
+			fmt.Printf("%0.f\n", poolsutil.ToFIL(mintPrice))
+			return
+		}
+
 		fmt.Printf("Mint Price: %.0f GLF\n", poolsutil.ToFIL(mintPrice))
 
 		err = checkGlfPlusBalanceAndAllowance(mintPrice)
@@ -74,4 +79,5 @@ var plusMintCmd = &cobra.Command{
 
 func init() {
 	plusCmd.AddCommand(plusMintCmd)
+	plusMintCmd.Flags().BoolVar(&dueNow, "due-now", false, "Print amount of GLF tokens required to mint")
 }

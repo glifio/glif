@@ -56,9 +56,15 @@ var plusUpgradeCmd = &cobra.Command{
 		oldLockAmount := info.TierLockAmount
 		newLockAmount := tierInfos[tier].TokenLockAmount
 
+		upgradeAmount := new(big.Int).Sub(newLockAmount, oldLockAmount)
+
+		if dueNow {
+			fmt.Printf("%0.f\n", poolsutil.ToFIL(upgradeAmount))
+			return
+		}
+
 		fmt.Printf("GLF lock amount for %s tier: %.0f GLF\n", tierName(info.Tier), poolsutil.ToFIL(oldLockAmount))
 		fmt.Printf("GLF lock amount for %s tier: %.0f GLF\n", tierName(tier), poolsutil.ToFIL(newLockAmount))
-		upgradeAmount := new(big.Int).Sub(newLockAmount, oldLockAmount)
 		fmt.Printf("GLF required to upgrade: %.0f GLF\n", poolsutil.ToFIL(upgradeAmount))
 
 		err = checkGlfPlusBalanceAndAllowance(upgradeAmount)
@@ -93,4 +99,5 @@ var plusUpgradeCmd = &cobra.Command{
 
 func init() {
 	plusCmd.AddCommand(plusUpgradeCmd)
+	plusUpgradeCmd.Flags().BoolVar(&dueNow, "due-now", false, "Print amount of GLF tokens required to upgrade")
 }

@@ -7,6 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var dueNow bool
+
 var plusCmd = &cobra.Command{
 	Use:   "plus",
 	Short: "Manage GLIF Plus loyalty rewards operations",
