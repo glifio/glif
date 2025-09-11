@@ -38,17 +38,21 @@ var plusMintAndActivateCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		fmt.Printf("Mint Price: %.0f GLF\n", poolsutil.ToFIL(mintPrice))
-
 		tierInfos, err := PoolsSDK.Query().SPPlusTierInfo(ctx, nil)
 		if err != nil {
 			logFatal(err)
 		}
 		lockAmount := tierInfos[tier].TokenLockAmount
 
-		fmt.Printf("GLF lock amount for tier: %.0f GLF\n", poolsutil.ToFIL(lockAmount))
-
 		combinedAmount := new(big.Int).Add(mintPrice, lockAmount)
+
+		if dueNow {
+			fmt.Printf("%0.f\n", poolsutil.ToFIL(combinedAmount))
+			return
+		}
+
+		fmt.Printf("Mint Price: %.0f GLF\n", poolsutil.ToFIL(mintPrice))
+		fmt.Printf("GLF lock amount for tier: %.0f GLF\n", poolsutil.ToFIL(lockAmount))
 		fmt.Printf("Mint + Lock Amount: %.0f GLF\n", poolsutil.ToFIL(combinedAmount))
 
 		err = checkGlfPlusBalanceAndAllowance(combinedAmount)
@@ -91,4 +95,5 @@ var plusMintAndActivateCmd = &cobra.Command{
 
 func init() {
 	plusCmd.AddCommand(plusMintAndActivateCmd)
+	plusMintAndActivateCmd.Flags().BoolVar(&dueNow, "due-now", false, "Print amount of GLF tokens required to mint and activate")
 }
