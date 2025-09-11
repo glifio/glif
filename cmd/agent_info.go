@@ -52,12 +52,12 @@ var agentInfoCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		_, _, _, _, afi, err := basicInfo(cmd.Context(), agentAddr, agentAddrDel, lapi, s)
+		_, _, _, _, afi, maxDTL, err := basicInfo(cmd.Context(), agentAddr, agentAddrDel, lapi, s)
 		if err != nil {
 			logFatal(err)
 		}
 
-		err = econInfo(cmd.Context(), agentAddr, afi, s)
+		err = econInfo(cmd.Context(), agentAddr, afi, maxDTL, s)
 		if err != nil {
 			logFatal(err)
 		}
@@ -75,6 +75,7 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 	agVersion uint8,
 	ntwVersion uint8,
 	afi *econ.AgentFi,
+	maxDTL *big.Int,
 	err error,
 ) {
 	query := PoolsSDK.Query()
@@ -109,10 +110,23 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 		func() (interface{}, error) {
 			return econ.GetAgentFiFromAPI(agent, PoolsSDK.Extern().GetEventsURL())
 		},
+		func() (interface{}, error) {
+			tier, err := query.SPPlusTierFromAgentAddress(ctx, agent, nil)
+			if err != nil {
+				return nil, err
+			}
+
+			maxDTL, exists := constants.SPTierDTL[tier]
+			if !exists {
+				// Default to MAX_BORROW_DTL if tier is not recognized
+				maxDTL = constants.MAX_BORROW_DTL
+			}
+			return maxDTL, nil
+		},
 	}
 	results, err := util.Multiread(tasks)
 	if err != nil {
-		return common.Big0, address.Undef, 0, 0, nil, err
+		return common.Big0, address.Undef, 0, 0, nil, nil, err
 	}
 
 	agentID = results[0].(*big.Int)
@@ -125,6 +139,7 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 	requester := results[5].(common.Address)
 	agentMiners := results[6].([]address.Address)
 	afi = results[7].(*econ.AgentFi)
+	maxDTL = results[8].(*big.Int)
 
 	goodVersion := agVersion == ntwVersion
 
@@ -164,10 +179,10 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 
 	s.Start()
 
-	return agentID, agentFILIDAddr, agVersion, ntwVersion, afi, nil
+	return agentID, agentFILIDAddr, agVersion, ntwVersion, afi, maxDTL, nil
 }
 
-func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, s *spinner.Spinner) error {
+func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, maxDTL *big.Int, s *spinner.Spinner) error {
 	query := PoolsSDK.Query()
 
 	tasks := []util.TaskFunc{
@@ -208,9 +223,9 @@ func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, s *s
 		"Max borrow to withdraw",
 		"Available to withdraw",
 	}, []string{
-		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.BorrowLimit())),
-		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.MaxBorrowAndWithdraw())),
-		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.WithdrawLimit())),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.BorrowLimit(maxDTL))),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.MaxBorrowAndWithdraw(maxDTL))),
+		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.WithdrawLimit(maxDTL))),
 	})
 
 	printTable([]string{
