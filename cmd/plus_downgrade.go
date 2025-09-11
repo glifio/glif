@@ -71,16 +71,7 @@ var plusDowngradeCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		windowStartSecs, err := strconv.ParseInt(info.LastTierSwitchTimestamp.String(), 10, 64)
-		if err != nil {
-			logFatal(err)
-		}
-		windowStart := time.Unix(windowStartSecs, 0)
-
-		windowEnd := windowStart.Add(time.Duration(time.Duration(penaltyWindow.Int64()) * time.Second))
-		hoursLeft := time.Until(windowEnd) / time.Hour
-		days := int(hoursLeft) / 24
-		hours := int(hoursLeft) % 24
+		windowStart, windowEnd, days, hours := getTierSwitchWindow(info, penaltyWindow)
 
 		if refundGlf.Sign() == 1 && windowEnd.After(time.Now()) {
 			fmt.Printf("Last tier switch timestamp: %v\n", windowStart.UTC())
