@@ -42,9 +42,9 @@ var plusInfoCmd = &cobra.Command{
 		fmt.Printf("GLIF Card Token ID: %d\n\n", tokenID)
 
 		fmt.Printf("Tier: %s\n", tierName(info.Tier))
-		fmt.Printf("Locked Amount: %.9f GLF\n", poolsutil.ToFIL(info.TierLockAmount))
+		fmt.Printf("Locked Amount: %.09f GLF\n", poolsutil.ToFIL(info.TierLockAmount))
 		if info.WithdrawableExtraLockedFunds.Sign() == 1 {
-			fmt.Printf("Withdrawable Extra Locked Funds: %.9f GLF\n", poolsutil.ToFIL(info.WithdrawableExtraLockedFunds))
+			fmt.Printf("Withdrawable Extra Locked Funds: %.09f GLF\n", poolsutil.ToFIL(info.WithdrawableExtraLockedFunds))
 		}
 
 		penaltyWindow, penaltyFee, err := PoolsSDK.Query().SPPlusTierSwitchPenaltyInfo(ctx, nil)
@@ -55,7 +55,7 @@ var plusInfoCmd = &cobra.Command{
 		windowStart, windowEnd, days, hours := getTierSwitchWindow(info, penaltyWindow)
 
 		if info.Tier > 0 {
-			fmt.Printf("Last tier switch timestamp: %v\n", windowStart.UTC())
+			fmt.Printf("Tier activation timestamp: %v\n", windowStart.UTC())
 			if windowEnd.After(time.Now()) {
 				fmt.Printf("Free downgrade after %v (%d days, %d hours)\n", windowEnd.UTC(), days, hours)
 				penaltyBasis, _ := penaltyFee.Float64()
@@ -69,7 +69,7 @@ var plusInfoCmd = &cobra.Command{
 		fmt.Printf("\nPersonal Cashback Percentage: %.02f%%\n", cashbackBasis/100.00)
 		fmt.Printf("Cashback earned: %.09f FIL\n", poolsutil.ToFIL(info.FilCashbackEarned))
 		fmt.Printf("Vault balance: %.09f GLF\n", poolsutil.ToFIL(info.GLFVaultBalance))
-		fmt.Printf("Base Conversion Rate: 1 FIL = %.9f GLF\n", poolsutil.ToFIL(info.BaseConversionRateFILtoGLF))
+		fmt.Printf("Base Conversion Rate: 1 FIL = %.09f GLF\n", poolsutil.ToFIL(info.BaseConversionRateFILtoGLF))
 	},
 }
 

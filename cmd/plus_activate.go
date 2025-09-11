@@ -45,7 +45,7 @@ var plusActivateCmd = &cobra.Command{
 		}
 		lockAmount := tierInfos[tier].TokenLockAmount
 
-		fmt.Printf("GLF lock amount for tier: %.0f GLF\n", poolsutil.ToFIL(lockAmount))
+		fmt.Printf("GLF lock amount for tier: %.09f GLF\n", poolsutil.ToFIL(lockAmount))
 
 		err = checkGlfPlusBalanceAndAllowance(lockAmount)
 		if err != nil {

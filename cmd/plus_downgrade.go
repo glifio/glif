@@ -74,7 +74,8 @@ var plusDowngradeCmd = &cobra.Command{
 		windowStart, windowEnd, days, hours := getTierSwitchWindow(info, penaltyWindow)
 
 		if refundGlf.Sign() == 1 && windowEnd.After(time.Now()) {
-			fmt.Printf("Last tier switch timestamp: %v\n", windowStart.UTC())
+			fmt.Println("Attempting to downgrade early...")
+			fmt.Printf("Tier activation timestamp: %v\n", windowStart.UTC())
 			fmt.Printf("Free downgrade after %v (%d days, %d hours)\n", windowEnd.UTC(), days, hours)
 			penaltyAmount := new(big.Int).Div(
 				new(big.Int).Mul(refundGlf, penaltyFee),
@@ -83,11 +84,11 @@ var plusDowngradeCmd = &cobra.Command{
 			expectedRefund := new(big.Int).Sub(refundGlf, penaltyAmount)
 			fmt.Printf("Refund with penalty: %.09f GLF\n", poolsutil.ToFIL(expectedRefund))
 			if !acceptPenalty {
-				logFatal("Re-run with --accept-penalty flag to pay penalty and proceed with downgrade")
+				logFatal("Re-run with --accept-penalty flag to pay penalty and proceed with early downgrade")
 			}
 		} else {
 			downgradeAmount := new(big.Int).Sub(oldLockAmount, newLockAmount)
-			fmt.Printf("GLF returned to owner after downgrade: %.0f GLF\n", poolsutil.ToFIL(downgradeAmount))
+			fmt.Printf("GLF returned to owner after downgrade: %.09f GLF\n", poolsutil.ToFIL(downgradeAmount))
 		}
 
 		agentAddr, auth, _, requesterKey, err := commonSetupOwnerCall(cmd)

@@ -37,7 +37,7 @@ var plusMintCmd = &cobra.Command{
 			return
 		}
 
-		fmt.Printf("Mint Price: %.0f GLF\n", poolsutil.ToFIL(mintPrice))
+		fmt.Printf("Mint Price: %.09f GLF\n", poolsutil.ToFIL(mintPrice))
 
 		err = checkGlfPlusBalanceAndAllowance(mintPrice)
 		if err != nil {
