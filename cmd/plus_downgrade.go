@@ -15,7 +15,7 @@ import (
 var acceptPenalty bool
 
 var plusDowngradeCmd = &cobra.Command{
-	Use:   "downgrade <new tier: bronze, silver or gold>",
+	Use:   "downgrade <new tier: bronze or silver>",
 	Short: "Downgrade to a lower tier",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
