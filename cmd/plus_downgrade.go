@@ -76,10 +76,9 @@ var plusDowngradeCmd = &cobra.Command{
 		if refundGlf.Sign() == 1 && windowEnd.After(time.Now()) {
 			fmt.Printf("Last tier switch timestamp: %v\n", windowStart.UTC())
 			fmt.Printf("Free downgrade after %v (%d days, %d hours)\n", windowEnd.UTC(), days, hours)
-			rate := new(big.Int).Mul(penaltyFee, big.NewInt(1e14))
 			penaltyAmount := new(big.Int).Div(
-				new(big.Int).Mul(refundGlf, rate),
-				big.NewInt(1e18))
+				new(big.Int).Mul(refundGlf, penaltyFee),
+				big.NewInt(10000))
 			fmt.Printf("Penalty fee: %.09f GLF\n", poolsutil.ToFIL(penaltyAmount))
 			expectedRefund := new(big.Int).Sub(refundGlf, penaltyAmount)
 			fmt.Printf("Refund with penalty: %.09f GLF\n", poolsutil.ToFIL(expectedRefund))
