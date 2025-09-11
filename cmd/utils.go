@@ -10,6 +10,7 @@ import (
 	"os"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -817,4 +818,38 @@ func getTierSwitchWindow(info *poolstypes.SPPlusInfo, penaltyWindow *big.Int) (
 	hours = int(hoursLeft) % 24
 
 	return windowStart, windowEnd, days, hours
+}
+
+func ensureNoPlusToken() error {
+	agentStore := util.AgentStore()
+
+	oldTokenID, err := agentStore.Get("plus-token-id")
+	if err != nil && err.Error() != "key not found: plus-token-id" {
+		return err
+	}
+
+	if oldTokenID != "" {
+		return fmt.Errorf("glif card already minted")
+	}
+	return nil
+}
+
+func getPlusTokenID() (int64, error) {
+	agentStore := util.AgentStore()
+
+	tokenIDStr, err := agentStore.Get("plus-token-id")
+	if err != nil && err.Error() != "key not found: plus-token-id" {
+		return 0, err
+	}
+
+	if tokenIDStr == "" {
+		return 0, fmt.Errorf("glif card not minted yet")
+	}
+
+	tokenID, err := strconv.ParseInt(tokenIDStr, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return tokenID, nil
 }

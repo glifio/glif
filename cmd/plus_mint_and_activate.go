@@ -17,15 +17,10 @@ var plusMintAndActivateCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
-		agentStore := util.AgentStore()
 
-		oldTokenID, err := agentStore.Get("plus-token-id")
-		if err != nil && err.Error() != "key not found: plus-token-id" {
+		err := ensureNoPlusToken()
+		if err != nil {
 			logFatal(err)
-		}
-
-		if oldTokenID != "" {
-			logFatal("GLIF Card already minted.")
 		}
 
 		tier, err := parseTierName(args[0])
@@ -87,7 +82,7 @@ var plusMintAndActivateCmd = &cobra.Command{
 
 		s.Stop()
 
-		agentStore.Set("plus-token-id", tokenID.String())
+		util.AgentStore().Set("plus-token-id", tokenID.String())
 
 		fmt.Printf("GLIF Plus NFT minted and activated: %s\n", tokenID.String())
 	},

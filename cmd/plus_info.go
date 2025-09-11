@@ -3,10 +3,8 @@ package cmd
 import (
 	"fmt"
 	"math/big"
-	"strconv"
 	"time"
 
-	"github.com/glifio/glif/v2/util"
 	poolsutil "github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
@@ -17,19 +15,8 @@ var plusInfoCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
-		agentStore := util.AgentStore()
 
-		tokenIDStr, err := agentStore.Get("plus-token-id")
-		if err != nil && err.Error() != "key not found: plus-token-id" {
-			logFatal(err)
-		}
-
-		if tokenIDStr == "" {
-			fmt.Println("GLIF Card not minted yet.")
-			return
-		}
-
-		tokenID, err := strconv.ParseInt(tokenIDStr, 10, 64)
+		tokenID, err := getPlusTokenID()
 		if err != nil {
 			logFatal(err)
 		}
