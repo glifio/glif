@@ -62,8 +62,8 @@ var plusDowngradeCmd = &cobra.Command{
 		if err != nil {
 			logFatal(err)
 		}
-		fmt.Printf("GLF lock amount for %s tier: %.0f GLF\n", tierName(info.Tier), poolsutil.ToFIL(oldLockAmount))
-		fmt.Printf("GLF lock amount for %s tier: %.0f GLF\n", tierName(tier), poolsutil.ToFIL(newLockAmount))
+		fmt.Printf("GLF lock amount for %s tier: %.09f GLF\n", tierName(info.Tier), poolsutil.ToFIL(oldLockAmount))
+		fmt.Printf("GLF lock amount for %s tier: %.09f GLF\n", tierName(tier), poolsutil.ToFIL(newLockAmount))
 		refundGlf := new(big.Int).Sub(oldLockAmount, newLockAmount)
 
 		penaltyWindow, penaltyFee, err := PoolsSDK.Query().SPPlusTierSwitchPenaltyInfo(ctx, nil)

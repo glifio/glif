@@ -33,7 +33,7 @@ var plusMintCmd = &cobra.Command{
 		}
 
 		if dueNow {
-			fmt.Printf("%0.f\n", poolsutil.ToFIL(mintPrice))
+			fmt.Printf("%.09f\n", poolsutil.ToFIL(mintPrice))
 			return
 		}
 
