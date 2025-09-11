@@ -6,6 +6,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/glifio/go-pools/abigen"
+	"github.com/glifio/go-pools/util"
 	"github.com/spf13/cobra"
 )
 
@@ -45,6 +46,11 @@ var plusApproveSpendCmd = &cobra.Command{
 		}
 
 		tx, err := poolTokenTransactor.Approve(auth, plusAddr, amount)
+		if err != nil {
+			logFatalf("Failed to approve GLF spend %s", err)
+		}
+
+		tx, err = util.TxPostProcess(tx, err)
 		if err != nil {
 			logFatalf("Failed to approve GLF spend %s", err)
 		}
