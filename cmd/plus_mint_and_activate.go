@@ -47,13 +47,13 @@ var plusMintAndActivateCmd = &cobra.Command{
 		combinedAmount := new(big.Int).Add(mintPrice, lockAmount)
 
 		if dueNow {
-			fmt.Printf("%0.f\n", poolsutil.ToFIL(combinedAmount))
+			fmt.Printf("%.09f\n", poolsutil.ToFIL(combinedAmount))
 			return
 		}
 
-		fmt.Printf("Mint Price: %.0f GLF\n", poolsutil.ToFIL(mintPrice))
-		fmt.Printf("GLF lock amount for tier: %.0f GLF\n", poolsutil.ToFIL(lockAmount))
-		fmt.Printf("Mint + Lock Amount: %.0f GLF\n", poolsutil.ToFIL(combinedAmount))
+		fmt.Printf("Mint Price: %.09f GLF\n", poolsutil.ToFIL(mintPrice))
+		fmt.Printf("GLF lock amount for tier: %.09f GLF\n", poolsutil.ToFIL(lockAmount))
+		fmt.Printf("Mint + Lock Amount: %.09f GLF\n", poolsutil.ToFIL(combinedAmount))
 
 		err = checkGlfPlusBalanceAndAllowance(combinedAmount)
 		if err != nil {

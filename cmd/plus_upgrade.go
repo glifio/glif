@@ -59,13 +59,13 @@ var plusUpgradeCmd = &cobra.Command{
 		upgradeAmount := new(big.Int).Sub(newLockAmount, oldLockAmount)
 
 		if dueNow {
-			fmt.Printf("%0.f\n", poolsutil.ToFIL(upgradeAmount))
+			fmt.Printf("%.09f\n", poolsutil.ToFIL(upgradeAmount))
 			return
 		}
 
-		fmt.Printf("GLF lock amount for %s tier: %.0f GLF\n", tierName(info.Tier), poolsutil.ToFIL(oldLockAmount))
-		fmt.Printf("GLF lock amount for %s tier: %.0f GLF\n", tierName(tier), poolsutil.ToFIL(newLockAmount))
-		fmt.Printf("GLF required to upgrade: %.0f GLF\n", poolsutil.ToFIL(upgradeAmount))
+		fmt.Printf("GLF lock amount for %s tier: %.09f GLF\n", tierName(info.Tier), poolsutil.ToFIL(oldLockAmount))
+		fmt.Printf("GLF lock amount for %s tier: %.09f GLF\n", tierName(tier), poolsutil.ToFIL(newLockAmount))
+		fmt.Printf("GLF required to upgrade: %.09f GLF\n", poolsutil.ToFIL(upgradeAmount))
 
 		err = checkGlfPlusBalanceAndAllowance(upgradeAmount)
 		if err != nil {
