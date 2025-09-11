@@ -765,7 +765,7 @@ func checkGlfPlusBalanceAndAllowance(requiredAmount *big.Int) error {
 
 	fmt.Printf("GLF allowance for Plus on behalf of owner is %.09f\n", denoms.ToFIL(allow))
 	if allow.Cmp(requiredAmount) < 0 {
-		return fmt.Errorf("insufficient GLF allowance, run: \"glif tokens glf approve %s %.9f --from owner\"", plusAddr.String(), denoms.ToFIL(requiredAmount))
+		return fmt.Errorf("insufficient GLF allowance, run: \"glif plus approve-spend %.9f\"", denoms.ToFIL(requiredAmount))
 	}
 
 	return nil
