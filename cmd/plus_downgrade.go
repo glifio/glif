@@ -100,8 +100,6 @@ var plusDowngradeCmd = &cobra.Command{
 			fmt.Printf("GLF returned to owner after downgrade: %.0f GLF\n", poolsutil.ToFIL(downgradeAmount))
 		}
 
-		// logFatal("jim abort")
-
 		agentAddr, auth, _, requesterKey, err := commonSetupOwnerCall(cmd)
 		if err != nil {
 			logFatal(err)
