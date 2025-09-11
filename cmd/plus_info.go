@@ -42,9 +42,11 @@ var plusInfoCmd = &cobra.Command{
 		windowStart, windowEnd, days, hours := getTierSwitchWindow(info, penaltyWindow)
 
 		if info.Tier > 0 {
-			fmt.Printf("Tier activation timestamp: %v\n", windowStart.UTC())
+			windowStartFormatted := windowStart.UTC().Format("January 2 2006 15:04")
+			fmt.Printf("Tier activation timestamp: %v\n", windowStartFormatted)
 			if windowEnd.After(time.Now()) {
-				fmt.Printf("Free downgrade after %v (%d days, %d hours)\n", windowEnd.UTC(), days, hours)
+				windowEndFormatted := windowEnd.UTC().Format("January 2 2006 15:04")
+				fmt.Printf("Free downgrade after %v UTC (%d days, %d hours)\n", windowEndFormatted, days, hours)
 				penaltyBasis, _ := penaltyFee.Float64()
 				fmt.Printf("Early downgrade penalty fee: %.02f%%\n", penaltyBasis/100.00)
 			} else {
