@@ -14,7 +14,7 @@ import (
 )
 
 var plusMintAndActivateCmd = &cobra.Command{
-	Use:   "mint-and-activate <tier: bronze, silver or gold> [--fund-glf-vault <amount>] [--personal-cashback-percent <percent>]",
+	Use:   "mint-and-activate <tier: bronze, silver or gold> [--fund-cash-back <amount>]",
 	Short: "Mints a GLIF Card and activates it with an agent",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -41,7 +41,7 @@ var plusMintAndActivateCmd = &cobra.Command{
 		}
 		lockAmount := tierInfos[tier].TokenLockAmount
 
-		fundAmountStr, err := cmd.Flags().GetString("fund-glf-vault")
+		fundAmountStr, err := cmd.Flags().GetString("fund-cash-back")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -50,11 +50,15 @@ var plusMintAndActivateCmd = &cobra.Command{
 			logFatalf("Failed to parse amount %s", err)
 		}
 
-		cashBackPercentFloat, err := cmd.Flags().GetFloat64("personal-cashback-percent")
+		cashBackPercentFloat, err := cmd.Flags().GetFloat64("cashback-percent")
 		if err != nil {
 			logFatal(err)
 		}
 		cashBackPercent := int64(cashBackPercentFloat * 100.00)
+
+		if cashBackPercentFloat > 500 {
+			logFatal(fmt.Errorf("cashback percent must be less than 5%%"))
+		}
 
 		combinedAmount := new(big.Int).Add(mintPrice, lockAmount)
 		combinedAmount = new(big.Int).Add(combinedAmount, fundAmount)
@@ -66,8 +70,8 @@ var plusMintAndActivateCmd = &cobra.Command{
 
 		fmt.Printf("Mint Price: %.09f GLF\n", poolsutil.ToFIL(mintPrice))
 		fmt.Printf("GLF lock amount for tier: %.09f GLF\n", poolsutil.ToFIL(lockAmount))
-		fmt.Printf("GLF vault fund amount: %.09f GLF\n", poolsutil.ToFIL(fundAmount))
-		fmt.Printf("Mint + Lock Amount: %.09f GLF\n", poolsutil.ToFIL(combinedAmount))
+		fmt.Printf("GLF tokens to fund cash back vault: %.09f GLF\n", poolsutil.ToFIL(fundAmount))
+		fmt.Printf("Total amount to spend: %.09f GLF\n", poolsutil.ToFIL(combinedAmount))
 
 		err = checkGlfPlusBalanceAndAllowance(combinedAmount)
 		if err != nil {
@@ -111,13 +115,13 @@ var plusMintAndActivateCmd = &cobra.Command{
 
 		util.AgentStore().Set("plus-token-id", tokenID.String())
 
-		fmt.Printf("GLIF Plus NFT minted and activated: %s\n", tokenID.String())
+		fmt.Printf("GLIF Plus NFT minted and activated successfully: %s\n", tokenID.String())
 	},
 }
 
 func init() {
 	plusCmd.AddCommand(plusMintAndActivateCmd)
 	plusMintAndActivateCmd.Flags().BoolVar(&dueNow, "due-now", false, "Print amount of GLF tokens required to mint and activate")
-	plusMintAndActivateCmd.PersistentFlags().String("fund-glf-vault", "0", "Amount of GLF to fund vault with")
-	plusMintAndActivateCmd.PersistentFlags().Float64("personal-cashback-percent", 5.0, "Set personal cashback percent")
+	plusMintAndActivateCmd.Flags().String("fund-cash-back", "0", "Amount of GLF tokens to add to the Card's cash back vault")
+	plusMintAndActivateCmd.Flags().Float64("cashback-percent", 5.0, "Set percent of interest to be earned through case back (5.0 = 5%)")
 }
