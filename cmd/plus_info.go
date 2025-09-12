@@ -16,9 +16,21 @@ var plusInfoCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 
-		tokenID, err := getPlusTokenID()
+		var tokenID int64
+		var err error
+
+		tokenIDFlag, err := cmd.Flags().GetInt64("token-id")
 		if err != nil {
 			logFatal(err)
+		}
+
+		if tokenIDFlag > 0 {
+			tokenID = tokenIDFlag
+		} else {
+			tokenID, err = getPlusTokenID()
+			if err != nil {
+				logFatal(err)
+			}
 		}
 
 		info, err := PoolsSDK.Query().SPPlusInfo(ctx, big.NewInt(tokenID), nil)
@@ -26,15 +38,18 @@ var plusInfoCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		fmt.Printf("GLIF Card Token ID: %d\n\n", tokenID)
+		fmt.Printf("GLIF Card Token ID: %d\n", tokenID)
 
+		// TIER INFORMATION
+		fmt.Printf("\n── Tier Information ──\n")
 		fmt.Printf("Tier: %s\n", tierName(info.Tier))
 		fmt.Printf("Locked Amount: %.09f GLF\n", poolsutil.ToFIL(info.TierLockAmount))
 		if info.WithdrawableExtraLockedFunds.Sign() == 1 {
-			fmt.Printf("Withdrawable Extra Locked Funds: %.09f GLF\n", poolsutil.ToFIL(info.WithdrawableExtraLockedFunds))
+			fmt.Printf("Withdrawable Extra: %.09f GLF\n", poolsutil.ToFIL(info.WithdrawableExtraLockedFunds))
 		}
 
-		penaltyWindow, penaltyFee, err := PoolsSDK.Query().SPPlusTierSwitchPenaltyInfo(ctx, nil)
+		// TIER SWITCH TIMING
+		penaltyWindow, _, err := PoolsSDK.Query().SPPlusTierSwitchPenaltyInfo(ctx, nil)
 		if err != nil {
 			logFatal(err)
 		}
@@ -42,26 +57,54 @@ var plusInfoCmd = &cobra.Command{
 		windowStart, windowEnd, days, hours := getTierSwitchWindow(info, penaltyWindow)
 
 		if info.Tier > 0 {
+			fmt.Printf("\n── Tier Switch Info ──\n")
 			windowStartFormatted := windowStart.UTC().Format("January 2 2006 15:04")
-			fmt.Printf("Tier activation timestamp: %v\n", windowStartFormatted)
+			fmt.Printf("Activated: %v\n", windowStartFormatted)
 			if windowEnd.After(time.Now()) {
 				windowEndFormatted := windowEnd.UTC().Format("January 2 2006 15:04")
-				fmt.Printf("Free downgrade after %v UTC (%d days, %d hours)\n", windowEndFormatted, days, hours)
-				penaltyBasis, _ := penaltyFee.Float64()
-				fmt.Printf("Early downgrade penalty fee: %.02f%%\n", penaltyBasis/100.00)
+				fmt.Printf("Free downgrade: %v UTC (%dd %dh)\n", windowEndFormatted, days, hours)
 			} else {
-				fmt.Println("Free downgrade available.")
+				fmt.Printf("Free downgrade: Available now\n")
 			}
 		}
 
+		// CASHBACK INFORMATION
+		fmt.Printf("\n── Cashback Status ──\n")
 		cashbackBasis, _ := info.PersonalCashBackPercent.Float64()
-		fmt.Printf("\nPersonal Cashback Percentage: %.02f%%\n", cashbackBasis/100.00)
-		fmt.Printf("Cashback earned: %.09f FIL\n", poolsutil.ToFIL(info.FilCashbackEarned))
-		fmt.Printf("Vault balance: %.09f GLF\n", poolsutil.ToFIL(info.GLFVaultBalance))
-		fmt.Printf("Base Conversion Rate: 1 FIL = %.09f GLF\n", poolsutil.ToFIL(info.BaseConversionRateFILtoGLF))
+		fmt.Printf("Earned: %.09f FIL\n", poolsutil.ToFIL(info.FilCashbackEarned))
+		fmt.Printf("Vault Balance: %.09f GLF\n", poolsutil.ToFIL(info.GLFVaultBalance))
+		fmt.Printf("Cashback Percentage: %.02f%%\n", cashbackBasis/100.00)
+
+		// CONVERSION RATES
+		fmt.Printf("\n── Conversion Rates ──\n")
+		fmt.Printf("Base Rate: 1 FIL = %.09f GLF\n", poolsutil.ToFIL(info.BaseConversionRateFILtoGLF))
+
+		// Get tier information to calculate tier premium rate
+		tierInfos, err := PoolsSDK.Query().SPPlusTierInfo(ctx, nil)
+		if err != nil {
+			logFatal(err)
+		}
+
+		if info.Tier > 0 && int(info.Tier) <= len(tierInfos) {
+			tierInfo := tierInfos[info.Tier]
+
+			// Calculate tier premium conversion rate using WAD math (18 decimals)
+			// This matches the SpPlus contract logic: conversionRateWithPremium = filToGlf.rawMulWad(tierInfo.cashBackPremium)
+			conversionRateWithPremium := poolsutil.MulWad(info.BaseConversionRateFILtoGLF, tierInfo.CashBackPremium)
+
+			premium := new(big.Float).Mul(
+				new(big.Float).Sub(poolsutil.ToFIL(tierInfo.CashBackPremium), big.NewFloat(1)),
+				big.NewFloat(100),
+			)
+
+			fmt.Printf("Tier Rate: 1 FIL = %.09f GLF (+%.02f%%)\n",
+				poolsutil.ToFIL(conversionRateWithPremium), premium)
+		}
+
 	},
 }
 
 func init() {
 	plusCmd.AddCommand(plusInfoCmd)
+	plusInfoCmd.Flags().Int64("token-id", 0, "Token ID to query (defaults to your stored token)")
 }

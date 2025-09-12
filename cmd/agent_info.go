@@ -15,6 +15,7 @@ import (
 	"github.com/filecoin-project/lotus/api"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
+	"github.com/glifio/go-pools/abigen"
 	"github.com/glifio/go-pools/constants"
 	"github.com/glifio/go-pools/econ"
 	"github.com/glifio/go-pools/util"
@@ -52,21 +53,40 @@ var agentInfoCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		_, _, _, _, afi, maxDTL, err := basicInfo(cmd.Context(), agentAddr, agentAddrDel, lapi, s)
+		_, _, _, _, afi, tokenID, tier, tierInfos, err := basicInfo(cmd.Context(), agentAddr, agentAddrDel, lapi, s)
 		if err != nil {
 			logFatal(err)
 		}
+
+		maxDTL := getDTLForTier(tier, tierInfos)
 
 		err = econInfo(cmd.Context(), agentAddr, afi, maxDTL, s)
 		if err != nil {
 			logFatal(err)
 		}
 
-		err = agentHealth(cmd.Context(), agentAddr, afi, s)
+		err = agentHealth(cmd.Context(), agentAddr, afi, maxDTL, s)
+		if err != nil {
+			logFatal(err)
+		}
+
+		err = plusCardInfo(cmd.Context(), tokenID, tier, tierInfos, s)
 		if err != nil {
 			logFatal(err)
 		}
 	},
+}
+
+func getDTLForTier(tier uint8, tierInfos []abigen.TierInfo) *big.Int {
+	if tier == 0 {
+		return constants.MAX_BORROW_DTL
+	}
+	if int(tier) <= len(tierInfos) {
+		tierInfo := tierInfos[tier]
+		return tierInfo.DebtToLiquidationValue
+	}
+
+	return constants.MAX_BORROW_DTL
 }
 
 func basicInfo(ctx context.Context, agent common.Address, agentDel address.Address, lapi *api.FullNodeStruct, s *spinner.Spinner) (
@@ -75,15 +95,19 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 	agVersion uint8,
 	ntwVersion uint8,
 	afi *econ.AgentFi,
-	maxDTL *big.Int,
+	tokenID *big.Int,
+	tier uint8,
+	tierInfos []abigen.TierInfo,
 	err error,
 ) {
 	query := PoolsSDK.Query()
 
+	agentID, err = query.AgentID(ctx, agent)
+	if err != nil {
+		return common.Big0, address.Undef, 0, 0, nil, common.Big0, 0, nil, err
+	}
+
 	tasks := []util.TaskFunc{
-		func() (interface{}, error) {
-			return query.AgentID(ctx, agent)
-		},
 		func() (interface{}, error) {
 			return lapi.StateLookupID(ctx, agentDel, types.EmptyTSK)
 		},
@@ -101,45 +125,38 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 			return query.AgentRequester(ctx, agent)
 		},
 		func() (interface{}, error) {
-			agentID, err := query.AgentID(ctx, agent)
-			if err != nil {
-				return nil, err
-			}
 			return query.MinerRegistryAgentMinersList(ctx, agentID, nil)
 		},
 		func() (interface{}, error) {
 			return econ.GetAgentFiFromAPI(agent, PoolsSDK.Extern().GetEventsURL())
 		},
 		func() (interface{}, error) {
-			tier, err := query.SPPlusTierFromAgentAddress(ctx, agent, nil)
-			if err != nil {
-				return nil, err
-			}
-
-			maxDTL, exists := constants.SPTierDTL[tier]
-			if !exists {
-				// Default to MAX_BORROW_DTL if tier is not recognized
-				maxDTL = constants.MAX_BORROW_DTL
-			}
-			return maxDTL, nil
+			return query.SPPlusAgentIdToTokenId(ctx, agentID, nil)
+		},
+		func() (interface{}, error) {
+			return query.SPPlusTierFromAgentAddress(ctx, agent, nil)
+		},
+		func() (interface{}, error) {
+			return query.SPPlusTierInfo(ctx, nil)
 		},
 	}
 	results, err := util.Multiread(tasks)
 	if err != nil {
-		return common.Big0, address.Undef, 0, 0, nil, nil, err
+		return common.Big0, address.Undef, 0, 0, nil, common.Big0, 0, nil, err
 	}
 
-	agentID = results[0].(*big.Int)
-	agentFILIDAddr = results[1].(address.Address)
-	versionResults := results[2].([]interface{})
+	agentFILIDAddr = results[0].(address.Address)
+	versionResults := results[1].([]interface{})
 	agVersion = versionResults[0].(uint8)
 	ntwVersion = versionResults[1].(uint8)
-	owner := results[3].(common.Address)
-	operator := results[4].(common.Address)
-	requester := results[5].(common.Address)
-	agentMiners := results[6].([]address.Address)
-	afi = results[7].(*econ.AgentFi)
-	maxDTL = results[8].(*big.Int)
+	owner := results[2].(common.Address)
+	operator := results[3].(common.Address)
+	requester := results[4].(common.Address)
+	agentMiners := results[5].([]address.Address)
+	afi = results[6].(*econ.AgentFi)
+	tokenID = results[7].(*big.Int)
+	tier = results[8].(uint8)
+	tierInfos = results[9].([]abigen.TierInfo)
 
 	goodVersion := agVersion == ntwVersion
 
@@ -179,7 +196,7 @@ func basicInfo(ctx context.Context, agent common.Address, agentDel address.Addre
 
 	s.Start()
 
-	return agentID, agentFILIDAddr, agVersion, ntwVersion, afi, maxDTL, nil
+	return agentID, agentFILIDAddr, agVersion, ntwVersion, afi, tokenID, tier, tierInfos, nil
 }
 
 func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, maxDTL *big.Int, s *spinner.Spinner) error {
@@ -212,10 +229,12 @@ func econInfo(ctx context.Context, agent common.Address, afi *econ.AgentFi, maxD
 		"Liquidation value",
 		"Total debt",
 		"Debt-to-liquidation ratio (DTL)",
+		"Max DTL",
 	}, []string{
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.LiquidationValue())),
 		fmt.Sprintf("%0.09f FIL", util.ToFIL(afi.Debt())),
 		fmt.Sprintf("%0.02f%%", new(big.Float).Mul(afi.DTL(), big.NewFloat(100))),
+		fmt.Sprintf("%0.02f%%", new(big.Float).Mul(big.NewFloat(100), util.ToFIL(maxDTL))),
 	})
 
 	printTable([]string{
@@ -284,7 +303,7 @@ func printTable(keys []string, values []string) {
 	tbl.Print()
 }
 
-func agentHealth(ctx context.Context, agent common.Address, afi *econ.AgentFi, s *spinner.Spinner) error {
+func agentHealth(ctx context.Context, agent common.Address, afi *econ.AgentFi, maxDTL *big.Int, s *spinner.Spinner) error {
 	query := PoolsSDK.Query()
 
 	tasks := []util.TaskFunc{
@@ -324,7 +343,7 @@ func agentHealth(ctx context.Context, agent common.Address, afi *econ.AgentFi, s
 		return nil
 	}
 
-	overLTV := util.DivWad(afi.Debt(), afi.LiquidationValue()).Cmp(constants.MAX_BORROW_DTL) > 0
+	overLTV := util.DivWad(afi.Debt(), afi.LiquidationValue()).Cmp(maxDTL) > 0
 
 	if overLTV {
 		fmt.Println(chalk.Bold.TextStyle("Status unhealthy 🔴"))
@@ -343,6 +362,60 @@ func agentHealth(ctx context.Context, agent common.Address, afi *econ.AgentFi, s
 	})
 	fmt.Println()
 
+	return nil
+}
+
+func plusCardInfo(ctx context.Context, tokenID *big.Int, tier uint8, tierInfos []abigen.TierInfo, s *spinner.Spinner) error {
+	s.Stop()
+
+	generateHeader("GLIF+ CARD")
+
+	if tokenID.Cmp(big.NewInt(0)) == 0 {
+		fmt.Println("No GLIF+ Card minted for Agent")
+		return nil
+	}
+	if tier == 0 {
+		fmt.Println("Agent's GLIF+ Card is inactive")
+		return nil
+	}
+
+	// Basic card info
+	printTable([]string{
+		"Card ID",
+		"Tier",
+	}, []string{
+		tokenID.String(),
+		tierName(tier),
+	})
+
+	// Display tier-specific information
+	if int(tier) <= len(tierInfos) && tier > 0 {
+		tierInfo := tierInfos[tier]
+
+		info, err := PoolsSDK.Query().SPPlusInfo(ctx, tokenID, nil)
+		if err != nil {
+			logFatal(err)
+		}
+
+		conversionRateWithPremium := util.MulWad(info.BaseConversionRateFILtoGLF, tierInfo.CashBackPremium)
+
+		premium := new(big.Float).Mul(
+			new(big.Float).Sub(util.ToFIL(tierInfo.CashBackPremium), big.NewFloat(1)),
+			big.NewFloat(100),
+		)
+
+		printTable([]string{
+			"Tier Benefits",
+			"Max Debt-to-Liquidation Ratio",
+			"Cashback Exchange Rate",
+		}, []string{
+			"",
+			fmt.Sprintf("%.2f%%", new(big.Float).Mul(big.NewFloat(100), util.ToFIL(tierInfo.DebtToLiquidationValue))),
+			fmt.Sprintf("1 FIL = %.09f GLF (+%.02f%%)", util.ToFIL(conversionRateWithPremium), premium),
+		})
+	}
+
+	s.Start()
 	return nil
 }
 

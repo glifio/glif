@@ -119,6 +119,6 @@ var plusDowngradeCmd = &cobra.Command{
 }
 
 func init() {
-	plusCmd.AddCommand(plusDowngradeCmd)
+	plusTiersCmd.AddCommand(plusDowngradeCmd)
 	plusDowngradeCmd.Flags().BoolVar(&acceptPenalty, "accept-penalty", false, "Pay penalty for early downgrade")
 }
