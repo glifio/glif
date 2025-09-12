@@ -50,6 +50,20 @@
     - [List existing airdrop plans that are already claimed and held by an address:](#list-existing-airdrop-plans-that-are-already-claimed-and-held-by-an-address)
     - [Redeem $GLF Tokens from an airdrop plan](#redeem-glf-tokens-from-an-airdrop-plan)
     - [Get information about an airdrop plan](#get-information-about-an-airdrop-plan)
+  - [GLIF+ Loyalty Cards](#glif-loyalty-cards)
+    - [Card Tiers](#card-tiers)
+    - [Activation](#activation)
+      - [Prerequisites](#prerequisites)
+      - [How to Mint and Activate](#how-to-mint-and-activate)
+      - [Card costs](#card-costs)
+      - [Minting and _then_ Activating a Card](#minting-and-then-activating-a-card)
+    - [Benefits](#benefits)
+      - [Cashback program](#cashback-program)
+      - [Funding Cashback](#funding-cashback)
+      - [Claiming cashback rewards](#claiming-cashback-rewards)
+      - [Cashback percentage](#cashback-percentage)
+    - [Tier Management](#tier-management)
+    - [Print Card info](#print-card-info)
 
 <hr />
 
@@ -442,3 +456,136 @@ Please make sure that you pass a `--from` flag with the wallet address of airdro
 `glif airdrop plans get <plan-id>`
 
 This will print out the airdrop plan details, including the amount of $GLF tokens that are available to redeem.
+
+## GLIF+ Loyalty Cards
+
+GLIF+ Loyalty Cards allow $GLF Token Holders to receive benefits from using GLIF. For Storage Providers, holding a GLIF+ Loyalty Card provides two primary benefits:
+
+1. Increased borrowing limits - up to 10x leverage (tier-dependent)
+2. FIL interest cash back - pay part of your interest in $GLF and receive FIL back at a premium
+
+You can see all the various commands for interacting with the GLIF+ program by running:
+
+`glif plus --help`
+
+### Card Tiers
+
+Card benefits apply to all Card holders with an active Card. An Active Card is either Bronze, Silver, or Gold. The benefits and costs associated with each Tier can be found by running:
+
+`glif plus tiers list`<br />
+
+### Activation
+
+#### Prerequisites
+
+Before activating a Card, it's important to check a few prerequisites:
+
+1. You have enough $GLF Tokens on your Agent owner address to activate your Card
+2. You have approved the GLIF+ program to spend $GLF Tokens
+
+To check the balance of your Agent's owner account:
+
+`glif tokens glf balance-of owner`
+
+To approve the GLIF+ Program to spend $GLF Tokens on your behalf, run:
+
+`glif plus approve-spend <amount>`<br />
+
+Where `amount` is the amount of $GLF Tokens required to activate your Card.
+
+#### How to Mint and Activate
+
+If you have not already minted a GLIF+ Card, run:
+
+`glif plus mint [tier: bronze, silver, or gold]`
+
+For example, to mint and activate a silver card:
+
+`glif plus mint silver`
+
+You can check the amount of $GLF Tokens required to mint and activate a specific tier by using the `--due-now` flag:
+
+`glif plus mint silver --due-now`<br /> This command will not actually execute the minting and activation, and instead, return the total amount of $GLF tokens required for the operation.
+
+To include additional $GLF tokens on your Card to use in the Cashback program, you can use the `--fund-cash-back` flag:
+
+`glif plus mint silver --fund-cash-back 10000`<br />
+This command will (1) mint a Card, (2) activate the Card to Silver Tier, and (3) Fund the Card's cashback program with 10000 GLF Tokens.
+
+#### Card costs
+
+There are 3 "Costs" associated with the GLIF+ Card:
+
+1. Minting fees - a one time fee that is not returned to the Card owner.
+2. Activation fees - a $GLF Token lockup that is repaid to the Card owner after downgrading or deactivating the Card.
+3. Cashback program vault - a $GLF Token lockup that is repaid to the Card owner whenever the Card owner wants to remove $GLF Tokens from the Cashback program.
+
+**NOTE:** $GLF Tokens that are locked for Card activations are locked for 3 months by default. Card holders can downgrade early, with a penalty. See below in the Tier management section for more information on lockups and downgrades.
+
+#### Minting and _then_ Activating a Card
+
+You can also mint a Card, and activate it later. To mint a Card without activating it, run:
+
+`glif plus mint`
+
+To activate an existing Card, run:
+
+`glif plus activate <tier: bronze, silver, or gold>`
+
+The `--due-now` flag will work for both of these commands as well, allowing you to see the cost of each action before running it.
+
+### Benefits
+
+After activating a Card, the Card will be eligible for benefits.
+
+1. The increased borrowing limits will be available immediately.
+2. The cashback program begins as soon as the Card owner funds the Card's cashback program vault balance.
+
+#### Cashback program
+
+The Cashback program allows Storage Providers to exchange $GLF Tokens for FIL at a premium to the $GLF Market Price. The amount of FIL you can receive in this Cashback program is computed as a percentage of your Agent's interest payments.
+
+#### Funding Cashback
+
+To participate in the Cashback program, your Card needs extra $GLF Tokens to swap into FIL. To fund your card, run:
+
+`glif plus cashback fund <amount>`
+
+You can remove $GLF from your Cashback program vault by running:
+
+`glif plus cashback withdraw <amount> <receiver>`
+
+#### Claiming cashback rewards
+
+Once the Cashback program vault is funded with $GLF tokens, every time your Agent makes an interest payment, FIL tokens become claimable. To claim your Cashback rewards:
+
+`glif plus advanced set-cashback-percent <receiver>`
+
+#### Cashback percentage
+
+The Cashback percentage represents the amount of interest that should be reclaimed using the Cashback program. The maximum and default value is set to 5%. However, Card owners can set this percentage by running:
+
+`glif plus advanced cashback-percentage
+
+### Tier Management
+
+Card holders can upgrade/downgrade their Cards according to the following policies:
+
+**Upgrades:** A Card holder can upgrade their Card to a higher tier for free at anytime, by providing the higher tier's GLF Token lockup requirement:
+
+`glif plus tiers upgrade <silver or gold>`
+
+Note that a Card must be activated first, before upgrading it.
+
+**Downgrades:** A Card holder can downgrade their Card to a lower tier, according to the following policies:
+
+- If the Card was last activated / upgraded / downgraded longer than 3 months ago, the Card can be downgraded for free. All $GLF Tokens staked to the Card for activation will be transferred back to the Card owner
+- If the Card was last activated / upgraded / downgraded less than 3 months ago, the Card can be downgraded with a 5% penalty on the staked $GLF Tokens for the Card activation. The Card holder will receive 95% of the staked $GLF Token amount
+
+Note that Minting fees are a one time fee paid for creating a Card, and are not counted in Activation fees.
+
+### Print Card info
+
+You can get information about the status of your Card by running:
+
+`glif plus info`
