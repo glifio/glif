@@ -86,6 +86,6 @@ var plusUpgradeCmd = &cobra.Command{
 }
 
 func init() {
-	plusCmd.AddCommand(plusUpgradeCmd)
+	plusTiersCmd.AddCommand(plusUpgradeCmd)
 	plusUpgradeCmd.Flags().BoolVar(&dueNow, "due-now", false, "Print amount of GLF tokens required to upgrade")
 }

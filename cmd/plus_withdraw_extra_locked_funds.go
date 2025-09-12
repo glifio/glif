@@ -47,5 +47,5 @@ var plusWithdrawExtraLockedFundsCmd = &cobra.Command{
 }
 
 func init() {
-	plusCmd.AddCommand(plusWithdrawExtraLockedFundsCmd)
+	plusAdvancedCmd.AddCommand(plusWithdrawExtraLockedFundsCmd)
 }

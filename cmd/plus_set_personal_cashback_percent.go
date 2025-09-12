@@ -54,5 +54,5 @@ var plusSetPersonalCashBackPercentCmd = &cobra.Command{
 }
 
 func init() {
-	plusCmd.AddCommand(plusSetPersonalCashBackPercentCmd)
+	plusAdvancedCmd.AddCommand(plusSetPersonalCashBackPercentCmd)
 }

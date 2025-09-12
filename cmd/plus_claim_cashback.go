@@ -52,5 +52,5 @@ var plusClaimCashBackCmd = &cobra.Command{
 }
 
 func init() {
-	plusCmd.AddCommand(plusClaimCashBackCmd)
+	plusCashBackCmd.AddCommand(plusClaimCashBackCmd)
 }

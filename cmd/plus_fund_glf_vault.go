@@ -10,8 +10,9 @@ import (
 )
 
 var plusFundGLFVaultCmd = &cobra.Command{
-	Use:   "fund-glf-vault <amount>",
-	Short: "Deposit GLF tokens into vault for cashback",
+	Use:   "fund <amount>",
+	Short: "Deposit GLF tokens to use in the Card's cashback program",
+	Long:  "Deposit GLF tokens to use in the Card's cashback program. The cashback program exchanges GLF tokens for 5% of every payment in FIL at a premium to the DEX price",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
@@ -57,5 +58,5 @@ var plusFundGLFVaultCmd = &cobra.Command{
 }
 
 func init() {
-	plusCmd.AddCommand(plusFundGLFVaultCmd)
+	plusCashBackCmd.AddCommand(plusFundGLFVaultCmd)
 }
