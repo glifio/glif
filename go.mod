@@ -4,6 +4,8 @@ go 1.23.7
 
 toolchain go1.24.2
 
+replace github.com/glifio/go-pools => ../go-pools
+
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/briandowns/spinner v1.23.0
