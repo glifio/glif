@@ -251,6 +251,8 @@ github.com/glifio/go-pools v1.4.0 h1:IWE8N8vUo/4rO6XtantGMVyWhwLxXjQGU1wlFqJs5hs
 github.com/glifio/go-pools v1.4.0/go.mod h1:OcaKDTZ0K9sivaSmpk14giDvtRmOzCk38fmwMkxFrcE=
 github.com/glifio/go-pools v1.4.2-0.20250912042647-71c9b626c567 h1:Hp0qLsrDdcsFX52UKdn2GC+CSEyk8zVZs8idkjhNaSY=
 github.com/glifio/go-pools v1.4.2-0.20250912042647-71c9b626c567/go.mod h1:OcaKDTZ0K9sivaSmpk14giDvtRmOzCk38fmwMkxFrcE=
+github.com/glifio/go-pools v1.4.2-0.20250912190920-0e963b9e2b1d h1:1hd4WXt1nwT3Rl+4atfaICN9jf5aZ74CGJt32euiMkI=
+github.com/glifio/go-pools v1.4.2-0.20250912190920-0e963b9e2b1d/go.mod h1:OcaKDTZ0K9sivaSmpk14giDvtRmOzCk38fmwMkxFrcE=
 github.com/glifio/go-wallet-utils v0.0.0-20230719050429-ff6c4bc75533 h1:teuqQtVb7YMyqIOg+xUNO21qZAnm8ibhpKy4lIUBpag=
 github.com/glifio/go-wallet-utils v0.0.0-20230719050429-ff6c4bc75533/go.mod h1:zJ9ksxDWIsuS80RtpjaM6swuKZ7OYdJH56I00EZRxD4=
 github.com/go-check/check v0.0.0-20180628173108-788fd7840127/go.mod h1:9ES+weclKsC9YodN5RgxqK/VD9HM9JsCSh7rNhMZE98=
