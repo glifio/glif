@@ -63,8 +63,10 @@ var plusDowngradeCmd = &cobra.Command{
 
 		if refundGlf.Sign() == 1 && windowEnd.After(time.Now()) {
 			fmt.Println("Attempting to downgrade early...")
-			fmt.Printf("Tier activation timestamp: %v\n", windowStart.UTC())
-			fmt.Printf("Free downgrade after %v (%d days, %d hours)\n", windowEnd.UTC(), days, hours)
+			windowStartFormatted := windowStart.UTC().Format("January 2 2006 15:04")
+			fmt.Printf("Tier activation timestamp: %v\n", windowStartFormatted)
+			windowEndFormatted := windowEnd.UTC().Format("January 2 2006 15:04")
+			fmt.Printf("Free downgrade after %v UTC (%d days, %d hours)\n", windowEndFormatted, days, hours)
 			penaltyAmount := new(big.Int).Div(
 				new(big.Int).Mul(refundGlf, penaltyFee),
 				big.NewInt(10000))
