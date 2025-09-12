@@ -13,7 +13,7 @@ import (
 var acceptPenalty bool
 
 var plusDowngradeCmd = &cobra.Command{
-	Use:   "downgrade <new tier: bronze or silver>",
+	Use:   "downgrade <new tier: inactive, bronze or silver>",
 	Short: "Downgrade to a lower tier",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -73,6 +73,14 @@ var plusDowngradeCmd = &cobra.Command{
 			fmt.Printf("Refund with penalty: %.09f GLF\n", poolsutil.ToFIL(expectedRefund))
 			if !acceptPenalty {
 				logFatal("Re-run with --accept-penalty flag to pay penalty and proceed with early downgrade")
+			}
+		} else if refundGlf.Sign() == -1 {
+			extraGlf := new(big.Int).Neg(refundGlf)
+			fmt.Printf("GLF required to downgrade: %.09f GLF\n", poolsutil.ToFIL(extraGlf))
+
+			err = checkGlfPlusBalanceAndAllowance(extraGlf)
+			if err != nil {
+				logFatal(err)
 			}
 		} else {
 			downgradeAmount := new(big.Int).Sub(oldLockAmount, newLockAmount)
