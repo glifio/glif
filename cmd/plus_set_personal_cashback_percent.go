@@ -11,8 +11,8 @@ import (
 )
 
 var plusSetPersonalCashBackPercentCmd = &cobra.Command{
-	Use:   "set-personal-cashback-percent <percent>",
-	Short: "Sets the cashback percentage",
+	Use:   "set-cashback-percent <percent>",
+	Short: "Sets the cashback percentage for the Card's Cashback program",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
@@ -37,6 +37,12 @@ var plusSetPersonalCashBackPercentCmd = &cobra.Command{
 		}
 		cashBackPercent := int64(cashBackPercentFloat * 100.00)
 
+		if cashBackPercent > 500 {
+			logFatal(fmt.Errorf("cashback percent must be less than 5%%"))
+		}
+
+		fmt.Printf("Setting cashback percent to %.02f%%\n", cashBackPercentFloat)
+
 		tx, err := PoolsSDK.Act().SPPlusSetPersonalCashBackPercent(ctx, auth, big.NewInt(tokenID), big.NewInt(cashBackPercent))
 		if err != nil {
 			logFatalf("Failed to set personal cashback percent %s", err)
@@ -49,7 +55,7 @@ var plusSetPersonalCashBackPercentCmd = &cobra.Command{
 
 		s.Stop()
 
-		fmt.Println("Personal cashback percent set.")
+		fmt.Println("Cashback percent set.")
 	},
 }
 
