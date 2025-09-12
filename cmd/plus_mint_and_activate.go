@@ -89,9 +89,6 @@ var plusMintAndActivateCmd = &cobra.Command{
 			if err != nil {
 				logFatalf("Failed to mint and activate GLIF Plus NFT %s", err)
 			}
-			if cashBackPercentFloat > 0.0 {
-				fmt.Printf("Cannot set personal cashback percent in same transaction, please run: glif plus set-personal-cashback-percent %f\n", cashBackPercentFloat)
-			}
 		} else {
 			tx, err = PoolsSDK.Act().SPPlusMintActivateAndFund(ctx, auth, big.NewInt(cashBackPercent), agentAddr, tier, fundAmount)
 			if err != nil {
