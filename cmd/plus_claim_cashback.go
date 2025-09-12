@@ -10,7 +10,7 @@ import (
 )
 
 var plusClaimCashBackCmd = &cobra.Command{
-	Use:   "claim-cashback <receiver address>",
+	Use:   "claim-rewards <receiver address>",
 	Short: "Transfer earned FIL cashback to receiver address",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
