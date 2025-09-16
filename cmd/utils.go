@@ -10,6 +10,7 @@ import (
 	"os"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -30,7 +31,9 @@ import (
 	ltypes "github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/types/ethtypes"
 	"github.com/glifio/glif/v2/util"
+	"github.com/glifio/go-pools/abigen"
 	"github.com/glifio/go-pools/constants"
+	poolstypes "github.com/glifio/go-pools/types"
 	denoms "github.com/glifio/go-pools/util"
 	walletutils "github.com/glifio/go-wallet-utils"
 	"github.com/spf13/cobra"
@@ -699,4 +702,154 @@ func computeRBF(curPrem abi.TokenAmount, replaceByFeeRatio types.Percent) abi.To
 	rbfNumBig := types.NewInt(uint64(replaceByFeeRatio))
 	minPrice := types.BigDiv(types.BigMul(curPrem, rbfNumBig), rbfDenomBig)
 	return types.BigAdd(minPrice, types.NewInt(1))
+}
+
+func parseTierName(tierName string) (uint8, error) {
+	switch strings.ToLower(tierName) {
+	case "inactive":
+		return 0, nil
+	case "bronze":
+		return 1, nil
+	case "silver":
+		return 2, nil
+	case "gold":
+		return 3, nil
+	default:
+		return 0, fmt.Errorf("unknown tier name")
+	}
+}
+
+var tiers = []string{"Inactive", "Bronze", "Silver", "Gold"}
+
+func tierName(tier uint8) string {
+	return tiers[tier]
+}
+
+func checkGlfPlusBalanceAndAllowance(requiredAmount *big.Int) error {
+	as := util.AccountsStore()
+	owner, _, err := as.GetAddrs(string(util.OwnerKey))
+	if err != nil {
+		var e *util.ErrKeyNotFound
+		if errors.As(err, &e) {
+			return fmt.Errorf("agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
+		}
+		return err
+	}
+
+	glfAddr := PoolsSDK.Query().GLF()
+	plusAddr := PoolsSDK.Query().SPPlus()
+
+	client, err := PoolsSDK.Extern().ConnectEthClient()
+	if err != nil {
+		return fmt.Errorf("failed to get glf caller %s", err)
+	}
+	defer client.Close()
+
+	glfToken, err := abigen.NewPoolTokenCaller(glfAddr, client)
+	if err != nil {
+		return fmt.Errorf("failed to get glf caller %s", err)
+	}
+
+	bal, err := glfToken.BalanceOf(&bind.CallOpts{}, owner)
+	if err != nil {
+		return fmt.Errorf("failed to get glf balance %s", err)
+	}
+	fmt.Printf("GLF balance of owner is %.9f\n", denoms.ToFIL(bal))
+
+	if bal.Cmp(requiredAmount) < 0 {
+		return fmt.Errorf("insufficient GLF balance")
+	}
+
+	allow, err := glfToken.Allowance(&bind.CallOpts{}, owner, plusAddr)
+	if err != nil {
+		logFatalf("Failed to get glf allowance %s", err)
+	}
+
+	fmt.Printf("GLF allowance for Plus on behalf of owner is %.09f\n", denoms.ToFIL(allow))
+	if allow.Cmp(requiredAmount) < 0 {
+		return fmt.Errorf("insufficient GLF allowance, run: \"glif plus approve-spend %.9f\"", denoms.ToFIL(requiredAmount))
+	}
+
+	return nil
+}
+
+func printGlfOwnerBalance(outputPrefix string) error {
+	as := util.AccountsStore()
+	owner, _, err := as.GetAddrs(string(util.OwnerKey))
+	if err != nil {
+		var e *util.ErrKeyNotFound
+		if errors.As(err, &e) {
+			return fmt.Errorf("agent accounts not found in wallet. Setup with: glif wallet create-agent-accounts")
+		}
+		return err
+	}
+
+	glfAddr := PoolsSDK.Query().GLF()
+
+	client, err := PoolsSDK.Extern().ConnectEthClient()
+	if err != nil {
+		return fmt.Errorf("failed to get glf caller %s", err)
+	}
+	defer client.Close()
+
+	glfToken, err := abigen.NewPoolTokenCaller(glfAddr, client)
+	if err != nil {
+		return fmt.Errorf("failed to get glf caller %s", err)
+	}
+
+	bal, err := glfToken.BalanceOf(&bind.CallOpts{}, owner)
+	if err != nil {
+		return fmt.Errorf("failed to get glf balance %s", err)
+	}
+	fmt.Printf("%s is %.9f\n", outputPrefix, denoms.ToFIL(bal))
+	return nil
+}
+
+func getTierSwitchWindow(info *poolstypes.SPPlusInfo, penaltyWindow *big.Int) (
+	windowStart time.Time,
+	windowEnd time.Time,
+	days int,
+	hours int,
+) {
+	windowStart = time.Unix(info.LastTierSwitchTimestamp.Int64(), 0)
+	windowEnd = windowStart.Add(time.Duration(time.Duration(penaltyWindow.Int64()) * time.Second))
+	hoursLeft := time.Until(windowEnd) / time.Hour
+	days = int(hoursLeft) / 24
+	hours = int(hoursLeft) % 24
+
+	return windowStart, windowEnd, days, hours
+}
+
+func ensureNoPlusToken() error {
+	agentStore := util.AgentStore()
+
+	oldTokenID, err := agentStore.Get("plus-token-id")
+	if err != nil && err.Error() != "key not found: plus-token-id" {
+		return err
+	}
+
+	if oldTokenID != "" {
+		return fmt.Errorf("glif card already minted")
+	}
+	return nil
+}
+
+func getPlusTokenID() (int64, error) {
+	agentStore := util.AgentStore()
+
+	tokenIDStr, err := agentStore.Get("plus-token-id")
+	if err != nil && err.Error() != "key not found: plus-token-id" {
+		return 0, err
+	}
+
+	if tokenIDStr == "" {
+		return 0, fmt.Errorf("glif card not minted yet")
+	}
+
+	tokenID, err := strconv.ParseInt(tokenIDStr, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return tokenID, nil
 }
