@@ -38,7 +38,7 @@ For English README, please click [here](https://github.com/glifio/glif/blob/main
     - [退出池子](#退出池子)
   - [Agent 健康状态](#agent-健康状态)
   - [高级模式](#高级模式)
-    - [重置 Agent 的所有者（owner）密钥](#重置-agent-的所有者owner密钥)
+    - [重置 Agent 的拥有者（owner）密钥](#重置-agent-的拥有者owner密钥)
     - [重置 Agent 的操作员（operator）密钥](#重置-agent-的操作员operator密钥)
     - [重置 Agent 的请求者（requester）密钥](#重置-agent-的请求者requester密钥)
   - [交易](#交易)
@@ -50,6 +50,20 @@ For English README, please click [here](https://github.com/glifio/glif/blob/main
     - [列出某地址已领取并持有的 Airdrop Plans](#列出某地址已领取并持有的-airdrop-plans)
     - [从 Airdrop Plan 中兑换 $GLF 代币](#从-airdrop-plan-中兑换-glf-代币)
     - [获取 Airdrop Plan 详情](#获取-airdrop-plan-详情)
+  - [GLIF+ 会员卡](#glif-会员卡)
+    - [卡片等级](#卡片等级)
+    - [激活](#激活)
+      - [前置条件](#前置条件)
+      - [如何铸造并激活](#如何铸造并激活)
+      - [卡片费用](#卡片费用)
+      - [先铸造再激活卡片](#先铸造再激活卡片)
+    - [权益](#权益)
+      - [返现计划](#返现计划)
+      - [返现计划注资](#返现计划注资)
+      - [领取返现奖励](#领取返现奖励)
+      - [返现比例](#返现比例)
+    - [等级管理](#等级管理)
+    - [显示卡片信息](#显示卡片信息)
 
 <hr />
 
@@ -165,12 +179,12 @@ Agent 是 [GLIF Pools Protocol](https://docs.glif.io/v/zhong-wen/) （构建 Inf
 
 `glif wallet create-agent-accounts`
 
-接下来，您需要为您的 Agent 的所有者密钥提供资金以支付 gas 费。您可以通过以下命令获取您的 Agent 所有者账户：<br />
+接下来，您需要为您的 Agent 的拥有者密钥提供资金以支付 gas 费。您可以通过以下命令获取您的 Agent 拥有者账户：<br />
 `glif wallet list`
 
-给您的账户提供资金，您可以转到 [GLIF Wallet](https://glif.io/wallet)，并向您的所有者地址转送一些资金。**重要提示** - 不要手动制作和发送`method 0`发送交易给 EVM 地址，并传递其`value`。请改用 [fil-forwarder](https://docs.filecoin.io/smart-contracts/filecoin-evm-runtime/filforwader/)。
+给您的账户提供资金，您可以转到 [GLIF Wallet](https://glif.io/wallet)，并向您的拥有者地址转送一些资金。**重要提示** - 不要手动制作和发送`method 0`发送交易给 EVM 地址，并传递其`value`。请改用 [fil-forwarder](https://docs.filecoin.io/smart-contracts/filecoin-evm-runtime/filforwader/)。
 
-一旦你为你的所有者密钥提供了资金，请验证：
+一旦你为你的拥有者密钥提供了资金，请验证：
 
 ```
 ➜ glif wallet balance
@@ -192,9 +206,9 @@ requester balance 0.00 FIL
 
 ### 给 Agent 添加矿工
 
-向 Agent 添加矿工，您需要使 Agent 成为您矿工的所有者。此过程分为两个步骤：
+向 Agent 添加矿工，您需要使 Agent 成为您矿工的拥有者。此过程分为两个步骤：
 
-1. 向 Miner Actor 提交所有权变更，并将 Agent 的`f4` Filecoin 地址传递为新的所有者。
+1. 向 Miner Actor 提交所有权变更，并将 Agent 的`f4` Filecoin 地址传递为新的拥有者。
 2. 从 Agent 那里批准所有权变更。
 
 **第一步 - 提交所有权变更**
@@ -261,13 +275,13 @@ Agent f4 Addr                         f410fh3njwnl6uirpnvi2o7qtnki43c47iyn5mf2q3
 从您的 Agent 中提款：<br />
 `glif agent withdraw <amount> <receiver>`<br />
 
-请记住，`receiver`可以是一个钱包账户。例如，您可以将资金提取到您 Agent 的所有者密钥中：<br />
+请记住，`receiver`可以是一个钱包账户。例如，您可以将资金提取到您 Agent 的拥有者密钥中：<br />
 
 `glif agent withdraw <amount> owner`
 
 ### 从 Agent 中移除矿工
 
-您可以通过调用 `glif agent miners remove <miner-id> <new-owner-address>` 将 Miner 从您的 Agent 中移除。此调用将提议更改 Agent Miner 的所有权，并传递 `new-owner-address` 作为新的所有者。此交易成功后，将需要从 `new-owner-address` 批准所有权更改。需要注意的是，如果尝试在 Miner 上设置 EVM actor 作为新所有者，此调用将失败。
+您可以通过调用 `glif agent miners remove <miner-id> <new-owner-address>` 将 Miner 从您的 Agent 中移除。此调用将提议更改 Agent Miner 的所有权，并传递 `new-owner-address` 作为新的拥有者。此交易成功后，将需要从 `new-owner-address` 批准所有权更改。需要注意的是，如果尝试在 Miner 上设置 EVM actor 作为新拥有者，此调用将失败。
 
 需要注意的是，从 Agent 中移除 Miner 就是移除权益，所以如果您由于抵押要求不被允许移除矿工，此调用可能会失败。规则与从您的 Agent 中提取资金相同 - 您可以在[这里](https://docs.glif.io/v/zhong-wen/cun-chu-ti-gong-shang-jing-ji-xue/ti-qu-zi-jin)了解更多关于经济学的内容。
 
@@ -337,13 +351,13 @@ GLIF CLI 可以在"高级模式"下构建，这允许您对您的 Agent 进行�
 
 在高级模式下运行时，是能够看到 `glif agent admin` 命令。
 
-### 重置 Agent 的所有者（owner）密钥
+### 重置 Agent 的拥有者（owner）密钥
 
-1. 首先，生成一个新的账户，该账户将充当 Agent 的新所有者，运行： <br />`glif wallet create-account new-owner`。<br /> 这将在您的 `~/.glif/accounts.toml` 中创建一个新的键值对。当您运行 `glif wallet list` 时，就能看到该账户。
-2. **安全地备份您的 new-owner 密钥库文件和（可选的）密码短语。**<br />失去这个密钥和密码短语就等于失去您的 Miner Actor 的所有者密钥。
+1. 首先，生成一个新的账户，该账户将充当 Agent 的新拥有者，运行： <br />`glif wallet create-account new-owner`。<br /> 这将在您的 `~/.glif/accounts.toml` 中创建一个新的键值对。当您运行 `glif wallet list` 时，就能看到该账户。
+2. **安全地备份您的 new-owner 密钥库文件和（可选的）密码短语。**<br />失去这个密钥和密码短语就等于失去您的 Miner Actor 的拥有者密钥。
 3. 接下来，给您的 `new-owner` 密钥发送资金，这样它就可以在 Filecoin 区块链上发送交易。
 4. 通过运行以下命令向您的代理提议所有权更改：<br />`glif agent admin transfer-ownership new-owner`
-5. 一旦初始的 transfer-ownership（所有权转让） 提议命令得到确认，您需要重新配置您的 `~/.glif/accounts.toml`，以将旧的所有者账户与新的所有者账户互换。您只需重命名密钥即可。您可以在 IDE 中进行此操作。例如：<br />
+5. 一旦初始的 transfer-ownership（所有权转让） 提议命令得到确认，您需要重新配置您的 `~/.glif/accounts.toml`，以将旧的拥有者账户与新的拥有者账户互换。您只需重命名密钥即可。您可以在 IDE 中进行此操作。例如：<br />
 
 ```
 # ~/.glif/accounts.toml BEFORE reconfiguration
@@ -366,7 +380,7 @@ owner = '0x5b49f3548592282A1f84c1b2C2c9FA40AF263aCA'
 
 6. 最后，为了完成所有权转移，运行：<br />`glif agent admin accept-ownership`
 
-如果一切成功，当您运行 `glif agent info` 时，就能看到新的所有者地址。
+如果一切成功，当您运行 `glif agent info` 时，就能看到新的拥有者地址。
 
 ### 重置 Agent 的操作员（operator）密钥
 
@@ -429,7 +443,7 @@ GLIF CLI 可以用于领取您的 GLF 代币空投。请注意，领取的 GLF �
 
 `glif airdrop plans list <address>`
 
-如果输入的是您的 Agent 地址，该命令将列出已被领取并存放在 Agent 拥有者地址 下的Airdrop plan。
+如果输入的是您的 Agent 地址，该命令将列出已被领取并存放在 Agent 拥有者地址 下的 Airdrop plan。
 
 ### 从 Airdrop Plan 中兑换 $GLF 代币
 
@@ -442,3 +456,139 @@ GLIF CLI 可以用于领取您的 GLF 代币空投。请注意，领取的 GLF �
 `glif airdrop plans get <plan-id>`
 
 该命令将显示该 Airdrop Plan 的详情，包括可兑换的 $GLF 代币数量。
+
+## GLIF+ 会员卡
+
+GLIF+ 会员卡让 $GLF 代币持有者在使用 GLIF 时获得更多权益。对于存储提供者来说，持有 GLIF+ 会员卡可获得两大核心权益：
+
+1. 提升借贷额度：最高可达 10 倍杠杆（具体取决于等级）
+2. FIL 利息返现：用 $GLF 支付部分利息，可获得溢价返还的 FIL
+
+运行以下命令，将看到所有可以与 GLIF+ 计划交互的命令：
+
+`glif plus --help`
+
+### 卡片等级
+
+所有持有已激活的会员卡用户，都可以享受会员卡权益。已激活的卡片分为铜卡、银卡或金卡。关于每个等级对应的权益与费用，详情可通过以下命令查询：
+
+`glif plus tiers list`<br />
+
+### 激活
+
+#### 前置条件
+
+在激活卡片之前，请确保已满足以下条件：
+
+1. 您的 Agent 拥有者地址上有足够的 $GLF 代币来激活卡片
+2. 您已授权 GLIF+ 计划使用您的 $GLF 代币
+
+如果需要查看 Agent 的拥有者账户余额，请运行以下命令：
+
+`glif tokens glf balance-of owner`
+
+要授权 GLIF+ 计划代表您使用 $GLF 代币，请运行以下命令：
+
+`glif plus approve-spend <amount>`<br />
+
+其中 `amount` 是激活卡片所需的 $GLF 代币数量。
+
+#### 如何铸造并激活
+
+如果尚未铸造 GLIF+ 卡片，请运行以下命令：
+
+`glif plus mint [tier: bronze, silver, or gold]`
+
+例如，要铸造并激活一张银卡：
+
+`glif plus mint silver`
+
+您可以使用 `--due-now` flag 查看铸造并激活特定等级所需的 $GLF 代币数量：
+
+`glif plus mint silver --due-now`<br />
+此命令不会实际执行铸造和激活，而是返回完成该操作所需的 $GLF 代币总数。
+
+如需为返现计划注资额外的$GLF 代币，可使用 `--fund-cash-back` flag：
+
+`glif plus mint silver --fund-cash-back 10000`<br />
+此命令将执行：（1）铸造一张卡片；（2）将卡片激活为银卡等级；（3）向返现计划金库注资 10000 个 GLF 代币。
+
+#### 卡片费用
+
+GLIF+ 卡片涉及以下三项"费用"：
+
+1. 铸造费用 - 此为一次性费用，不会返还给卡片持有人。
+2. 激活费用 - 被锁定的 $GLF 代币，当卡片降级或停用后，将返还给卡片持有人。
+3. 返现计划金库 - 被锁定的 $GLF 代币，只要卡片持有人希望从返现计划中提取 $GLF，该金额即可返还给卡片持有人。
+
+**注意：** 用于卡片激活的 $GLF 代币默认锁定 3 个月。卡片持有人可以选择提前降级，但会产生罚金。关于锁定和降级的详情，请参见下方的“等级管理”部分。
+
+#### 先铸造再激活卡片
+
+您也可以先铸造卡片，稍后再激活。如需先铸造卡片，不立即激活，请运行以下命令：
+
+`glif plus mint`
+
+要激活已存在的卡片，请运行以下命令：
+
+`glif plus activate <tier: bronze, silver, or gold>`
+
+`--due-now` flag 同样适用于这两个命令，可让您在执行前查看每个操作的费用。
+
+### 权益
+
+激活卡片后，即可享受以下权益：
+
+1. 借款额度立即提升
+2. 当卡片持有人往返现金库里注资后，返现计划就会立刻生效。
+
+#### 返现计划
+
+返现计划允许存储提供者以高于 $GLF 市场价格的溢价，用 $GLF 代币兑换 FIL。在返现计划中可获得的 FIL 数量，将根据 Agent 的利息支付金额，按百分比计算。
+
+#### 返现计划注资
+
+要参与返现计划，您的卡片需要额外的 $GLF 代币，用于兑换成 FIL。要为卡片注资，请运行：
+
+`glif plus cashback fund <amount>`
+
+您可以通过以下命令，从返现计划金库中提取 $GLF：
+
+`glif plus cashback withdraw <amount> <receiver>`
+
+#### 领取返现奖励
+
+当返现计划金库中已有 $GLF 代币时，每次 Agent 支付利息后，就会有可领取的 FIL。要领取返现奖励，请运行：
+
+`glif plus advanced set-cashback-percent <receiver>`
+
+#### 返现比例
+
+返现比例表示通过返现计划返还的利息金额比例。默认值和最大值为 5%。不过，卡片持有人可以通过以下命令设定此比例：
+
+`glif plus advanced set-cashback-percentage <percentage>`
+
+### 等级管理
+
+卡片持有人可以根据以下规则升级或降级卡片：
+
+**升级：**  
+卡片持有人可随时免费将卡片升级到更高等级，只需质押对应等级所需的 GLF 代币：
+
+`glif plus tiers upgrade <silver or gold>`
+
+注意：卡片必须先被激活，才能进行升级。
+
+**降级：**  
+卡片持有人可按以下规则将卡片降级到更低等级：
+
+- 如果距离卡片的上次激活 / 升级 / 降级已超过 3 个月，可免费降级，所有用于激活的 $GLF 代币将返还给卡片持有人。
+- 如果距离卡片的上次激活 / 升级 / 降级少于 3 个月，激活卡片时所质押的 $GLF 代币将被扣除 8.5% 作为罚金，持有人将收到激活时质押 $GLF 代币的 91.5%。
+
+注意：铸造费用为创建卡片时的一次性费用，不包含在激活费用中。
+
+### 显示卡片信息
+
+您可以通过以下命令查看卡片的状态：
+
+`glif plus info`
