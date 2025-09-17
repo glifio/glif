@@ -559,7 +559,9 @@ You can remove $GLF from your Cashback program vault by running:
 
 Once the Cashback program vault is funded with $GLF tokens, every time your Agent makes an interest payment, FIL tokens become claimable. To claim your Cashback rewards:
 
-`glif plus advanced set-cashback-percent <receiver>`
+`glif plus cashback claim-rewards <receiver>`
+
+Note that the cashback rewards are available on your Card, they don't automatically get transferred back to your Agent after making a payment.
 
 #### Cashback percentage
 
