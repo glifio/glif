@@ -582,7 +582,7 @@ Note that a Card must be activated first, before upgrading it.
 **Downgrades:** A Card holder can downgrade their Card to a lower tier, according to the following policies:
 
 - If the Card was last activated / upgraded / downgraded longer than 3 months ago, the Card can be downgraded for free. All $GLF Tokens staked to the Card for activation will be transferred back to the Card owner
-- If the Card was last activated / upgraded / downgraded less than 3 months ago, the Card can be downgraded with a 8.5% penalty on the staked $GLF Tokens for the Card activation. The Card holder will receive 95% of the staked $GLF Token amount
+- If the Card was last activated / upgraded / downgraded less than 3 months ago, the Card can be downgraded with a 8.5% penalty on the staked $GLF Tokens for the Card activation. The Card holder will receive 91.5% of the staked $GLF Token amount
 
 Note that Minting fees are a one time fee paid for creating a Card, and are not counted in Activation fees.
 
