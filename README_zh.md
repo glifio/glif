@@ -50,7 +50,7 @@ For English README, please click [here](https://github.com/glifio/glif/blob/main
     - [列出某地址已领取并持有的 Airdrop Plans](#列出某地址已领取并持有的-airdrop-plans)
     - [从 Airdrop Plan 中兑换 $GLF 代币](#从-airdrop-plan-中兑换-glf-代币)
     - [获取 Airdrop Plan 详情](#获取-airdrop-plan-详情)
-  - [GLIF+ 会员卡](#glif-会员卡)
+  - [GLIF+ 会员卡](#GLIF-会员卡)
     - [卡片等级](#卡片等级)
     - [激活](#激活)
       - [前置条件](#前置条件)
@@ -62,8 +62,8 @@ For English README, please click [here](https://github.com/glifio/glif/blob/main
       - [返现计划注资](#返现计划注资)
       - [领取返现奖励](#领取返现奖励)
       - [返现比例](#返现比例)
-    - [等级管理](#等级管理)
-    - [显示卡片信息](#显示卡片信息)
+  - [等级管理](#等级管理)
+  - [显示卡片信息](#显示卡片信息)
 
 <hr />
 
@@ -443,7 +443,7 @@ GLIF CLI 可以用于领取您的 GLF 代币空投。请注意，领取的 GLF �
 
 `glif airdrop plans list <address>`
 
-如果输入的是您的 Agent 地址，该命令将列出已被领取并存放在 Agent 拥有者地址 下的 Airdrop plan。
+如果输入的是您的 Agent 地址，该命令将列出已被领取并存放在 Agent 拥有者地址 下的Airdrop plan。
 
 ### 从 Airdrop Plan 中兑换 $GLF 代币
 
@@ -480,10 +480,10 @@ GLIF+ 会员卡让 $GLF 代币持有者在使用 GLIF 时获得更多权益。�
 
 在激活卡片之前，请确保已满足以下条件：
 
-1. 您的 Agent 拥有者地址上有足够的 $GLF 代币来激活卡片
+1. 您的Agent 拥有者地址上有足够的 $GLF 代币来激活卡片  
 2. 您已授权 GLIF+ 计划使用您的 $GLF 代币
 
-如果需要查看 Agent 的拥有者账户余额，请运行以下命令：
+如果需要查看Agent的拥有者账户余额，请运行以下命令：
 
 `glif tokens glf balance-of owner`
 
@@ -539,7 +539,7 @@ GLIF+ 卡片涉及以下三项"费用"：
 
 激活卡片后，即可享受以下权益：
 
-1. 借款额度立即提升
+1. 借款额度立即提升  
 2. 当卡片持有人往返现金库里注资后，返现计划就会立刻生效。
 
 #### 返现计划
@@ -560,7 +560,7 @@ GLIF+ 卡片涉及以下三项"费用"：
 
 当返现计划金库中已有 $GLF 代币时，每次 Agent 支付利息后，就会有可领取的 FIL。要领取返现奖励，请运行：
 
-`glif plus advanced set-cashback-percent <receiver>`
+`glif plus cashback claim-rewards <receiver>`
 
 #### 返现比例
 
@@ -582,8 +582,8 @@ GLIF+ 卡片涉及以下三项"费用"：
 **降级：**  
 卡片持有人可按以下规则将卡片降级到更低等级：
 
-- 如果距离卡片的上次激活 / 升级 / 降级已超过 3 个月，可免费降级，所有用于激活的 $GLF 代币将返还给卡片持有人。
-- 如果距离卡片的上次激活 / 升级 / 降级少于 3 个月，激活卡片时所质押的 $GLF 代币将被扣除 8.5% 作为罚金，持有人将收到激活时质押 $GLF 代币的 91.5%。
+- 如果距离卡片的上次激活 / 升级 / 降级已超过 3 个月，可免费降级，所有用于激活的 $GLF 代币将返还给卡片持有人。  
+- 如果距离卡片的上次激活 / 升级 / 降级少于 3 个月，激活卡片时所质押的 $GLF 代币将被扣除 8.5% 作为罚金，持有人将收到激活时质押 $GLF 代币的 91.5%。  
 
 注意：铸造费用为创建卡片时的一次性费用，不包含在激活费用中。
 
