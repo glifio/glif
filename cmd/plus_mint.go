@@ -60,10 +60,6 @@ var plusMintCmd = &cobra.Command{
 				logFatal(err)
 			}
 			cashBackPercent = int64(cashBackPercentFloat * 100.00)
-
-			if cashBackPercent > 500 {
-				logFatal(fmt.Errorf("cashback percent must be less than 5%%"))
-			}
 		}
 
 		combinedAmount := new(big.Int).Add(mintPrice, lockAmount)
