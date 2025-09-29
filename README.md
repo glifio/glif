@@ -565,7 +565,7 @@ Note that the cashback rewards are available on your Card, they don't automatica
 
 #### Cashback percentage
 
-The Cashback percentage represents the amount of interest that should be reclaimed using the Cashback program. The maximum and default value is set to 5%. However, Card owners can set this percentage by running:
+The Cashback percentage represents the amount of interest that should be reclaimed using the Cashback program. The maximum and default value is set to 10%. However, Card owners can set this percentage by running:
 
 `glif plus advanced set-cashback-percentage <percentage>`
 
