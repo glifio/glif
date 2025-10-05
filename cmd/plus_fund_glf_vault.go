@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"math/big"
+	"strconv"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -27,6 +28,22 @@ var plusFundGLFVaultCmd = &cobra.Command{
 			logFatalf("Failed to parse amount %s", err)
 		}
 
+		cashbackPercent, err := cmd.Flags().GetString("cashback-percent")
+		if err != nil {
+			logFatal(err)
+		}
+		var cashbackPercentBigInt *big.Int = nil
+		if cashbackPercent != "" {
+			cashbackPercentFloat, err := strconv.ParseFloat(cashbackPercent, 64)
+			if err != nil {
+				logFatal(err)
+			}
+
+			fmt.Printf("Setting cashback percent: %.02f%%\n", cashbackPercentFloat)
+
+			cashbackPercentBigInt = big.NewInt(int64(cashbackPercentFloat * 100.00))
+		}
+
 		err = checkGlfPlusBalanceAndAllowance(amount)
 		if err != nil {
 			logFatal(err)
@@ -41,7 +58,7 @@ var plusFundGLFVaultCmd = &cobra.Command{
 		s.Start()
 		defer s.Stop()
 
-		tx, err := PoolsSDK.Act().SPPlusFundGLFVault(ctx, auth, big.NewInt(tokenID), amount)
+		tx, err := PoolsSDK.Act().SPPlusFundGLFVault(ctx, auth, big.NewInt(tokenID), amount, cashbackPercentBigInt)
 		if err != nil {
 			logFatalf("Failed to fund GLF vault %s", err)
 		}
@@ -59,4 +76,5 @@ var plusFundGLFVaultCmd = &cobra.Command{
 
 func init() {
 	plusCashBackCmd.AddCommand(plusFundGLFVaultCmd)
+	plusFundGLFVaultCmd.Flags().String("cashback-percent", "", "Optional cashback percent to use for the GLF/FIL price")
 }

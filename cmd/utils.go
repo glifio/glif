@@ -754,7 +754,6 @@ func checkGlfPlusBalanceAndAllowance(requiredAmount *big.Int) error {
 	if err != nil {
 		return fmt.Errorf("failed to get glf balance %s", err)
 	}
-	fmt.Printf("GLF balance of owner is %.9f\n", denoms.ToFIL(bal))
 
 	if bal.Cmp(requiredAmount) < 0 {
 		return fmt.Errorf("insufficient GLF balance")
@@ -765,7 +764,6 @@ func checkGlfPlusBalanceAndAllowance(requiredAmount *big.Int) error {
 		logFatalf("Failed to get glf allowance %s", err)
 	}
 
-	fmt.Printf("GLF allowance for Plus on behalf of owner is %.09f\n", denoms.ToFIL(allow))
 	if allow.Cmp(requiredAmount) < 0 {
 		return fmt.Errorf("insufficient GLF allowance, run: \"glif plus approve-spend %.9f\"", denoms.ToFIL(requiredAmount))
 	}
