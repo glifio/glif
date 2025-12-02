@@ -59,12 +59,12 @@
       - [Minting and _then_ Activating a Card](#minting-and-then-activating-a-card)
     - [Benefits](#benefits)
       - [Cash back program](#cash-back-program)
-      - [Funding Cash back](#funding-cash-back)
+      - [Funding cash back](#funding-cash-back)
       - [Claiming cash back rewards](#claiming-cash-back-rewards)
       - [Cash back percentage](#cash-back-percentage)
     - [Tier Management](#tier-management)
     - [Print Card info](#print-card-info)
-    - [Cash-back Vault](#cash-back-vault)
+    - [Cash back vault limitations](#cash-back-vault-limitations)
 
 <hr />
 
@@ -546,7 +546,7 @@ After activating a Card, the Card will be eligible for benefits.
 
 The cash back program allows Storage Providers to exchange $GLF Tokens for FIL at a premium to the $GLF Market Price. The amount of FIL you can receive in this cash back program is computed as a percentage of your Agent's interest payments.
 
-#### Funding Cash back
+#### Funding cash back
 
 To participate in the cash back program, your Card needs extra $GLF Tokens to swap into FIL. To fund your card, run:
 
@@ -558,7 +558,7 @@ You can remove $GLF from your cash back program vault by running:
 
 #### Claiming cash back rewards
 
-Once the Cash back program vault is funded with $GLF tokens, every time your Agent makes an interest payment, FIL tokens become claimable. To claim your cash back rewards:
+Once the cash back program vault is funded with $GLF tokens, every time your Agent makes an interest payment, FIL tokens become claimable. To claim your cash back rewards:
 
 `glif plus cashback claim-rewards <receiver>`
 
@@ -593,7 +593,7 @@ You can get information about the status of your Card by running:
 
 `glif plus info`
 
-### Cash-back Vault
+### Cash back vault limitations
 
 To maintain economic security and prevent the treasury from being drained by unusually large or extremely delayed interest payments, the cash back program uses a capped vault that is refilled (at most) every two weeks. Each refill brings the vault balance up to the lesser of:
 
