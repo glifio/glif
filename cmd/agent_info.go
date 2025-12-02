@@ -407,7 +407,7 @@ func plusCardInfo(ctx context.Context, tokenID *big.Int, tier uint8, tierInfos [
 		printTable([]string{
 			"Tier Benefits",
 			"Max Debt-to-Liquidation Ratio",
-			"Cashback Exchange Rate",
+			"Cash Back Exchange Rate",
 		}, []string{
 			"",
 			fmt.Sprintf("%.2f%%", new(big.Float).Mul(big.NewFloat(100), util.ToFIL(tierInfo.DebtToLiquidationValue))),

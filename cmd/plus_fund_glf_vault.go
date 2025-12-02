@@ -12,8 +12,8 @@ import (
 
 var plusFundGLFVaultCmd = &cobra.Command{
 	Use:   "fund <amount>",
-	Short: "Deposit GLF tokens to use in the Card's cashback program",
-	Long:  "Deposit GLF tokens to use in the Card's cashback program. The cashback program exchanges GLF tokens for 5% of every payment in FIL at a premium to the DEX price",
+	Short: "Deposit GLF tokens to use in the Card's cash back program",
+	Long:  "Deposit GLF tokens to use in the Card's cash back program. The cash back program exchanges GLF tokens for 5% of every payment in FIL at a premium to the DEX price",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
@@ -39,7 +39,7 @@ var plusFundGLFVaultCmd = &cobra.Command{
 				logFatal(err)
 			}
 
-			fmt.Printf("Setting cashback percent: %.02f%%\n", cashbackPercentFloat)
+			fmt.Printf("Setting cash back percent: %.02f%%\n", cashbackPercentFloat)
 
 			cashbackPercentBigInt = big.NewInt(int64(cashbackPercentFloat * 100.00))
 		}
@@ -76,5 +76,5 @@ var plusFundGLFVaultCmd = &cobra.Command{
 
 func init() {
 	plusCashBackCmd.AddCommand(plusFundGLFVaultCmd)
-	plusFundGLFVaultCmd.Flags().String("cashback-percent", "", "Optional cashback percent to use for the GLF/FIL price")
+	plusFundGLFVaultCmd.Flags().String("cashback-percent", "", "Optional cash back percent to use for the GLF/FIL price")
 }

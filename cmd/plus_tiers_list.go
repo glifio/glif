@@ -21,10 +21,6 @@ func dtlToLeverage(dtl *big.Int) *big.Int {
 	return leverage
 }
 
-func premium(cashbackPremium *big.Int) *big.Float {
-	return new(big.Float).Mul(big.NewFloat(100), util.ToFIL(cashbackPremium))
-}
-
 var tiersListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all GLIF+ card tiers and their benefits",
@@ -39,7 +35,7 @@ var tiersListCmd = &cobra.Command{
 		}
 
 		// Create and populate the table
-		tbl := table.New("Tier", "Activation Amount ($GLF)", "Max DTL/Leverage", "Cashback Exchange Premium")
+		tbl := table.New("Tier", "Activation Amount ($GLF)", "Max DTL/Leverage", "Cash Back Exchange Premium")
 
 		// Add default (no card) row first
 		defaultDTL := constants.MAX_BORROW_DTL

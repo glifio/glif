@@ -601,3 +601,9 @@ To maintain economic security and prevent the treasury from being drained by unu
 2. 50% of the treasury fees earned during the previous two-week period.
 
 If an SP makes an interest payment while the cash back vault has 0 FIL, the payment processes normally and no GLF tokens are used. If the vault has some FIL but not enough to cover the full cash back amount, the program will apply the maximum available FIL and use a pro-rata amount of GLF tokens for the remainder.
+
+To check the current FIL balance available in the cash back vault:
+
+`glif plus cashback fil-vault-balance`
+
+This command displays the total amount of FIL currently available in the cash back program vault.
