@@ -58,12 +58,13 @@
       - [Card costs](#card-costs)
       - [Minting and _then_ Activating a Card](#minting-and-then-activating-a-card)
     - [Benefits](#benefits)
-      - [Cashback program](#cashback-program)
-      - [Funding Cashback](#funding-cashback)
-      - [Claiming cashback rewards](#claiming-cashback-rewards)
-      - [Cashback percentage](#cashback-percentage)
+      - [Cash back program](#cash-back-program)
+      - [Funding cash back](#funding-cash-back)
+      - [Claiming cash back rewards](#claiming-cash-back-rewards)
+      - [Cash back percentage](#cash-back-percentage)
     - [Tier Management](#tier-management)
     - [Print Card info](#print-card-info)
+    - [Cash back vault limitations](#cash-back-vault-limitations)
 
 <hr />
 
@@ -265,7 +266,7 @@ You can change your `~/.lotusminer/config.toml` to use available miner balance f
   #CollateralFromMinerBalance = false
 ```
 
-When you want to pull funds up from your Miner to your Agent to withdraw rewards or make a weekly payment, you can use:<br />
+When you want to pull funds up from your Miner to your Agent to withdraw rewards or make a payment, you can use:<br />
 `glif agent miners pull-funds <miner-id> <amount>`<br />
 
 ### Withdraw Rewards / Cash Advance
@@ -287,7 +288,7 @@ It's important to note that removing a Miner from your Agent is removing equity,
 
 ## Payments
 
-After borrowing, Storage Providers are expected to make a payment once a week, for the amount of fees that have accrued throughout the given time period. You are not restricted to only make payments once a week - you can pay daily, every other day, or once a week. The amount of fees you pay does not depend on how frequently you choose to make payments.
+After borrowing, Storage Providers are expected to make a payment, for the amount of fees that have accrued. You can borrow FIL from GLIF for as long as necessary - whenever you are done with your borrowed FIL, you can pay it back anytime to GLIF with no due dates or early repayment fees.
 
 To make a payment, your Agent must have sufficient balance on it (funds move from the Agent back into the pool):<br />
 `glif agent pay <payment-type>`<br />
@@ -304,7 +305,7 @@ Note that if you overpay principal, the overpayment amount is refunded to your A
 
 ### Autopilot
 
-It gets annoying to have to manually make payments each week - that's why we built autopilot. Autopilot is a service that automates: (1) pulling up funds from one of your Agent's Miners, and (2) making a payment back into the pool.
+It gets annoying to have to manually make payments - that's why we built autopilot. Autopilot is a service that automates: (1) pulling up funds from one of your Agent's Miners, and (2) making a payment back into the pool.
 
 Autopilot's configuration settings can be found in `~/.glif/config.toml`. The default settings are as follows:
 
@@ -337,7 +338,7 @@ As this will ensure _all_ the principal is paid off, and no tiny amounts of atto
 
 ## Agent health
 
-It's important to note that an Agent can enter into an "unhealthy" state if it begins accruing faulty sectors and/or misses its weekly payment.
+It's important to note that an Agent can enter into an "unhealthy" state if it begins accruing faulty sectors.
 
 If your Agent has been marked in a faulty state, `glif agent info` will tell you. If you have recovered from your faulty state, you should recover your Agent's health using the command:<br />
 
@@ -507,10 +508,10 @@ You can check the amount of $GLF Tokens required to mint and activate a specific
 
 `glif plus mint silver --due-now`<br /> This command will not actually execute the minting and activation, and instead, return the total amount of $GLF tokens required for the operation.
 
-To include additional $GLF tokens on your Card to use in the Cashback program, you can use the `--fund-cash-back` flag:
+To include additional $GLF tokens on your Card to use in the cash back program, you can use the `--fund-cash-back` flag:
 
 `glif plus mint silver --fund-cash-back 10000`<br />
-This command will (1) mint a Card, (2) activate the Card to Silver Tier, and (3) Fund the Card's cashback program with 10000 GLF Tokens.
+This command will (1) mint a Card, (2) activate the Card to Silver Tier, and (3) Fund the Card's cash back program with 10000 GLF Tokens.
 
 #### Card costs
 
@@ -518,7 +519,7 @@ There are 3 "Costs" associated with the GLIF+ Card:
 
 1. Minting fees - a one time fee that is not returned to the Card owner.
 2. Activation fees - a $GLF Token lockup that is repaid to the Card owner after downgrading or deactivating the Card.
-3. Cashback program vault - a $GLF Token lockup that is repaid to the Card owner whenever the Card owner wants to remove $GLF Tokens from the Cashback program.
+3. Cash back program vault - a $GLF Token lockup that is repaid to the Card owner whenever the Card owner wants to remove $GLF Tokens from the cash back program.
 
 **NOTE:** $GLF Tokens that are locked for Card activations are locked for 3 months by default. Card holders can downgrade early, with a penalty. See below in the Tier management section for more information on lockups and downgrades.
 
@@ -539,33 +540,33 @@ The `--due-now` flag will work for both of these commands as well, allowing you 
 After activating a Card, the Card will be eligible for benefits.
 
 1. The increased borrowing limits will be available immediately.
-2. The cashback program begins as soon as the Card owner funds the Card's cashback program vault balance.
+2. The cash back program begins as soon as the Card owner funds the Card's cash back program vault balance.
 
-#### Cashback program
+#### Cash back program
 
-The Cashback program allows Storage Providers to exchange $GLF Tokens for FIL at a premium to the $GLF Market Price. The amount of FIL you can receive in this Cashback program is computed as a percentage of your Agent's interest payments.
+The cash back program allows Storage Providers to exchange $GLF Tokens for FIL at a premium to the $GLF Market Price. The amount of FIL you can receive in this cash back program is computed as a percentage of your Agent's interest payments.
 
-#### Funding Cashback
+#### Funding cash back
 
-To participate in the Cashback program, your Card needs extra $GLF Tokens to swap into FIL. To fund your card, run:
+To participate in the cash back program, your Card needs extra $GLF Tokens to swap into FIL. To fund your card, run:
 
 `glif plus cashback fund <amount>`
 
-You can remove $GLF from your Cashback program vault by running:
+You can remove $GLF from your cash back program vault by running:
 
 `glif plus cashback withdraw <amount> <receiver>`
 
-#### Claiming cashback rewards
+#### Claiming cash back rewards
 
-Once the Cashback program vault is funded with $GLF tokens, every time your Agent makes an interest payment, FIL tokens become claimable. To claim your Cashback rewards:
+Once the cash back program vault is funded with $GLF tokens, every time your Agent makes an interest payment, FIL tokens become claimable. To claim your cash back rewards:
 
 `glif plus cashback claim-rewards <receiver>`
 
-Note that the cashback rewards are available on your Card, they don't automatically get transferred back to your Agent after making a payment.
+Note that the cash back rewards are available on your Card, they don't automatically get transferred back to your Agent after making a payment.
 
-#### Cashback percentage
+#### Cash back percentage
 
-The Cashback percentage represents the amount of interest that should be reclaimed using the Cashback program. The maximum and default value is set to 10%. However, Card owners can set this percentage by running:
+The cash back percentage represents the amount of interest that should be reclaimed using the cash back program. The maximum and default value is set to 10%. However, Card owners can set this percentage by running:
 
 `glif plus advanced set-cashback-percentage <percentage>`
 
@@ -591,3 +592,18 @@ Note that Minting fees are a one time fee paid for creating a Card, and are not 
 You can get information about the status of your Card by running:
 
 `glif plus info`
+
+### Cash back vault limitations
+
+To maintain economic security and prevent the treasury from being drained by unusually large or extremely delayed interest payments, the cash back program uses a capped vault that is refilled (at most) every two weeks. Each refill brings the vault balance up to the lesser of:
+
+1. 5,000 FIL, or
+2. 50% of the treasury fees earned during the previous two-week period.
+
+If an SP makes an interest payment while the cash back vault has 0 FIL, the payment processes normally and no GLF tokens are used. If the vault has some FIL but not enough to cover the full cash back amount, the program will apply the maximum available FIL and use a pro-rata amount of GLF tokens for the remainder.
+
+To check the current FIL balance available in the cash back vault:
+
+`glif plus cashback fil-vault-balance`
+
+This command displays the total amount of FIL currently available in the cash back program vault.

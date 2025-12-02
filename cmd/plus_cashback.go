@@ -9,7 +9,7 @@ import (
 
 var plusCashBackCmd = &cobra.Command{
 	Use:   "cashback",
-	Short: "Manage cashback operations",
+	Short: "Manage cash back operations",
 }
 
 func init() {

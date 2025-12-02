@@ -68,12 +68,17 @@ var plusInfoCmd = &cobra.Command{
 			}
 		}
 
+		filVaultBalance, err := PoolsSDK.Query().SPPlusFILVaultBalance(ctx, nil)
+		if err != nil {
+			logFatal(err)
+		}
+
 		// CASHBACK INFORMATION
-		fmt.Printf("\n── Cashback Status ──\n")
+		fmt.Printf("\n── Cash Back Status ──\n")
 		cashbackBasis, _ := info.PersonalCashBackPercent.Float64()
 		fmt.Printf("Earned: %.09f FIL\n", poolsutil.ToFIL(info.FilCashbackEarned))
 		fmt.Printf("Vault Balance: %.09f GLF\n", poolsutil.ToFIL(info.GLFVaultBalance))
-		fmt.Printf("Cashback Percentage: %.02f%%\n", cashbackBasis/100.00)
+		fmt.Printf("Cash Back Percentage: %.02f%%\n", cashbackBasis/100.00)
 
 		// CONVERSION RATES
 		fmt.Printf("\n── Conversion Rates ──\n")
@@ -100,6 +105,9 @@ var plusInfoCmd = &cobra.Command{
 			fmt.Printf("Tier Rate: 1 FIL = %.09f GLF (+%.02f%%)\n",
 				poolsutil.ToFIL(conversionRateWithPremium), premium)
 		}
+
+		fmt.Printf("\n── Cash back program vault balance ──\n")
+		fmt.Printf("Total FIL available for cash back program: %.09f FIL\n", poolsutil.ToFIL(filVaultBalance))
 
 	},
 }

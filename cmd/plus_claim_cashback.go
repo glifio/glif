@@ -11,7 +11,7 @@ import (
 
 var plusClaimCashBackCmd = &cobra.Command{
 	Use:   "claim-rewards <receiver address>",
-	Short: "Transfer earned FIL cashback to receiver address",
+	Short: "Transfer earned FIL cash back to receiver address",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
@@ -37,17 +37,17 @@ var plusClaimCashBackCmd = &cobra.Command{
 
 		tx, err := PoolsSDK.Act().SPPlusClaimCashBack(ctx, auth, big.NewInt(tokenID), receiver)
 		if err != nil {
-			logFatalf("Failed to claim cashback %s", err)
+			logFatalf("Failed to claim cash back %s", err)
 		}
 
 		_, err = PoolsSDK.Query().StateWaitReceipt(ctx, tx.Hash())
 		if err != nil {
-			logFatalf("Failed to claim cashback %s", err)
+			logFatalf("Failed to claim cash back %s", err)
 		}
 
 		s.Stop()
 
-		fmt.Println("FIL cashback successfully claimed.")
+		fmt.Println("FIL cash back successfully claimed.")
 	},
 }
 
