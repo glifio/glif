@@ -64,6 +64,7 @@
       - [Cash back percentage](#cash-back-percentage)
     - [Tier Management](#tier-management)
     - [Print Card info](#print-card-info)
+    - [Transfer Card ownership](#transfer-card-ownership)
     - [Cash back vault limitations](#cash-back-vault-limitations)
 
 <hr />
@@ -592,6 +593,14 @@ Note that Minting fees are a one time fee paid for creating a Card, and are not 
 You can get information about the status of your Card by running:
 
 `glif plus info`
+
+### Transfer Card ownership
+
+If you need to transfer ownership of your GLIF+ Card to a new Agent owner (for example, when the Agent's owner address has changed), you can use the advanced transfer-owner command:
+
+`glif plus advanced transfer-owner`
+
+This command transfers the ownership of your GLIF Card to the new Agent owner address.
 
 ### Cash back vault limitations
 

@@ -51,5 +51,5 @@ This command is useful when transferring a GLIF Card to a new owner because the 
 }
 
 func init() {
-	plusCmd.AddCommand(plusChangeOwnerForAgentCmd)
+	plusAdvancedCmd.AddCommand(plusChangeOwnerForAgentCmd)
 }
