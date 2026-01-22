@@ -12,7 +12,7 @@ require (
 	github.com/filecoin-project/go-address v1.2.0
 	github.com/filecoin-project/go-state-types v0.17.0
 	github.com/filecoin-project/lotus v1.34.1
-	github.com/glifio/go-pools v1.5.4-0.20260122211653-270b8fe07663
+	github.com/glifio/go-pools v1.5.4
 	github.com/glifio/go-wallet-utils v0.0.0-20230719050429-ff6c4bc75533
 	github.com/golang/mock v1.6.0
 	github.com/ipfs/go-cid v0.5.0
