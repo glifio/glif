@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/glifio/go-pools/abigen"
 	"github.com/glifio/go-pools/constants"
 
@@ -58,6 +59,7 @@ var claimCmd = &cobra.Command{
 		}
 
 		addressToClaimOnBehalf := addr
+		var agentAddr *common.Address
 
 		// first check if this is an agent address
 		isTestDrop := PoolsSDK.Query().ChainID().Int64() != constants.MainnetChainID
@@ -69,6 +71,7 @@ var claimCmd = &cobra.Command{
 		owner, ok := agentToOwnerMap[addr]
 		if ok {
 			addressToClaimOnBehalf = owner
+			agentAddr = &addr // Store agent address for duplicate resolution
 			fmt.Println("This is an Agent address - you are claiming with your Agent's Owner wallet: ", addressToClaimOnBehalf.Hex())
 		}
 
@@ -112,12 +115,12 @@ var claimCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		proof, err := mt.GetProofForAddr(addressToClaimOnBehalf)
+		proof, err := mt.GetProofForAddrWithAgent(addressToClaimOnBehalf, agentAddr)
 		if err != nil {
 			logFatal(err)
 		}
 
-		value, err := mt.GetLeafValueForAddr(addressToClaimOnBehalf)
+		value, err := mt.GetLeafValueForAddrWithAgent(addressToClaimOnBehalf, agentAddr)
 		if err != nil {
 			logFatal(err)
 		}
