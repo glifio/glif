@@ -22,7 +22,7 @@ var acceptOwnershipCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 
-		agentAddr, auth, _, _, err := commonSetupOwnerCall()
+		agentAddr, auth, _, _, err := commonSetupOwnerCall(cmd)
 		if err != nil {
 			logFatal(err)
 		}

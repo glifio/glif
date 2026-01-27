@@ -22,7 +22,7 @@ var acceptOperatorCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 
-		agentAddr, auth, _, _, err := commonOwnerOrOperatorSetup(ctx, "operator")
+		agentAddr, auth, _, _, err := commonOwnerOrOperatorSetup(cmd, "operator")
 		if err != nil {
 			logFatal(err)
 		}
