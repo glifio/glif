@@ -27,7 +27,7 @@ var transferOwnershipCmd = &cobra.Command{
 			logFatal(err)
 		}
 
-		agentAddr, auth, _, _, err := commonSetupOwnerCall()
+		agentAddr, auth, _, _, err := commonSetupOwnerCall(cmd)
 		if err != nil {
 			logFatal(err)
 		}
